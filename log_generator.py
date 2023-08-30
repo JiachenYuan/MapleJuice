@@ -12,14 +12,14 @@ def generate_log_entry():
     service = random.choice(services)
     log_level = random.choice(['INFO', 'WARNING', 'ERROR'])
     
-    N = 100
+    N = 10
     # using random.choices()
     # generating random strings
     res = ''.join(random.choices(string.ascii_letters, k=N))
     return f"{timestamp} - [{service}] [{log_level}] - {res}"
 
 # Number of log entries to generate
-num_entries = 30000
+num_entries = 10
 
 with open("fake_log.log", "w") as f:
     for _ in range(num_entries):

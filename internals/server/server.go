@@ -1,14 +1,19 @@
 package server
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"net"
 	"os"
+	"os/exec"
+	"strings"
 )
 
 const (
 	HOST = "localhost"
 	PORT = "55555"
+	LOG_FILE = "fake_log.log"
 )
 
 func Start() {
@@ -31,26 +36,39 @@ func Start() {
 
 func serveConn(conn net.Conn) {
 	defer conn.Close()
-	buffer := make([]byte, 2048)
 
-	for {
-		readLength, err := conn.Read(buffer)
+	reader := bufio.NewReader(conn)
+	// for {
+		request, err := reader.ReadString('\n')
 		if err != nil {
-			fmt.Printf("Error reading request: %v\n", err.Error())
+			if err != io.EOF {
+				fmt.Printf("Error reading request: %v\n", err.Error())
+			}
 			return
 		}
+		request = strings.TrimSuffix(request, "\n")
 		
-		response := processRequest(string(buffer[:readLength]))
+		response := processRequest(request)
 		_, err = conn.Write(response)
 		if err != nil {
 			fmt.Printf("Error sending response: %v\n", err.Error())
 			return
 		}
-	}
+	// }
 }
 
 func processRequest(request string) []byte {
-	// TODO: actual log grep logic and 
-	fmt.Println("Received: ", request)
-	return []byte("Hello world!\n")
+	fmt.Println("Received request: ", request)
+
+	// cmdArgs := strings.Fields(request)
+	// cmdArgs = append(cmdArgs, LOG_FILE)
+	request = request + " " + LOG_FILE
+	cmd := exec.Command("bash", "-c", request)
+	fmt.Printf("%v\n", cmd)
+	out, err := cmd.Output()
+	if err != nil {
+		return []byte("Error executing command.")
+	}
+
+	return out
 }
