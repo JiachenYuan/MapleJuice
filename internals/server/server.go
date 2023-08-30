@@ -38,30 +38,26 @@ func serveConn(conn net.Conn) {
 	defer conn.Close()
 
 	reader := bufio.NewReader(conn)
-	// for {
-		request, err := reader.ReadString('\n')
-		if err != nil {
-			if err != io.EOF {
-				fmt.Printf("Error reading request: %v\n", err.Error())
-			}
-			return
+	request, err := reader.ReadString('\n')
+	if err != nil {
+		if err != io.EOF {
+			fmt.Printf("Error reading request: %v\n", err.Error())
 		}
-		request = strings.TrimSuffix(request, "\n")
-		
-		response := processRequest(request)
-		_, err = conn.Write(response)
-		if err != nil {
-			fmt.Printf("Error sending response: %v\n", err.Error())
-			return
-		}
-	// }
+		return
+	}
+	request = strings.TrimSuffix(request, "\n")
+	
+	response := processRequest(request)
+	_, err = conn.Write(response)
+	if err != nil {
+		fmt.Printf("Error sending response: %v\n", err.Error())
+		return
+	}
 }
 
 func processRequest(request string) []byte {
 	fmt.Println("Received request: ", request)
 
-	// cmdArgs := strings.Fields(request)
-	// cmdArgs = append(cmdArgs, LOG_FILE)
 	request = request + " " + LOG_FILE
 	cmd := exec.Command("bash", "-c", request)
 	fmt.Printf("%v\n", cmd)
