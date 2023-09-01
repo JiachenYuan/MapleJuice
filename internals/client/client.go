@@ -9,7 +9,7 @@ import (
 	"sync"
 )
 
-var serverAddrs = []string{"localhost:8080"}
+var serverAddrs = []string{"fa23-cs425-1801.cs.illinois.edu"}
 
 func Start() {
 	inputChan := make(chan string)
