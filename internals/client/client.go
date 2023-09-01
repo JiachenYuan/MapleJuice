@@ -9,7 +9,12 @@ import (
 	"sync"
 )
 
-var serverAddrs = []string{"fa23-cs425-1801.cs.illinois.edu", "fa23-cs425-1801.cs.illinois.edu"}
+var serverAddrs = []string{
+	"fa23-cs425-1801.cs.illinois.edu", "fa23-cs425-1802.cs.illinois.edu",
+	"fa23-cs425-1803.cs.illinois.edu", "fa23-cs425-1804.cs.illinois.edu",
+	"fa23-cs425-1805.cs.illinois.edu", "fa23-cs425-1806.cs.illinois.edu",
+	"fa23-cs425-1807.cs.illinois.edu", "fa23-cs425-1808.cs.illinois.edu",
+	"fa23-cs425-1809.cs.illinois.edu", "fa23-cs425-1810.cs.illinois.edu"}
 
 func Start() {
 	inputChan := make(chan string)
