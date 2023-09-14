@@ -19,7 +19,7 @@ const (
 
 var (
 	localTimer = 0
-	nodeList   = make(map[string]Node)
+	nodeList   = make(map[string]*Node)
 )
 
 type Node struct {
@@ -30,7 +30,7 @@ type Node struct {
 	TimeStamp        int    `json:"timeStamp"`
 }
 
-func SetNodeList(nodes map[string]Node) {
+func SetNodeList(nodes map[string]*Node) {
 	nodeList = nodes
 }
 
@@ -52,11 +52,10 @@ func StartGossipDetector(port string) {
 			os.Exit(1)
 		}
 
-		var receivedMembershipList map[string]Node
+		var receivedMembershipList map[string]*Node
 		if err := json.Unmarshal(buffer[:n], &receivedMembershipList); err != nil {
 			fmt.Println("Error decoding membership list: ", err)
 		} else {
-			fmt.Println("Received membership list: ", receivedMembershipList)
 			updateMembershipList(receivedMembershipList)
 		}
 	}
@@ -64,9 +63,10 @@ func StartGossipDetector(port string) {
 }
 
 // update current membership list with incoming list
-func updateMembershipList(receivedMembershipList map[string]Node) {
+func updateMembershipList(receivedMembershipList map[string]*Node) {
 	fmt.Println("Updating membership list")
 	for key, receivedNode := range receivedMembershipList {
+		fmt.Println("received node is : ", *receivedNode)
 		if val, ok := nodeList[key]; ok {
 			if val.HeartbeatCounter < receivedNode.HeartbeatCounter {
 				val.HeartbeatCounter = receivedNode.HeartbeatCounter
@@ -120,7 +120,7 @@ func parseNodeList() []byte {
 }
 
 // helper function to randomly select B nodes to gossip to
-func randomlySelectNodes(num int) []Node {
+func randomlySelectNodes(num int) []*Node {
 	num = max(num, len(nodeList))
 	keys := make([]string, 0, len(nodeList))
 	for k := range nodeList {
@@ -128,7 +128,7 @@ func randomlySelectNodes(num int) []Node {
 	}
 
 	rand.Shuffle(len(keys), func(i, j int) { keys[i], keys[j] = keys[j], keys[i] })
-	selectedNodes := make([]Node, 0, num)
+	selectedNodes := make([]*Node, 0, num)
 	for i := 0; i < num; i++ {
 		selectedNodes = append(selectedNodes, nodeList[keys[i]])
 	}
