@@ -35,6 +35,7 @@ const (
 
 var (
 	nodeList           = make(map[string]*Node)
+	LOCAL_NODE_KEY     = getLocalNodeName() + fmt.Sprint(time.Now().Unix())
 	INTRODUCER_ADDRESS = "fa23-cs425-1801.cs.illinois.edu"
 	SERVER_ADDRS       = []string{
 		"fa23-cs425-1801.cs.illinois.edu", "fa23-cs425-1802.cs.illinois.edu",
@@ -45,7 +46,6 @@ var (
 )
 
 type Node struct {
-	Id               string     `json:"id"`
 	Address          string     `json:"Address"`
 	HeartbeatCounter int        `json:"heartbeatCounter"`
 	Status           StatusType `json:"status"`
@@ -53,11 +53,10 @@ type Node struct {
 }
 
 func InitializeNodeList() {
-	key := getLocalNodeName() + fmt.Sprint(time.Now().Unix())
+	localNodeName := getLocalNodeName()
 	initialNodeList := map[string]*Node{
-		key: {
-			Id:               key,
-			Address:          getLocalNodeName(),
+		LOCAL_NODE_KEY: {
+			Address:          localNodeName,
 			HeartbeatCounter: 1,
 			Status:           Alive,
 			TimeStamp:        int(time.Now().Unix()),
@@ -169,7 +168,6 @@ func SendJoinMessage() {
 
 func SendGossipMessage() {
 	selectedNodes := randomlySelectNodes(NUM_NODES_TO_GOSSIP)
-	fmt.Println("Number of selected nodes is:", len(selectedNodes))
 	getLocalNodeFromNodeList().HeartbeatCounter++
 	parsedNodes := parseNodeList()
 	var wg sync.WaitGroup

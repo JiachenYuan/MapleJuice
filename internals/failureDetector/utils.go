@@ -7,6 +7,36 @@ import (
 	"os"
 )
 
+// helper function to randomly select B nodes to gossip to
+func randomlySelectNodes(num int) []*Node {
+	num = max(num, len(nodeList))
+	keys := make([]string, 0, len(nodeList))
+	for k := range nodeList {
+		keys = append(keys, k)
+	}
+
+	rand.Shuffle(len(keys), func(i, j int) { keys[i], keys[j] = keys[j], keys[i] })
+	selectedNodes := make([]*Node, 0, num)
+	for i := 0; i < num; i++ {
+		selectedNodes = append(selectedNodes, nodeList[keys[i]])
+	}
+	return selectedNodes
+}
+
+func getLocalNodeFromNodeList() *Node {
+	return nodeList[LOCAL_NODE_KEY]
+}
+
+func getLocalNodeName() string {
+	hostname, err := os.Hostname()
+	if err != nil {
+		fmt.Println("Error getting host name: ", err)
+		os.Exit(1)
+	}
+	key := hostname + ":" + PORT
+	return key
+}
+
 // helper function to calculate the max of two nodes
 func max(a, b int) int {
 	if a < b {
@@ -24,36 +54,4 @@ func parseNodeList() []byte {
 	}
 
 	return byteSlice
-}
-
-// helper function to randomly select B nodes to gossip to
-func randomlySelectNodes(num int) []*Node {
-	num = max(num, len(nodeList))
-	keys := make([]string, 0, len(nodeList))
-	for k := range nodeList {
-		keys = append(keys, k)
-	}
-
-	rand.Shuffle(len(keys), func(i, j int) { keys[i], keys[j] = keys[j], keys[i] })
-	selectedNodes := make([]*Node, 0, num)
-	for i := 0; i < num; i++ {
-		selectedNodes = append(selectedNodes, nodeList[keys[i]])
-	}
-	fmt.Println("Selected nodes: ", selectedNodes)
-	return selectedNodes
-}
-
-func getLocalNodeFromNodeList() *Node {
-	key := getLocalNodeName()
-	return nodeList[key]
-}
-
-func getLocalNodeName() string {
-	hostname, err := os.Hostname()
-	if err != nil {
-		fmt.Println("Error getting host name: ", err)
-		os.Exit(1)
-	}
-	key := hostname + ":" + PORT
-	return key
 }
