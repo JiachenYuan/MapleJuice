@@ -11,23 +11,53 @@ import (
 )
 
 const (
-	GOSSIPRATE = 500 * time.Millisecond // 1000ms
-	B          = 3                      //number of nodes to gossip to
-	PORT       = "55556"
-	HOST       = "localhost"
+	GOSSIP_RATE         = 5000 * time.Millisecond // 1000ms
+	NUM_NODES_TO_GOSSIP = 3                       //number of nodes to gossip to
+	PORT                = "55556"
+	HOST                = "0.0.0.0"
+)
+
+type MessageType int
+
+const (
+	Join MessageType = iota
+	Leave
+	Gossip
 )
 
 var (
-	localTimer = 0
-	nodeList   = make(map[string]*Node)
+	localTimer         = 0
+	nodeList           = make(map[string]*Node)
+	COORDINATOR_ADRESS = "fa23-cs425-1801.cs.illinois.edu"
+	SERVER_ADDRS       = []string{
+		"fa23-cs425-1801.cs.illinois.edu", "fa23-cs425-1802.cs.illinois.edu",
+		"fa23-cs425-1803.cs.illinois.edu", "fa23-cs425-1804.cs.illinois.edu",
+		"fa23-cs425-1805.cs.illinois.edu", "fa23-cs425-1806.cs.illinois.edu",
+		"fa23-cs425-1807.cs.illinois.edu", "fa23-cs425-1808.cs.illinois.edu",
+		"fa23-cs425-1809.cs.illinois.edu", "fa23-cs425-1810.cs.illinois.edu"}
 )
 
 type Node struct {
-	Id               int    `json:"id"`
-	IpAddress        string `json:"ipAddress"`
+	Id               string `json:"id"`
+	Address          string `json:"Address"`
 	HeartbeatCounter int    `json:"heartbeatCounter"`
 	IsAlive          bool   `json:"isAlive"`
 	TimeStamp        int    `json:"timeStamp"`
+}
+
+func InitializeNodeList() {
+	key := getLocalNodeName()
+	initialNodeList := map[string]*Node{
+		key: {
+			Id:               key,
+			Address:          getLocalNodeName(),
+			HeartbeatCounter: 1,
+			IsAlive:          true,
+			TimeStamp:        0,
+		},
+	}
+
+	SetNodeList(initialNodeList)
 }
 
 func SetNodeList(nodes map[string]*Node) {
@@ -35,9 +65,10 @@ func SetNodeList(nodes map[string]*Node) {
 }
 
 // listen to gossip from other nodes
-func StartGossipDetector(port string) {
-	server, err := net.ListenPacket("udp", ":"+port)
-	fmt.Println("Listening on address: ", ":"+port)
+func StartGossipDetector() {
+	go SendGossip(Join)
+	server, err := net.ListenPacket("udp", ":"+PORT)
+	fmt.Println("Listening on address: ", ":"+PORT)
 	if err != nil {
 		fmt.Println("Error listening to UDP packets: ", err)
 		os.Exit(1)
@@ -80,14 +111,42 @@ func updateMembershipList(receivedMembershipList map[string]*Node) {
 }
 
 // send gossip to other nodes
-func SendGossip() {
-	selectedNodes := randomlySelectNodes(2)
+func SendGossip(msgType MessageType) {
+	switch msgType {
+	case Join:
+		SendJoinMessage()
+	case Gossip:
+		SendGossipMessage()
+	case Leave:
+		SendLeaveMessage()
+	default:
+		fmt.Println("Error: unsupported message type")
+		os.Exit(1)
+	}
+}
+
+func SendJoinMessage() {
+	conn, err := net.Dial("udp", COORDINATOR_ADRESS+":"+PORT)
+	if err != nil {
+		fmt.Println("Error dialing UDP to Coordinator: ", err)
+		return
+	}
+	defer conn.Close()
+	fmt.Println(getLocalNodeName(), " is joining the cluster")
+	parsedNodes := parseNodeList()
+	conn.Write(parsedNodes)
+}
+
+func SendGossipMessage() {
+	selectedNodes := randomlySelectNodes(NUM_NODES_TO_GOSSIP)
+	fmt.Println("Number of selected nodes is:", len(selectedNodes))
+	getLocalNodeFromNodeList().HeartbeatCounter++
+	parsedNodes := parseNodeList()
 	var wg sync.WaitGroup
 	for _, node := range selectedNodes {
 		wg.Add(1)
 		go func(address string) {
 			defer wg.Done()
-			parsedNodes := parseNodeList()
 			conn, err := net.Dial("udp", address)
 			if err != nil {
 				fmt.Println("Error dialing UDP: ", err)
@@ -101,10 +160,28 @@ func SendGossip() {
 				fmt.Println("Error sending UDP: ", err)
 				return
 			}
-		}(node.IpAddress)
+		}(node.Address)
 	}
 	wg.Wait()
 	fmt.Println("Finished sending gossip")
+}
+func SendLeaveMessage() {
+	fmt.Println("TODO: SendLeaveMessage not implemented")
+}
+
+func getLocalNodeFromNodeList() *Node {
+	key := getLocalNodeName()
+	return nodeList[key]
+}
+
+func getLocalNodeName() string {
+	hostname, err := os.Hostname()
+	if err != nil {
+		fmt.Println("Error getting host name: ", err)
+		os.Exit(1)
+	}
+	key := hostname + ":" + PORT
+	return key
 }
 
 // helper function to parse node list into byte array
@@ -134,4 +211,12 @@ func randomlySelectNodes(num int) []*Node {
 	}
 	fmt.Println("Selected nodes: ", selectedNodes)
 	return selectedNodes
+}
+
+// helper function to calculate the max of two nodes
+func max(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
