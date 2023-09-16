@@ -4,15 +4,18 @@
 * golang 1.21
 
 ## Update
-1. Finished the basic data structure design
+1. Migrated the code to VM
+2. Designate 1801 as introducer to handle JOIN messages 
+3. Update membership table (heartbeat count, local timer, etc.)
+4. Mark node as failed after detection
 
 ## Todo
-1. Migrate the code to VMs && real IP address rather than port
-2. Update membership table (heartbeat count, local timer, etc.)
-3. Mark node as failed after detection
-4. Think about how to handle the situation of new node joining
+1. Add suspicion stage
+2. Integrate MP2 to MP1
 
 ## To Run
-1. Type in `go run cmd/cs425-mp2/main.go 8080` in the terminal. You will see two things happening
-    a. The terminal periodically sends its own gossip table to 8080 and 8001
-    b. The current terminal will receive the membership list
+1. Start VM, cd to the project root directory of mp2
+2. enter the command `go run cmd/cs425-mp2/main.go`  You will see three things happening
+    a. The VM will send a JOIN message to 1801
+    b. The VM will start listening gossips from other VMs on port 55556
+    b. The current VM will periodically send its membership list to 3 other randomly chosen machines
