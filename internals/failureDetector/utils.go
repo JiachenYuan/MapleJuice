@@ -4,8 +4,39 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"net"
 	"os"
+	"sync"
+	"time"
 )
+
+func sendGossipToNodes(selectedNodes []*Node, gossip []byte) {
+	var wg sync.WaitGroup
+	for _, node := range selectedNodes {
+		wg.Add(1)
+		go func(address string) {
+			defer wg.Done()
+			rand.Seed(time.Now().UnixNano())
+			randomNumber := rand.Float64()
+			if randomNumber > 1-MESSAGE_DROP_RATE {
+				return
+			}
+			conn, err := net.Dial("udp", address)
+			if err != nil {
+				fmt.Println("Error dialing UDP: ", err)
+				return
+			}
+			fmt.Println("Sending gossip to: ", address)
+			defer conn.Close()
+			_, err = conn.Write(gossip)
+			if err != nil {
+				fmt.Println("Error sending UDP: ", err)
+				return
+			}
+		}(node.Address)
+	}
+	wg.Wait()
+}
 
 // helper function to randomly select B nodes to gossip to
 func randomlySelectNodes(num int) []*Node {
@@ -54,4 +85,20 @@ func parseNodeList() []byte {
 	}
 
 	return byteSlice
+}
+
+func parseLocalNode() []byte {
+	gossipMap := make(map[string]*Node)
+	if value, exists := nodeList[LOCAL_NODE_KEY]; exists {
+		gossipMap[LOCAL_NODE_KEY] = value
+
+		byteSlice, err := json.Marshal(gossipMap)
+		if err != nil {
+			fmt.Println("Error encoding local node to JSON:", err)
+			return nil
+		}
+		return byteSlice
+	}
+	fmt.Println("Error: local key not found")
+	return nil
 }

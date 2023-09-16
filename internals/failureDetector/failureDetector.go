@@ -11,8 +11,8 @@ import (
 
 const (
 	GOSSIP_RATE         = 1000 * time.Millisecond // 1000ms
-	T_FAIL              = 2                       // 2 second
-	T_CLEANUP           = 3                       // 3 second
+	T_FAIL              = 2                       // 2 seconds
+	T_CLEANUP           = 3                       // 3 seconds
 	NUM_NODES_TO_GOSSIP = 3                       //number of nodes to gossip to
 	PORT                = "55556"
 	HOST                = "0.0.0.0"
@@ -35,6 +35,8 @@ const (
 
 var (
 	nodeList           = make(map[string]*Node)
+	USE_SUSPICION      = false
+	MESSAGE_DROP_RATE  = 0.0
 	LOCAL_NODE_KEY     = getLocalNodeName() + fmt.Sprint(time.Now().Unix())
 	nodeListLock       = &sync.Mutex{}
 	INTRODUCER_ADDRESS = "fa23-cs425-1801.cs.illinois.edu"
@@ -88,8 +90,13 @@ func startPerodicFailureCheck() {
 			switch node.Status {
 			case Alive:
 				if time.Now().Unix()-int64(node.TimeStamp) > T_FAIL {
-					fmt.Println("Marking ", key, " as failed")
-					node.Status = Failed
+					if USE_SUSPICION {
+						fmt.Println("Marking ", key, " as suspected")
+						node.Status = Suspected
+					} else {
+						fmt.Println("Marking ", key, " as failed")
+						node.Status = Failed
+					}
 				}
 			case Failed:
 				if time.Now().Unix()-int64(node.TimeStamp) > T_CLEANUP {
@@ -97,7 +104,10 @@ func startPerodicFailureCheck() {
 					delete(nodeList, key)
 				}
 			case Suspected:
-				fmt.Println("Not implemented")
+				if time.Now().Unix()-int64(node.TimeStamp) > T_FAIL {
+					fmt.Println("Marking ", key, " as failed")
+					node.Status = Failed
+				}
 			}
 		}
 		nodeListLock.Unlock()
@@ -133,7 +143,6 @@ func startListeningToGossips() {
 
 // update current membership list with incoming list
 func updateMembershipList(receivedMembershipList map[string]*Node) {
-	fmt.Println("Updating membership list")
 	nodeListLock.Lock()
 	for key, receivedNode := range receivedMembershipList {
 		if val, ok := nodeList[key]; ok {
@@ -185,27 +194,17 @@ func SendGossipMessage() {
 	}
 	parsedNodes := parseNodeList()
 	nodeListLock.Unlock()
-	var wg sync.WaitGroup
-	for _, node := range selectedNodes {
-		wg.Add(1)
-		go func(address string) {
-			defer wg.Done()
-			conn, err := net.Dial("udp", address)
-			if err != nil {
-				fmt.Println("Error dialing UDP: ", err)
-				return
-			}
-			fmt.Println("Sending gossip to: ", address)
-			defer conn.Close()
-			_, err = conn.Write(parsedNodes)
-			if err != nil {
-				fmt.Println("Error sending UDP: ", err)
-				return
-			}
-		}(node.Address)
-	}
-	wg.Wait()
+	sendGossipToNodes(selectedNodes, parsedNodes)
 }
+
 func SendLeaveMessage() {
-	fmt.Println("TODO: SendLeaveMessage not implemented")
+	nodeListLock.Lock()
+	selectedNodes := randomlySelectNodes(NUM_NODES_TO_GOSSIP)
+	if localNode := getLocalNodeFromNodeList(); localNode != nil {
+		localNode.Status = Failed
+		localNode.TimeStamp = int(time.Now().Unix())
+	}
+	gossip := parseLocalNode()
+	nodeListLock.Unlock()
+	sendGossipToNodes(selectedNodes, gossip)
 }

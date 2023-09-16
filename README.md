@@ -8,10 +8,14 @@
 2. Designate 1801 as introducer to handle JOIN messages 
 3. Update membership table (heartbeat count, local timer, etc.)
 4. Mark node as failed after detection
+5. Implemented a preliminary suspicion mechanism
 
 ## Todo
-1. Add suspicion stage
-2. Integrate MP2 to MP1
+1. Add suspicion toggle
+2. Add message drop rate toggle
+3. Implement leave message
+4. Integrate MP2 to MP1
+
 
 ## To Run
 1. Start VM, cd to the project root directory of mp2
