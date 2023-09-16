@@ -11,8 +11,8 @@ import (
 
 const (
 	GOSSIP_RATE         = 1000 * time.Millisecond // 1000ms
-	T_FAIL              = 1                       // 1 second
-	T_CLEANUP           = 1                       // 1 second
+	T_FAIL              = 2                       // 2 second
+	T_CLEANUP           = 3                       // 3 second
 	NUM_NODES_TO_GOSSIP = 3                       //number of nodes to gossip to
 	PORT                = "55556"
 	HOST                = "0.0.0.0"
@@ -36,6 +36,7 @@ const (
 var (
 	nodeList           = make(map[string]*Node)
 	LOCAL_NODE_KEY     = getLocalNodeName() + fmt.Sprint(time.Now().Unix())
+	nodeListLock       = &sync.Mutex{}
 	INTRODUCER_ADDRESS = "fa23-cs425-1801.cs.illinois.edu"
 	SERVER_ADDRS       = []string{
 		"fa23-cs425-1801.cs.illinois.edu", "fa23-cs425-1802.cs.illinois.edu",
@@ -67,7 +68,9 @@ func InitializeNodeList() {
 }
 
 func SetNodeList(nodes map[string]*Node) {
+	nodeListLock.Lock()
 	nodeList = nodes
+	nodeListLock.Unlock()
 }
 
 // listen to gossip from other nodes
@@ -79,20 +82,26 @@ func StartGossipDetector() {
 
 // start periodic failure check
 func startPerodicFailureCheck() {
-	for key, node := range nodeList {
-		switch node.Status {
-		case Alive:
-			if time.Now().Unix()-int64(node.TimeStamp) > T_FAIL {
-				node.Status = Failed
+	for {
+		nodeListLock.Lock()
+		for key, node := range nodeList {
+			switch node.Status {
+			case Alive:
+				if time.Now().Unix()-int64(node.TimeStamp) > T_FAIL {
+					fmt.Println("Marking ", key, " as failed")
+					node.Status = Failed
+				}
+			case Failed:
+				if time.Now().Unix()-int64(node.TimeStamp) > T_CLEANUP {
+					fmt.Println("Deleting node: ", key)
+					delete(nodeList, key)
+				}
+			case Suspected:
+				fmt.Println("Not implemented")
 			}
-		case Failed:
-			if time.Now().Unix()-int64(node.TimeStamp) > T_CLEANUP {
-				delete(nodeList, key)
-			}
-		case Suspected:
-			fmt.Println("Not implemented")
 		}
-
+		nodeListLock.Unlock()
+		time.Sleep(500 * time.Millisecond)
 	}
 }
 
@@ -125,6 +134,7 @@ func startListeningToGossips() {
 // update current membership list with incoming list
 func updateMembershipList(receivedMembershipList map[string]*Node) {
 	fmt.Println("Updating membership list")
+	nodeListLock.Lock()
 	for key, receivedNode := range receivedMembershipList {
 		if val, ok := nodeList[key]; ok {
 			if val.HeartbeatCounter < receivedNode.HeartbeatCounter {
@@ -136,7 +146,7 @@ func updateMembershipList(receivedMembershipList map[string]*Node) {
 			nodeList[key] = receivedNode
 		}
 	}
-
+	nodeListLock.Unlock()
 }
 
 // send gossip to other nodes
@@ -167,9 +177,14 @@ func SendJoinMessage() {
 }
 
 func SendGossipMessage() {
+	nodeListLock.Lock()
 	selectedNodes := randomlySelectNodes(NUM_NODES_TO_GOSSIP)
-	getLocalNodeFromNodeList().HeartbeatCounter++
+	if localNode := getLocalNodeFromNodeList(); localNode != nil {
+		localNode.HeartbeatCounter++
+		localNode.TimeStamp = int(time.Now().Unix())
+	}
 	parsedNodes := parseNodeList()
+	nodeListLock.Unlock()
 	var wg sync.WaitGroup
 	for _, node := range selectedNodes {
 		wg.Add(1)
