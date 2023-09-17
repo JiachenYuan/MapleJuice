@@ -26,7 +26,6 @@ func sendGossipToNodes(selectedNodes []*Node, gossip []byte) {
 				fmt.Println("Error dialing UDP: ", err)
 				return
 			}
-			fmt.Println("Sending gossip to: ", address)
 			defer conn.Close()
 			_, err = conn.Write(gossip)
 			if err != nil {

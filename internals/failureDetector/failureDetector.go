@@ -23,8 +23,8 @@ type StatusType int
 
 const (
 	Alive StatusType = iota
-	Failed
 	Suspected
+	Failed
 )
 
 const (
@@ -149,8 +149,8 @@ func updateMembershipList(receivedMembershipList map[string]*Node) {
 			if val.HeartbeatCounter < receivedNode.HeartbeatCounter {
 				val.HeartbeatCounter = receivedNode.HeartbeatCounter
 				val.TimeStamp = int(time.Now().Unix())
+				val.Status = receivedNode.Status
 			}
-			val.Status = receivedNode.Status
 		} else {
 			nodeList[key] = receivedNode
 		}
