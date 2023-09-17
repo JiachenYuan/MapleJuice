@@ -87,6 +87,9 @@ func startPerodicFailureCheck() {
 	for {
 		nodeListLock.Lock()
 		for key, node := range nodeList {
+			if key == LOCAL_NODE_KEY {
+				continue
+			}
 			switch node.Status {
 			case Alive:
 				if time.Now().Unix()-int64(node.TimeStamp) > T_FAIL {
@@ -104,7 +107,7 @@ func startPerodicFailureCheck() {
 					delete(nodeList, key)
 				}
 			case Suspected:
-				if time.Now().Unix()-int64(node.TimeStamp) > T_FAIL {
+				if !USE_SUSPICION || time.Now().Unix()-int64(node.TimeStamp) > T_FAIL {
 					fmt.Println("Marking ", key, " as failed")
 					node.Status = Failed
 				}
@@ -117,7 +120,6 @@ func startPerodicFailureCheck() {
 
 func startListeningToGossips() {
 	server, err := net.ListenPacket("udp", ":"+PORT)
-	fmt.Println("Listening on address: ", ":"+PORT)
 	if err != nil {
 		fmt.Println("Error listening to UDP packets: ", err)
 		os.Exit(1)
@@ -180,7 +182,6 @@ func SendJoinMessage() {
 		return
 	}
 	defer conn.Close()
-	fmt.Println(getLocalNodeName(), " is joining the cluster")
 	parsedNodes := parseNodeList()
 	conn.Write(parsedNodes)
 }

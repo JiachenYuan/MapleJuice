@@ -9,12 +9,11 @@
 3. Update membership table (heartbeat count, local timer, etc.)
 4. Mark node as failed after detection
 5. Implemented a preliminary suspicion mechanism
+6. Add suspicion toggle & message drop rate update with http listener
 
 ## Todo
-1. Add suspicion toggle
-2. Add message drop rate toggle
-3. Implement leave message
-4. Integrate MP2 to MP1
+1. Update suspicion & message drop rate for the entire system rather than a single node
+2. Integrate MP2 to MP1
 
 
 ## To Run

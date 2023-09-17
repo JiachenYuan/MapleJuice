@@ -9,7 +9,7 @@ import (
 func main() {
 	fmt.Println("Failure Detector Started")
 	failureDetector.InitializeNodeList()
-
+	go failureDetector.HandleRequests()
 	go failureDetector.StartGossipDetector()
 
 	for {
