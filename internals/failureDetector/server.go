@@ -5,55 +5,8 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"sync"
 	"time"
 )
-
-const (
-	GOSSIP_RATE         = 1000 * time.Millisecond // 1000ms
-	T_FAIL              = 2                       // 2 seconds
-	T_CLEANUP           = 3                       // 3 seconds
-	NUM_NODES_TO_GOSSIP = 3                       //number of nodes to gossip to
-	PORT                = "55556"
-	HOST                = "0.0.0.0"
-)
-
-type MessageType int
-type StatusType int
-
-const (
-	Alive StatusType = iota
-	Suspected
-	Failed
-)
-
-const (
-	Join MessageType = iota
-	Leave
-	Gossip
-)
-
-var (
-	nodeList           = make(map[string]*Node)
-	USE_SUSPICION      = false
-	MESSAGE_DROP_RATE  = 0.0
-	LOCAL_NODE_KEY     = getLocalNodeName() + fmt.Sprint(time.Now().Unix())
-	nodeListLock       = &sync.Mutex{}
-	INTRODUCER_ADDRESS = "fa23-cs425-1801.cs.illinois.edu"
-	SERVER_ADDRS       = []string{
-		"fa23-cs425-1801.cs.illinois.edu", "fa23-cs425-1802.cs.illinois.edu",
-		"fa23-cs425-1803.cs.illinois.edu", "fa23-cs425-1804.cs.illinois.edu",
-		"fa23-cs425-1805.cs.illinois.edu", "fa23-cs425-1806.cs.illinois.edu",
-		"fa23-cs425-1807.cs.illinois.edu", "fa23-cs425-1808.cs.illinois.edu",
-		"fa23-cs425-1809.cs.illinois.edu", "fa23-cs425-1810.cs.illinois.edu"}
-)
-
-type Node struct {
-	Address          string     `json:"Address"`
-	HeartbeatCounter int        `json:"heartbeatCounter"`
-	Status           StatusType `json:"status"`
-	TimeStamp        int        `json:"timeStamp"`
-}
 
 func InitializeNodeList() {
 	localNodeName := getLocalNodeName()
@@ -77,7 +30,7 @@ func SetNodeList(nodes map[string]*Node) {
 
 // listen to gossip from other nodes
 func StartGossipDetector() {
-	go SendGossip(Join)
+	SendGossip(Join)
 	go startPerodicFailureCheck()
 	startListeningToGossips()
 }
@@ -158,54 +111,4 @@ func updateMembershipList(receivedMembershipList map[string]*Node) {
 		}
 	}
 	nodeListLock.Unlock()
-}
-
-// send gossip to other nodes
-func SendGossip(msgType MessageType) {
-	switch msgType {
-	case Join:
-		SendJoinMessage()
-	case Gossip:
-		SendGossipMessage()
-	case Leave:
-		SendLeaveMessage()
-	default:
-		fmt.Println("Error: unsupported message type")
-		os.Exit(1)
-	}
-}
-
-func SendJoinMessage() {
-	conn, err := net.Dial("udp", INTRODUCER_ADDRESS+":"+PORT)
-	if err != nil {
-		fmt.Println("Error dialing UDP to introducer: ", err)
-		return
-	}
-	defer conn.Close()
-	parsedNodes := parseNodeList()
-	conn.Write(parsedNodes)
-}
-
-func SendGossipMessage() {
-	nodeListLock.Lock()
-	selectedNodes := randomlySelectNodes(NUM_NODES_TO_GOSSIP)
-	if localNode := getLocalNodeFromNodeList(); localNode != nil {
-		localNode.HeartbeatCounter++
-		localNode.TimeStamp = int(time.Now().Unix())
-	}
-	parsedNodes := parseNodeList()
-	nodeListLock.Unlock()
-	sendGossipToNodes(selectedNodes, parsedNodes)
-}
-
-func SendLeaveMessage() {
-	nodeListLock.Lock()
-	selectedNodes := randomlySelectNodes(NUM_NODES_TO_GOSSIP)
-	if localNode := getLocalNodeFromNodeList(); localNode != nil {
-		localNode.Status = Failed
-		localNode.TimeStamp = int(time.Now().Unix())
-	}
-	gossip := parseLocalNode()
-	nodeListLock.Unlock()
-	sendGossipToNodes(selectedNodes, gossip)
 }
