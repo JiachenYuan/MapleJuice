@@ -12,6 +12,7 @@ const (
 	T_CLEANUP           = 3                       // 3 seconds
 	NUM_NODES_TO_GOSSIP = 3                       //number of nodes to gossip to
 	PORT                = "55556"
+	INTRODUCER_PORT     = "55557"
 	HOST                = "0.0.0.0"
 )
 

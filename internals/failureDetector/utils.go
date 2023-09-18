@@ -101,3 +101,35 @@ func parseLocalNode() []byte {
 	fmt.Println("Error: local key not found")
 	return nil
 }
+
+func handshakeWithIntroducer() {
+	introducerAddr, err := net.ResolveUDPAddr("udp", INTRODUCER_ADDRESS+":"+INTRODUCER_PORT)
+	if err != nil {
+		fmt.Println("Error resolving server address:", err)
+		return
+	}
+	conn, err := net.DialUDP("udp", nil, introducerAddr)
+	if err != nil {
+		fmt.Println("Error dialing UDP to introducer: ", err)
+		return
+	}
+	defer conn.Close()
+	buffer := make([]byte, 1024)
+	joinRequest := []byte("JOIN")
+	for {
+		_, err = conn.Write(joinRequest)
+		if err != nil {
+			fmt.Println("Error sending JOIN message:", err)
+			return
+		}
+
+		conn.SetReadDeadline(time.Now().Add(1 * time.Second))
+
+		_, _, err = conn.ReadFromUDP(buffer)
+		if err != nil {
+			fmt.Println("Error reading from UDP:", err)
+			continue
+		}
+		break
+	}
+}

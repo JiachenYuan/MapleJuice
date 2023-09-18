@@ -30,8 +30,11 @@ func SetNodeList(nodes map[string]*Node) {
 
 // listen to gossip from other nodes
 func StartGossipDetector() {
-	SendGossip(Join)
+	if hostname, err := os.Hostname(); err == nil && hostname != INTRODUCER_ADDRESS {
+		SendGossip(Join)
+	}
 	go startPerodicFailureCheck()
+	go startListeningToJoinMessagesIfNeeded()
 	startListeningToGossips()
 }
 
@@ -96,12 +99,47 @@ func startListeningToGossips() {
 	}
 }
 
+func startListeningToJoinMessagesIfNeeded() {
+	if hostname, err := os.Hostname(); err == nil && hostname != INTRODUCER_ADDRESS {
+		return
+	}
+	address, err := net.ResolveUDPAddr("udp", INTRODUCER_ADDRESS+":"+INTRODUCER_PORT)
+	if err != nil {
+		fmt.Println("Error resolving address: ", err)
+		return
+	}
+	conn, err := net.ListenUDP("udp", address)
+	if err != nil {
+		fmt.Println("Error creating introducer UDP service: ", err)
+		return
+	}
+	defer conn.Close()
+	buffer := make([]byte, 1024)
+	for {
+		_, clientAddress, err := conn.ReadFromUDP(buffer)
+		if err != nil {
+			fmt.Println("Error reading from UDP: ", err)
+			return
+		}
+
+		reply := []byte("OK")
+		_, err = conn.WriteToUDP(reply, clientAddress)
+		if err != nil {
+			fmt.Println("Error sending reply:", err)
+			return
+		}
+	}
+
+}
+
 // update current membership list with incoming list
 func updateMembershipList(receivedMembershipList map[string]*Node) {
 	nodeListLock.Lock()
 	for key, receivedNode := range receivedMembershipList {
 		if val, ok := nodeList[key]; ok {
-			if val.HeartbeatCounter < receivedNode.HeartbeatCounter {
+			if val.Status == Failed {
+				continue
+			} else if val.HeartbeatCounter < receivedNode.HeartbeatCounter {
 				val.HeartbeatCounter = receivedNode.HeartbeatCounter
 				val.TimeStamp = int(time.Now().Unix())
 				val.Status = receivedNode.Status

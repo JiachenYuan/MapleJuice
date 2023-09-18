@@ -30,6 +30,8 @@ func SendGossip(msgType MessageType) {
 }
 
 func SendJoinMessage() {
+	handshakeWithIntroducer()
+	//send nodelist to introducer
 	conn, err := net.Dial("udp", INTRODUCER_ADDRESS+":"+PORT)
 	if err != nil {
 		fmt.Println("Error dialing UDP to introducer: ", err)
