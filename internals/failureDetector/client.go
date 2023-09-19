@@ -164,7 +164,7 @@ func JoinGroupAndInit() error {
 			continue
 		}
 
-		buffer := make([]byte, 65507)
+		buffer := make([]byte, 4096)
 		n, err := conn.Read(buffer)
 		if err != nil {
 			println("Read data failed:", err.Error())

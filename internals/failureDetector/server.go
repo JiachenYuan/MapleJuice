@@ -19,7 +19,7 @@ func HandleGroupMessages() {
 		os.Exit(1)
 	}
 	defer conn.Close()
-	buffer := make([]byte, 65507)
+	buffer := make([]byte, 4096)
 	for {
 		conn.SetWriteDeadline(time.Now().Add(CONN_TIMEOUT))
 		n, from, err := conn.ReadFrom(buffer)
