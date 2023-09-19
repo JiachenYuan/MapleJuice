@@ -16,7 +16,6 @@ const (
 	T_CLEANUP           = 10 * time.Second       // 10 seconds
 	NUM_NODES_TO_GOSSIP = 3                      //number of nodes to gossip to
 	PORT                = "55556"
-	HOST                = "0.0.0.0"
 	CONN_TIMEOUT        = 500 * time.Millisecond
 )
 
@@ -221,4 +220,10 @@ func randomPeersToPB(newcomerKey string) *pb.NodeInfoList {
 	}
 
 	return pbNodeList
+}
+
+func spinOnFailedStatus() {
+	for NodeInfoList[LOCAL_NODE_KEY].Status == Failed {
+
+	}
 }

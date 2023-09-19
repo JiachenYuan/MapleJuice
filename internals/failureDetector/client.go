@@ -14,6 +14,7 @@ import (
 
 func PeriodicUpdate() {
 	for {
+		spinOnFailedStatus()
 		NodeListLock.Lock()
 		gossip := NodeStatusUpdateAndNewGossip()
 		NodeListLock.Unlock()

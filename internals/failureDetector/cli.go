@@ -34,11 +34,17 @@ func ProcessUserInputInLoop(inputChan <-chan string) {
 	for {
 		//read the user input from inputChan
 		query := <-inputChan
-		if strings.TrimRight(query, "\n") == "leave" {
+		switch strings.TrimRight(query, "\n") {
+		case "leave":
 			NodeInfoList[LOCAL_NODE_KEY].Status = Failed
 			NodeInfoList[LOCAL_NODE_KEY].SeqNo++
 			leaveMessage := newMessageOfType(pb.GroupMessage_LEAVE)
 			SendGossip(leaveMessage)
+		case "rejoin":
+			NodeInfoList[LOCAL_NODE_KEY].Status = Alive
+			NodeInfoList[LOCAL_NODE_KEY].SeqNo++
+			rejoinMesasge := newMessageOfType(pb.GroupMessage_JOIN)
+			SendGossip(rejoinMesasge)
 		}
 	}
 }
