@@ -18,7 +18,7 @@ func HandleGroupMessages() {
 		os.Exit(1)
 	}
 	defer conn.Close()
-	buffer := make([]byte, 4096)
+	buffer := make([]byte, 65507)
 	for {
 		n, from, err := conn.ReadFrom(buffer)
 		if err != nil {
