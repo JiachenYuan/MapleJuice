@@ -36,6 +36,7 @@ func ProcessUserInputInLoop(inputChan <-chan string) {
 		query := <-inputChan
 		if strings.TrimRight(query, "\n") == "leave" {
 			NodeInfoList[LOCAL_NODE_KEY].Status = Failed
+			NodeInfoList[LOCAL_NODE_KEY].SeqNo++
 			leaveMessage := newMessageOfType(pb.GroupMessage_LEAVE)
 			SendGossip(leaveMessage)
 		}
