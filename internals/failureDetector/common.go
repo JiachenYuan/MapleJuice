@@ -130,8 +130,7 @@ func nodeInfoListToPB() *pb.NodeInfoList {
 			}
 			_status = pb.NodeInfoRow_Suspected
 		case Failed:
-			// FAILED node should never be communicated to peers over the network
-			continue
+			_status = pb.NodeInfoRow_Failed
 		}
 
 		pbNodeList.Rows = append(pbNodeList.Rows, &pb.NodeInfoRow{

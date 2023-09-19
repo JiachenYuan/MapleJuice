@@ -41,7 +41,9 @@ func HandleGroupMessages() {
 
 		case pb.GroupMessage_GOSSIP:
 			go processGossipMessage(conn, groupMessage)
-			// TODO: add Leave message
+
+		case pb.GroupMessage_LEAVE:
+			go processGossipMessage(conn, groupMessage)
 		}
 	}
 }
