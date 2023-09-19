@@ -29,26 +29,27 @@ func CheckFailure() {
 			node.SeqNo++
 			continue
 		}
+		sinceLastTimestamp := time.Since(node.TimeStamp)
 		switch node.Status {
 		case Alive:
-			if time.Since(node.TimeStamp) > T_FAIL {
+			if sinceLastTimestamp > T_FAIL {
 				if USE_SUSPICION {
 					fmt.Println("Marking ", key, " as suspected")
 					node.Status = Suspected
 					node.TimeStamp = time.Now()
 				} else {
-					fmt.Println("Marking ", key, " as failed")
+					fmt.Println("Marking ", key, " as failed, overtime for ", sinceLastTimestamp.Seconds(), " time")
 					node.Status = Failed
 					node.TimeStamp = time.Now()
 				}
 			}
 		case Failed:
-			if time.Since(node.TimeStamp) > T_CLEANUP {
+			if sinceLastTimestamp > T_CLEANUP {
 				fmt.Println("Deleting node: ", key)
 				delete(NodeInfoList, key)
 			}
 		case Suspected:
-			if !USE_SUSPICION || time.Since(node.TimeStamp) > T_FAIL {
+			if !USE_SUSPICION || sinceLastTimestamp > T_FAIL {
 				fmt.Println("Marking ", key, " as failed")
 				node.Status = Failed
 				node.TimeStamp = time.Now()
