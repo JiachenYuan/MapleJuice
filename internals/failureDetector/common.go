@@ -12,11 +12,12 @@ import (
 const (
 	INTRODUCER_ADDRESS  = "fa23-cs425-1801.cs.illinois.edu:55556"
 	GOSSIP_RATE         = 500 * time.Millisecond // 500ms
-	T_FAIL              = 3 * time.Second         // 3 seconds
-	T_CLEANUP           = 10 * time.Second        // 10 seconds
-	NUM_NODES_TO_GOSSIP = 3                       //number of nodes to gossip to
+	T_FAIL              = 3 * time.Second        // 3 seconds
+	T_CLEANUP           = 10 * time.Second       // 10 seconds
+	NUM_NODES_TO_GOSSIP = 3                      //number of nodes to gossip to
 	PORT                = "55556"
 	HOST                = "0.0.0.0"
+	CONN_TIMEOUT        = 500 * time.Millisecond
 )
 
 type MessageType int
@@ -73,7 +74,7 @@ func init() {
 
 // update current membership list with incoming list
 func updateMembershipList(receivedMembershipList map[string]*Node) {
-	fmt.Println("Updating membership list with incoming list")
+	// fmt.Println("Updating membership list with incoming list")
 	for key, receivedNode := range receivedMembershipList {
 		// In response to being suspected by someone, increase the suspicion incarnation number of self
 		if key == LOCAL_NODE_KEY && receivedNode.Status == Suspected {

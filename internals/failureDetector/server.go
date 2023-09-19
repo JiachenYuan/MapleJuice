@@ -21,7 +21,7 @@ func HandleGroupMessages() {
 	defer conn.Close()
 	buffer := make([]byte, 65507)
 	for {
-		conn.SetDeadline(time.Now().Add(1000*time.Millisecond))
+		conn.SetDeadline(time.Now().Add(CONN_TIMEOUT))
 		n, from, err := conn.ReadFrom(buffer)
 		if err != nil {
 			fmt.Printf("Error reading: %v\n", err.Error())
@@ -67,7 +67,7 @@ func processJoinMessage(conn net.PacketConn, from net.Addr, message *pb.GroupMes
 }
 
 func processGossipMessage(conn net.PacketConn, message *pb.GroupMessage) {
-	fmt.Println("Processing gossip message")
+	// fmt.Println("Processing gossip message")
 	incomingNodeList := pBToNodeInfoList(message.NodeInfoList)
 	NodeListLock.Lock()
 	updateMembershipList(incomingNodeList)

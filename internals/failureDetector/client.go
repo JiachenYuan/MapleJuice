@@ -12,10 +12,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-const (
-	connTimeout = 1 * time.Second
-)
-
 func PeriodicUpdate() {
 	for {
 		NodeListLock.Lock()
@@ -28,7 +24,7 @@ func PeriodicUpdate() {
 }
 
 func NodeStatusUpdateAndNewGossip() *pb.GroupMessage {
-	fmt.Println("Checking failure")
+	// fmt.Println("Checking failure")
 	for key, node := range NodeInfoList {
 		if key == LOCAL_NODE_KEY {
 			node.TimeStamp = time.Now()
@@ -44,7 +40,7 @@ func NodeStatusUpdateAndNewGossip() *pb.GroupMessage {
 					node.Status = Suspected
 					node.TimeStamp = time.Now()
 				} else {
-					fmt.Println("Marking ", key, " as failed, overtime for ", sinceLastTimestamp.Seconds(), " time")
+					fmt.Println("Marking ", key, " as failed, overtime for ", sinceLastTimestamp.Seconds()-T_FAIL.Seconds(), " time")
 					node.Status = Failed
 					node.TimeStamp = time.Now()
 				}
@@ -68,7 +64,7 @@ func NodeStatusUpdateAndNewGossip() *pb.GroupMessage {
 
 // send gossip to other nodes
 func SendGossip(message *pb.GroupMessage) {
-	fmt.Println("Sending gossips")
+	// fmt.Println("Sending gossips")
 
 	messageBytes, err := proto.Marshal(message)
 	if err != nil {
@@ -80,7 +76,7 @@ func SendGossip(message *pb.GroupMessage) {
 }
 
 func sendGossipToNodes(selectedNodes []*Node, gossip []byte) {
-	fmt.Println("Sending gossips to nodes")
+	// fmt.Println("Sending gossips to nodes")
 	var wg sync.WaitGroup
 	for _, node := range selectedNodes {
 		wg.Add(1)
@@ -92,12 +88,12 @@ func sendGossipToNodes(selectedNodes []*Node, gossip []byte) {
 			if randomNumber > 1-MESSAGE_DROP_RATE {
 				return
 			}
-			conn, err := net.DialTimeout("udp", address, connTimeout)
+			conn, err := net.DialTimeout("udp", address, CONN_TIMEOUT)
 			if err != nil {
 				fmt.Println("Error dialing UDP: ", err)
 				return
 			}
-			conn.SetWriteDeadline(time.Now().Add(connTimeout))
+			conn.SetWriteDeadline(time.Now().Add(CONN_TIMEOUT))
 			defer conn.Close()
 			_, err = conn.Write(gossip)
 			if err != nil {
