@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"time"
 
 	pb "cs425-mp/protobuf"
 
@@ -20,7 +21,7 @@ func HandleGroupMessages() {
 	defer conn.Close()
 	buffer := make([]byte, 65507)
 	for {
-		// conn.SetDeadline(time.Now().Add(CONN_TIMEOUT))
+		conn.SetWriteDeadline(time.Now().Add(CONN_TIMEOUT))
 		n, from, err := conn.ReadFrom(buffer)
 		if err != nil {
 			fmt.Printf("Error reading: %v\n", err.Error())
