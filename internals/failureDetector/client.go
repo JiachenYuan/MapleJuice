@@ -90,7 +90,7 @@ func sendGossipToNodes(selectedNodes []*Node, gossip []byte) {
 			}
 			conn, err := net.DialTimeout("udp", address, CONN_TIMEOUT)
 			if err != nil {
-				fmt.Println("Error dialing UDP: ", err)
+				// fmt.Println("Error dialing UDP: ", err)
 				return
 			}
 			conn.SetWriteDeadline(time.Now().Add(CONN_TIMEOUT))

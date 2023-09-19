@@ -21,7 +21,7 @@ func HandleGroupMessages() {
 	defer conn.Close()
 	buffer := make([]byte, 65507)
 	for {
-		conn.SetDeadline(time.Now().Add(CONN_TIMEOUT))
+		// conn.SetDeadline(time.Now().Add(CONN_TIMEOUT))
 		n, from, err := conn.ReadFrom(buffer)
 		if err != nil {
 			fmt.Printf("Error reading: %v\n", err.Error())
