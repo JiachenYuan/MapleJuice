@@ -23,6 +23,7 @@ func PeriodicUpdate() {
 }
 
 func CheckFailure() {
+	fmt.Println("Checking failure")
 	for key, node := range NodeInfoList {
 		if key == LOCAL_NODE_KEY {
 			node.TimeStamp = time.Now()
@@ -60,6 +61,7 @@ func CheckFailure() {
 
 // send gossip to other nodes
 func SendGossip() {
+	fmt.Println("Sending gossips")
 	message := newMessageOfType(pb.GroupMessage_GOSSIP)
 
 	messageBytes, err := proto.Marshal(message)
@@ -72,6 +74,7 @@ func SendGossip() {
 }
 
 func sendGossipToNodes(selectedNodes []*Node, gossip []byte) {
+	fmt.Println("Sending gossips to nodes")
 	var wg sync.WaitGroup
 	for _, node := range selectedNodes {
 		wg.Add(1)

@@ -73,6 +73,7 @@ func init() {
 
 // update current membership list with incoming list
 func updateMembershipList(receivedMembershipList map[string]*Node) {
+	fmt.Println("Updating membership list with incoming list")
 	for key, receivedNode := range receivedMembershipList {
 		// In response to being suspected by someone, increase the suspicion incarnation number of self
 		if key == LOCAL_NODE_KEY && receivedNode.Status == Suspected {
@@ -104,7 +105,7 @@ func updateMembershipList(receivedMembershipList map[string]*Node) {
 		// Up to this point, The incoming node statuses can only be either ALIVE or SUSPECTED
 		// , and the local statuses for the node can only be either ALIVE or SUSPECTED as well.
 		if localInfo.SeqNo < receivedNode.SeqNo {
-			fmt.Printf("Incrementing counter for node (%v), status: %v -> %v, seqNum: %v -> %v\n", key, localInfo.Status, receivedNode.Status, localInfo.SeqNo, receivedNode.SeqNo)
+			// fmt.Printf("Incrementing counter for node (%v), status: %v -> %v, seqNum: %v -> %v\n", key, localInfo.Status, receivedNode.Status, localInfo.SeqNo, receivedNode.SeqNo)
 			localInfo.SeqNo = receivedNode.SeqNo
 			localInfo.TimeStamp = time.Now()
 			localInfo.Status = receivedNode.Status
