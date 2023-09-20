@@ -4,7 +4,6 @@ import (
 	pb "cs425-mp/protobuf"
 	"fmt"
 	"log"
-	"math/rand"
 	"os"
 	"sync"
 	"time"
@@ -27,6 +26,7 @@ const (
 	Alive StatusType = iota
 	Suspected
 	Failed
+	Left
 )
 
 func (e StatusType) String() string {
@@ -120,8 +120,13 @@ func updateMembershipList(receivedMembershipList map[string]*Node) {
 		localInfo, ok := NodeInfoList[key]
 		// Add the node to membership list if never seen before
 		if !ok {
-			fmt.Printf("New node (%v) adding it to membership list\n", key)
-			customLog("New node (%v) adding it to membership list", key)
+			if receivedNode.Status == Left {
+				fmt.Printf("Mark node (%v) as LEFT in membership list\n", key)
+				customLog("Mark node (%v) as LEFT in membership list", key)
+			} else {
+				fmt.Printf("New node (%v) adding it to membership list\n", key)
+				customLog("New node (%v) adding it to membership list", key)
+			}
 			NodeInfoList[key] = receivedNode
 			continue
 		}
@@ -137,9 +142,9 @@ func updateMembershipList(receivedMembershipList map[string]*Node) {
 			localInfo.SeqNo = receivedNode.SeqNo
 			localInfo.TimeStamp = time.Now()
 			localInfo.Status = receivedNode.Status
-			if receivedNode.Status == Failed {
-				fmt.Println("Marking ", key, " as failed due to gossip from other nodes")
-				customLog("Marking %v as failed due to gossip from other nodes", key)
+			if receivedNode.Status == Left {
+				fmt.Printf("Mark node (%v) as LEFT in membership list\n", key)
+				customLog("Mark node (%v) as LEFT in membership list", key)
 			}
 		}
 	}
@@ -160,6 +165,8 @@ func nodeInfoListToPB() *pb.NodeInfoList {
 				continue
 			}
 			_status = pb.NodeInfoRow_Suspected
+		case Left:
+			_status = pb.NodeInfoRow_Left
 		case Failed:
 			_status = pb.NodeInfoRow_Failed
 		}
@@ -183,6 +190,8 @@ func pBToNodeInfoList(incomingNodeList *pb.NodeInfoList) map[string]*Node {
 			_status = Alive
 		case pb.NodeInfoRow_Suspected:
 			_status = Suspected
+		case pb.NodeInfoRow_Left:
+			_status = Left
 		case pb.NodeInfoRow_Failed:
 			_status = Failed
 		}
@@ -202,60 +211,5 @@ func newMessageOfType(messageType pb.GroupMessage_MessageType) *pb.GroupMessage 
 	return &pb.GroupMessage{
 		Type:         messageType,
 		NodeInfoList: nodeInfoListToPB(),
-	}
-}
-
-func newResponseToJoin(newcomerKey string) *pb.GroupMessage {
-	return &pb.GroupMessage{
-		Type:         pb.GroupMessage_GOSSIP,
-		NodeInfoList: randomPeersToPB(newcomerKey),
-	}
-}
-
-func randomPeersToPB(newcomerKey string) *pb.NodeInfoList {
-	pbNodeList := &pb.NodeInfoList{}
-	pbNodeList.Rows = []*pb.NodeInfoRow{}
-
-	keyPool := make([]string, 0)
-	for nodeID, _ := range NodeInfoList {
-		if nodeID != newcomerKey {
-			keyPool = append(keyPool, nodeID)
-		}
-	}
-	rand.Shuffle(len(keyPool), func(i, j int) { keyPool[i], keyPool[j] = keyPool[j], keyPool[i] })
-
-	numPeersToSend := min(NUM_NODES_TO_GOSSIP, len(keyPool))
-
-	for _, nodeID := range keyPool[:numPeersToSend] {
-		nodeInfo := NodeInfoList[nodeID]
-
-		var _status pb.NodeInfoRow_NodeStatus
-		switch nodeInfo.Status {
-		case Alive:
-			_status = pb.NodeInfoRow_Alive
-		case Suspected:
-			// Suspected node is not communcated to peers if self is not using SUSPICION mechanism
-			if !USE_SUSPICION {
-				continue
-			}
-			_status = pb.NodeInfoRow_Suspected
-		case Failed:
-			// FAILED node should never be communicated to peers over the network
-			continue
-		}
-
-		pbNodeList.Rows = append(pbNodeList.Rows, &pb.NodeInfoRow{
-			NodeID: nodeID,
-			SeqNum: nodeInfo.SeqNo,
-			Status: _status,
-		})
-	}
-
-	return pbNodeList
-}
-
-func spinOnFailedStatus() {
-	for LOCAL_NODE_KEY == "" {
-
 	}
 }
