@@ -38,10 +38,12 @@ func NodeStatusUpdateAndNewGossip() *pb.GroupMessage {
 			if sinceLastTimestamp > T_FAIL {
 				if USE_SUSPICION {
 					fmt.Println("Marking ", key, " as suspected")
+					customLog("Marking %v as suspected", key)
 					node.Status = Suspected
 					node.TimeStamp = time.Now()
 				} else {
 					fmt.Println("Marking ", key, " as failed, overtime for ", sinceLastTimestamp.Seconds()-T_FAIL.Seconds(), " time")
+					customLog("Marking %v as failed, over time for %v time", key, sinceLastTimestamp.Seconds()-T_FAIL.Seconds())
 					node.Status = Failed
 					node.TimeStamp = time.Now()
 				}
@@ -49,11 +51,13 @@ func NodeStatusUpdateAndNewGossip() *pb.GroupMessage {
 		case Failed:
 			if sinceLastTimestamp > T_CLEANUP {
 				fmt.Println("Deleting node: ", key)
+				customLog("Deleting node %v", key)
 				delete(NodeInfoList, key)
 			}
 		case Suspected:
 			if !USE_SUSPICION || sinceLastTimestamp > T_FAIL {
 				fmt.Println("Marking ", key, " as failed")
+				customLog("Marking %v as failed", key)
 				node.Status = Failed
 				node.TimeStamp = time.Now()
 			}
@@ -101,6 +105,7 @@ func sendGossipToNodes(selectedNodes []*Node, gossip []byte) {
 				fmt.Println("Error sending UDP: ", err)
 				return
 			}
+			customLog("Sent gossip with size of %v bytes", len(gossip))
 		}(node.NodeAddr)
 	}
 	wg.Wait()
@@ -146,6 +151,7 @@ func JoinGroupAndInit() error {
 			return err
 		}
 		_, err = conn.Write(msg)
+		customLog("Sent Join message with size of %v bytes", len(msg))
 		if err != nil {
 			fmt.Println("Unable to send JOIN message")
 			time.Sleep(GOSSIP_RATE)

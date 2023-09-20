@@ -3,6 +3,7 @@ package failureDetector
 import (
 	pb "cs425-mp/protobuf"
 	"fmt"
+	"log"
 	"math/rand"
 	"os"
 	"sync"
@@ -64,6 +65,25 @@ type Node struct {
 
 func init() {
 	updateLocalNodeKey()
+	initializeLoggerConfig()
+}
+
+func initializeLoggerConfig() {
+	f, err := os.OpenFile("log.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+		os.Exit(1)
+	}
+	defer f.Close()
+
+	log.SetOutput(f)
+
+	hostname, err := os.Hostname()
+	if err != nil {
+		fmt.Println("Cannot get host name ", err.Error())
+		os.Exit(1)
+	}
+	log.SetPrefix(hostname + ": ")
 }
 
 func updateLocalNodeKey() {
@@ -101,6 +121,7 @@ func updateMembershipList(receivedMembershipList map[string]*Node) {
 		// Add the node to membership list if never seen before
 		if !ok {
 			fmt.Printf("New node (%v) adding it to membership list\n", key)
+			customLog("New node (%v) adding it to membership list", key)
 			NodeInfoList[key] = receivedNode
 			continue
 		}
@@ -118,6 +139,7 @@ func updateMembershipList(receivedMembershipList map[string]*Node) {
 			localInfo.Status = receivedNode.Status
 			if receivedNode.Status == Failed {
 				fmt.Println("Marking ", key, " as failed due to gossip from other nodes")
+				customLog("Marking %v as failed due to gossip from other nodes", key)
 			}
 		}
 	}
