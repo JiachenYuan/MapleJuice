@@ -78,6 +78,9 @@ func updateLocalNodeKey() {
 // update current membership list with incoming list
 func updateMembershipList(receivedMembershipList map[string]*Node) {
 	// fmt.Println("Updating membership list with incoming list")
+	if LOCAL_NODE_KEY == "" {
+		return
+	}
 	for key, receivedNode := range receivedMembershipList {
 		// In response to being suspected by someone, increase the suspicion incarnation number of self
 		if key == LOCAL_NODE_KEY && receivedNode.Status == Suspected {

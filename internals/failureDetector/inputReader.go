@@ -72,6 +72,10 @@ func handleLeave() {
 }
 
 func handleRejoin() {
+	if LOCAL_NODE_KEY != "" {
+		fmt.Println("Error: cannot rejoin when the current node already exists in some networks")
+		return
+	}
 	updateLocalNodeKey()
 	err := JoinGroupAndInit()
 	if err != nil {
