@@ -231,7 +231,9 @@ func randomPeersToPB(newcomerKey string) *pb.NodeInfoList {
 
 func spinOnFailedStatus() {
 	for {
+		NodeListLock.Lock()
 		selfNode, ok := NodeInfoList[LOCAL_NODE_KEY]
+		NodeListLock.Unlock()
 		if !ok || selfNode.Status == Failed {
 			continue
 		} else {
