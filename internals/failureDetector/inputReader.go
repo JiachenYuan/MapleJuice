@@ -36,15 +36,33 @@ func ProcessUserInputInLoop(inputChan <-chan string) {
 		query := <-inputChan
 		switch strings.TrimRight(query, "\n") {
 		case "leave":
-			NodeInfoList[LOCAL_NODE_KEY].Status = Failed
-			NodeInfoList[LOCAL_NODE_KEY].SeqNo++
-			leaveMessage := newMessageOfType(pb.GroupMessage_LEAVE)
-			SendGossip(leaveMessage)
+			handleLeave()
 		case "rejoin":
-			NodeInfoList[LOCAL_NODE_KEY].Status = Alive
-			NodeInfoList[LOCAL_NODE_KEY].SeqNo++
-			rejoinMesasge := newMessageOfType(pb.GroupMessage_JOIN)
-			SendGossip(rejoinMesasge)
+			handleRejoin()
+		default:
+			fmt.Println("Error: input command not supported.")
 		}
+
 	}
+}
+
+func handleLeave() {
+	NodeInfoList[LOCAL_NODE_KEY].Status = Failed
+	NodeInfoList[LOCAL_NODE_KEY].SeqNo++
+	leaveMessage := newMessageOfType(pb.GroupMessage_LEAVE)
+	SendGossip(leaveMessage)
+	delete(NodeInfoList, LOCAL_NODE_KEY)
+}
+
+func handleRejoin() {
+	selfNode, ok := NodeInfoList[LOCAL_NODE_KEY]
+	if !ok || selfNode.Status != Failed {
+		fmt.Println("Error: cannot rejoin when the current node is still in the network")
+		return
+	}
+	updateLocalNodeKey()
+	NodeInfoList[LOCAL_NODE_KEY].Status = Alive
+	NodeInfoList[LOCAL_NODE_KEY].SeqNo++
+	rejoinMesasge := newMessageOfType(pb.GroupMessage_JOIN)
+	SendGossip(rejoinMesasge)
 }

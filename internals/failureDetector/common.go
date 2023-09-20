@@ -63,6 +63,10 @@ type Node struct {
 }
 
 func init() {
+	updateLocalNodeKey()
+}
+
+func updateLocalNodeKey() {
 	localNodeName, err := getLocalNodeAddress()
 	if err != nil {
 		fmt.Println("Unable to get local network address")
@@ -109,6 +113,9 @@ func updateMembershipList(receivedMembershipList map[string]*Node) {
 			localInfo.SeqNo = receivedNode.SeqNo
 			localInfo.TimeStamp = time.Now()
 			localInfo.Status = receivedNode.Status
+			if receivedNode.Status == Failed {
+				fmt.Println("Marking ", key, " as failed due to gossip from other nodes")
+			}
 		}
 	}
 }
