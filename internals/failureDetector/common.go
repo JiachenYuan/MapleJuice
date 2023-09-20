@@ -101,11 +101,9 @@ func updateMembershipList(receivedMembershipList map[string]*Node) {
 		// Add the node to membership list if never seen before
 		if !ok {
 			if receivedNode.Status == Left {
-				fmt.Printf("Mark node (%v) as LEFT in membership list\n", key)
-				customLog("Mark node (%v) as LEFT in membership list", key)
+				customLog(true, "Mark node (%v) as LEFT in membership list", key)
 			} else {
-				fmt.Printf("New node (%v) adding it to membership list\n", key)
-				customLog("New node (%v) adding it to membership list", key)
+				customLog(true, "New node (%v) adding it to membership list", key)
 			}
 			NodeInfoList[key] = receivedNode
 			continue
@@ -123,8 +121,7 @@ func updateMembershipList(receivedMembershipList map[string]*Node) {
 			localInfo.TimeStamp = time.Now()
 			localInfo.Status = receivedNode.Status
 			if receivedNode.Status == Left {
-				fmt.Printf("Mark node (%v) as LEFT in membership list\n", key)
-				customLog("Mark node (%v) as LEFT in membership list", key)
+				customLog(true, "Mark node (%v) as LEFT in membership list", key)
 			}
 		}
 	}
