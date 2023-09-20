@@ -39,10 +39,8 @@ func HandleGroupMessages() {
 			processJoinMessage(conn, from, groupMessage)
 
 		case pb.GroupMessage_GOSSIP:
-			go processGossipMessage(conn, groupMessage)
-
 		case pb.GroupMessage_LEAVE:
-			go processGossipMessage(conn, groupMessage)
+			go processGossipMessage(groupMessage)
 		}
 	}
 }
@@ -67,7 +65,7 @@ func processJoinMessage(conn net.PacketConn, from net.Addr, message *pb.GroupMes
 	}
 }
 
-func processGossipMessage(conn net.PacketConn, message *pb.GroupMessage) {
+func processGossipMessage(message *pb.GroupMessage) {
 	// fmt.Println("Processing gossip message")
 	incomingNodeList := pBToNodeInfoList(message.NodeInfoList)
 	NodeListLock.Lock()

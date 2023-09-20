@@ -48,37 +48,34 @@ func ProcessUserInputInLoop(inputChan <-chan string) {
 }
 
 func handleLeave() {
-	selfNode, ok := NodeInfoList[LOCAL_NODE_KEY]
-	if !ok || selfNode.Status == Failed {
+	if LOCAL_NODE_KEY == "" {
 		fmt.Println("Error: cannot leave when the current node does not exist in the network")
 		return
 	}
-	NodeInfoList[LOCAL_NODE_KEY].Status = Failed
-	NodeInfoList[LOCAL_NODE_KEY].SeqNo++
-	leaveMessage := newMessageOfType(pb.GroupMessage_LEAVE)
-	SendGossip(leaveMessage)
-	delete(NodeInfoList, LOCAL_NODE_KEY)
-}
-
-func handleRejoin() {
-	selfNode, ok := NodeInfoList[LOCAL_NODE_KEY]
-	if ok && selfNode.Status != Failed {
-		fmt.Println("Error: cannot rejoin when the current node is still in the network")
-		return
-	}
-	updateLocalNodeKey()
 	selfAddr := GetAddrFromNodeKey(LOCAL_NODE_KEY)
+	NodeListLock.Lock()
+	originalSeqNo := NodeInfoList[LOCAL_NODE_KEY].SeqNo
 	initialNodeList := map[string]*Node{
 		LOCAL_NODE_KEY: {
 			NodeAddr:  selfAddr,
-			SeqNo:     1,
-			Status:    Alive,
+			SeqNo:     originalSeqNo + 1,
+			Status:    Failed,
 			TimeStamp: time.Now(),
 		},
 	}
-	NodeListLock.Lock()
 	NodeInfoList = initialNodeList
+	leaveMessage := newMessageOfType(pb.GroupMessage_LEAVE)
+	SendGossip(leaveMessage)
+	NodeInfoList = nil
 	NodeListLock.Unlock()
-	rejoinMesasge := newMessageOfType(pb.GroupMessage_JOIN)
-	SendGossip(rejoinMesasge)
+	LOCAL_NODE_KEY = ""
+}
+
+func handleRejoin() {
+	updateLocalNodeKey()
+	err := JoinGroupAndInit()
+	if err != nil {
+		fmt.Printf("Cannot join the group: %v\n", err.Error())
+		return
+	}
 }
