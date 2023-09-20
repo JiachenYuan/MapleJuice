@@ -65,7 +65,7 @@ func processJoinMessage(conn net.PacketConn, from net.Addr, message *pb.GroupMes
 }
 
 func processGossipMessage(message *pb.GroupMessage) {
-	fmt.Println("Processing gossip message")
+	// fmt.Println("Processing gossip message")
 	incomingNodeList := pBToNodeInfoList(message.NodeInfoList)
 	NodeListLock.Lock()
 	updateMembershipList(incomingNodeList)
