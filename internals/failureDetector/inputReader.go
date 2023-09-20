@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 )
 
 func HandleUserInput() {
@@ -52,18 +51,9 @@ func handleLeave() {
 		fmt.Println("Error: cannot leave when the current node does not exist in the network")
 		return
 	}
-	selfAddr := GetAddrFromNodeKey(LOCAL_NODE_KEY)
 	NodeListLock.Lock()
-	originalSeqNo := NodeInfoList[LOCAL_NODE_KEY].SeqNo
-	initialNodeList := map[string]*Node{
-		LOCAL_NODE_KEY: {
-			NodeAddr:  selfAddr,
-			SeqNo:     originalSeqNo + 1,
-			Status:    Failed,
-			TimeStamp: time.Now(),
-		},
-	}
-	NodeInfoList = initialNodeList
+	NodeInfoList[LOCAL_NODE_KEY].Status = Failed
+	NodeInfoList[LOCAL_NODE_KEY].SeqNo++
 	leaveMessage := newMessageOfType(pb.GroupMessage_LEAVE)
 	SendGossip(leaveMessage)
 	NodeInfoList = nil
