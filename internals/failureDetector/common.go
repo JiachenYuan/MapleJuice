@@ -10,8 +10,8 @@ import (
 
 const (
 	INTRODUCER_ADDRESS  = "fa23-cs425-1801.cs.illinois.edu:55556"
-	GOSSIP_RATE         = 600 * time.Millisecond // 1000 ms
-	T_FAIL              = 4 * time.Second        // 3 seconds
+	GOSSIP_RATE         = 700 * time.Millisecond // 1000 ms
+	T_FAIL              = 3 * time.Second        // 3 seconds
 	T_SUSPECT           = 2 * time.Second        // 2 seconds
 	T_CLEANUP           = 3 * time.Second        // 10 seconds
 	NUM_NODES_TO_GOSSIP = 2                      //number of nodes to gossip to
@@ -48,12 +48,14 @@ const (
 	Gossip
 )
 
+// Internal states of current node
 var (
 	NodeInfoList      = make(map[string]*Node)
 	USE_SUSPICION     = false
 	MESSAGE_DROP_RATE = 0.0
 	LOCAL_NODE_KEY    = ""
 	NodeListLock      = &sync.Mutex{}
+	DNS_Cache         = make(map[string]string)
 )
 
 type Node struct {
