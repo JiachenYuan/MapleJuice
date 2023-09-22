@@ -116,7 +116,7 @@ func sendGossipToNodes(selectedNodes []*Node, gossip []byte) {
 
 func JoinGroupAndInit() error {
 	// Populate the first entry in Node List
-	selfAddr := GetAddrFromNodeKey(decompressServerTimeID(LOCAL_NODE_KEY))
+	selfAddr := GetAddrFromNodeKey(LOCAL_NODE_KEY)
 	initialNodeList := map[string]*Node{
 		LOCAL_NODE_KEY: {
 			NodeAddr:  selfAddr,

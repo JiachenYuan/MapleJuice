@@ -179,7 +179,7 @@ func pBToNodeInfoList(incomingNodeList *pb.NodeInfoList) map[string]*Node {
 		}
 
 		newNodeList[row.NodeID] = &Node{
-			NodeAddr:  GetAddrFromNodeKey(decompressServerTimeID(row.NodeID)),
+			NodeAddr:  GetAddrFromNodeKey(row.NodeID),
 			SeqNo:     row.SeqNum,
 			Status:    _status,
 			TimeStamp: time.Now(),

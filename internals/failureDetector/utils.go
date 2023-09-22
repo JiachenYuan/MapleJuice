@@ -64,8 +64,9 @@ func decompressServerTimeID(input string) string {
     return decompressedID
 }
 
-// Given a nodeKey in format of [hostname]:[port]:[timestamp], extract the [hostname]:[port] part as a string
+// Given a nodeKey in format of [machine_number]_[version_number], extract the [hostname]:[port] as a string
 func GetAddrFromNodeKey(nodeKey string) string {
+	nodeKey = decompressServerTimeID(nodeKey)
 	idSplitted := strings.Split(nodeKey, ":")
 	peer_name := idSplitted[0]
 	peer_port := idSplitted[1]
