@@ -75,7 +75,7 @@ func updateLocalNodeKey() {
 		fmt.Println("Unable to get local network address")
 		os.Exit(1)
 	}
-	LOCAL_NODE_KEY = localNodeName + ":" + time.Now().Format("2017-09-07 17:06:04.000000")
+	LOCAL_NODE_KEY = compressServerTimeID(localNodeName + ":" + time.Now().Format("2017-09-07 17:06:04.000000"))
 }
 
 // update current membership list with incoming list
@@ -179,7 +179,7 @@ func pBToNodeInfoList(incomingNodeList *pb.NodeInfoList) map[string]*Node {
 		}
 
 		newNodeList[row.NodeID] = &Node{
-			NodeAddr:  GetAddrFromNodeKey(row.NodeID),
+			NodeAddr:  GetAddrFromNodeKey(decompressServerTimeID(row.NodeID)),
 			SeqNo:     row.SeqNum,
 			Status:    _status,
 			TimeStamp: time.Now(),
