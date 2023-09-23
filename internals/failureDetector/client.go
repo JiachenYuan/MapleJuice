@@ -42,7 +42,7 @@ func NodeStatusUpdateAndNewGossip() *pb.GroupMessage {
 				customLog(true, "Marking %v as suspected", key)
 				node.Status = Suspected
 				node.TimeStamp = time.Now()
-			} else if sinceLastTimestamp > T_FAIL {
+			} else if sinceLastTimestamp > 4*time.Second {
 				customLog(true, "Marking %v as failed, over time for %v time", key, sinceLastTimestamp.Seconds()-T_FAIL.Seconds())
 				node.Status = Failed
 				node.TimeStamp = time.Now()
