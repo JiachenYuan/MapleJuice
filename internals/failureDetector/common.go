@@ -10,19 +10,11 @@ import (
 
 const (
 	INTRODUCER_ADDRESS  = "fa23-cs425-1801.cs.illinois.edu:55556"
-<<<<<<< HEAD
-	GOSSIP_RATE         = 1000 * time.Millisecond // 1000ms
-	T_FAIL              = 3 * time.Second         // 3 seconds
-	T_SUSPECT           = 2 * time.Second         // 2 seconds
-	T_CLEANUP           = 3 * time.Second         // 3 seconds
-	NUM_NODES_TO_GOSSIP = 3                       //number of nodes to gossip to
-=======
 	GOSSIP_RATE         = 500 * time.Millisecond // 500 ms
 	T_FAIL              = 3 * time.Second        // 3 seconds
 	T_SUSPECT           = 2 * time.Second        // 2 seconds
 	T_CLEANUP           = 3 * time.Second        // 3 seconds
 	NUM_NODES_TO_GOSSIP = 2                      //number of nodes to gossip to
->>>>>>> main
 	PORT                = "55556"
 	CONN_TIMEOUT        = 500 * time.Millisecond
 )
@@ -63,7 +55,6 @@ var (
 	MESSAGE_DROP_RATE = 0.0
 	LOCAL_NODE_KEY    = ""
 	NodeListLock      = &sync.Mutex{}
-	DNS_Cache         = make(map[string]string)
 )
 var (
 	DNS_Cache_Lock = &sync.Mutex{}
