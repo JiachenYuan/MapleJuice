@@ -57,6 +57,8 @@ func ProcessUserInputInLoop(inputChan <-chan string) {
 				fmt.Printf("Expected 2 components for DELETE command, but got %v \n", len(splitted))
 				continue
 			}
+			sdfsFileName := splitted[1]
+			deleteFile(sdfsFileName)
 		} else if command == "ls" {
 			if len(splitted) != 2 {
 				fmt.Printf("Expected 2 components for LS command, but got %v \n", len(splitted))
@@ -70,6 +72,8 @@ func ProcessUserInputInLoop(inputChan <-chan string) {
 				fmt.Printf("Expected 1 components for STORE command, but got %v \n", len(splitted))
 				continue
 			}
+			fileNameList := getAllLocalSDFSFiles()
+			fmt.Printf("%+q\n", fileNameList)
 		} else {
 			fmt.Println("Command Not Supported")
 		}

@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
+	"strings"
 )
 
 const (
@@ -88,6 +89,38 @@ func getFile(sdfsFileName string, localFileName string) {
 	if err != nil {
 		fmt.Printf("Command finished with error: %v\n", err)
 	}
+}
+
+func deleteFile(sdfsFileName string) {
+	delete(fileToVMMap, sdfsFileName)
+	files, err := os.ReadDir(SDFS_PATH)
+	if err != nil {
+		fmt.Printf("Failed to list files in directory %s: %v\n", SDFS_PATH, err)
+		return
+	}
+	for _, file := range files {
+		filePath := filepath.Join(SDFS_PATH, file.Name())
+		if !file.IsDir() && strings.HasPrefix(file.Name(), sdfsFileName) {
+			fmt.Printf("Try to delete file %s.\n", file.Name())
+			err := os.Remove(filePath)
+			if err != nil {
+				fmt.Printf("Failed to delete file %s: %v\n", filePath, err)
+			}
+		}
+	}
+}
+
+func getAllLocalSDFSFiles() []string {
+	files, err := os.ReadDir(SDFS_PATH)
+	if err != nil {
+		fmt.Printf("Failed to list files in directory %s: %v\n", SDFS_PATH, err)
+		return nil
+	}
+	var fileNames []string
+	for _, f := range files {
+		fileNames = append(fileNames, f.Name())
+	}
+	return fileNames
 }
 
 func listSDFSFileVMs(sdfsFileName string) []string {
