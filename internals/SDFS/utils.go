@@ -21,16 +21,15 @@ func hashFileName(fileName string) string {
 }
 
 func getDefaultReplicaMachineIDs(id string) []string {
-	return []string{"1"}
-	// replicas := make([]string, 4)
-	// val, err := strconv.Atoi(id)
-	// if err != nil {
-	// 	fmt.Println("Input id cannot be parsed to int")
-	// }
-	// for i := 0; i < 4; i++ {
-	// 	replicas[i] = fmt.Sprintf("%v", ((val+i)%10 + 1))
-	// }
-	// return replicas
+	replicas := make([]string, 4)
+	val, err := strconv.Atoi(id)
+	if err != nil {
+		fmt.Println("Input id cannot be parsed to int")
+	}
+	for i := 0; i < 4; i++ {
+		replicas[i] = fmt.Sprintf("%v", ((val+i)%10 + 1))
+	}
+	return replicas
 }
 
 func getFullHostNameFromID(id string) string {
