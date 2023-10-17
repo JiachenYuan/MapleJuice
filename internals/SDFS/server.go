@@ -56,8 +56,8 @@ func HandleSDFSMessages() {
 			fmt.Printf("Error unmarshalling SDFS message: %v\n", err.Error())
 		}
 		switch SDFSMessage.MessageType {
-		case pb.SDFSMessageType_UPDATE:
-			processUpdateMessage(SDFSMessage)
+		case pb.SDFSMessageType_PUT:
+			processPutMessage(SDFSMessage)
 		case pb.SDFSMessageType_DELETE:
 			processDeleteMessage(SDFSMessage)
 		}
@@ -72,8 +72,8 @@ func processDeleteMessage(message *pb.SDFSMessage) {
 	deleteLocalSDFSFile(fileName)
 }
 
-func processUpdateMessage(message *pb.SDFSMessage) {
-	fmt.Println("Received Update Message")
+func processPutMessage(message *pb.SDFSMessage) {
+	fmt.Println("Received Put Message")
 	fileName := message.SdfsFileName
 	replicas := message.Replicas
 	if _, exists := fileToVMMap[fileName]; !exists {
@@ -123,7 +123,7 @@ func putFile(localFileName string, sdfsFileName string) {
 
 func sendPutFileMessage(fileName string, replicas []string) {
 	putMessage := &pb.SDFSMessage{
-		MessageType:  pb.SDFSMessageType_UPDATE,
+		MessageType:  pb.SDFSMessageType_PUT,
 		Replicas:     replicas,
 		SdfsFileName: fileName,
 	}

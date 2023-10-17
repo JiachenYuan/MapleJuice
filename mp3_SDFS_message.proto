@@ -5,7 +5,7 @@ option go_package = "./protobuf";
 
 enum SDFSMessageType {
     DELETE = 0;
-    UPDATE = 1;
+    PUT = 1;
 }
 
 message SDFSMessage {
