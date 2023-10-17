@@ -35,6 +35,7 @@ func putFile(localFileName string, sdfsFileName string) {
 	var targetReplicas []string
 	val, exists := fileToVMMap[sdfsFileName]
 	if !exists {
+		fileToVMMap[sdfsFileName] = make(map[string]Empty)
 		targetReplicas = getDefaultReplicaMachineIDs(hashFileName(localFileName))
 		for _, r := range targetReplicas {
 			fileToVMMap[sdfsFileName][r] = Empty{}
@@ -44,9 +45,9 @@ func putFile(localFileName string, sdfsFileName string) {
 			targetReplicas = append(targetReplicas, k)
 		}
 	}
-	fmt.Printf("Put file %s to sdfs %s", localFileName, sdfsFileName)
+	fmt.Printf("Put file %s to sdfs %s \n", localFileName, sdfsFileName)
 	for _, id := range targetReplicas {
-		targetHostName := getHostNameFromID(id)
+		targetHostName := getScpHostNameFromID(id)
 		remotePath := targetHostName + ":" + filepath.Join(SDFS_PATH, sdfsFileName)
 		cmd := exec.Command("scp", localFileName, remotePath)
 		err := cmd.Start()
@@ -73,7 +74,7 @@ func getFile(sdfsFileName string, localFileName string) {
 		firstReplicaID = key
 		break
 	}
-	targetHostName := getHostNameFromID(firstReplicaID)
+	targetHostName := getScpHostNameFromID(firstReplicaID)
 	fmt.Printf("Get file %s from VM %s", sdfsFileName, targetHostName)
 	remotePath := targetHostName + ":" + filepath.Join(SDFS_PATH, sdfsFileName)
 	cmd := exec.Command("scp", remotePath, localFileName)
@@ -96,7 +97,7 @@ func listSDFSFileVMs(sdfsFileName string) []string {
 		fmt.Println("Error: file not exist")
 	} else {
 		for k := range val {
-			VMList = append(VMList, k)
+			VMList = append(VMList, getFullHostNameFromID(k))
 		}
 	}
 	return VMList

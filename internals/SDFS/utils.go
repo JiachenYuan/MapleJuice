@@ -21,22 +21,32 @@ func hashFileName(fileName string) string {
 }
 
 func getDefaultReplicaMachineIDs(id string) []string {
-	replicas := make([]string, 4)
-	val, err := strconv.Atoi(id)
-	if err != nil {
-		fmt.Println("Input id cannot be parsed to int")
-	}
-	for i := 0; i < 4; i++ {
-		replicas[i] = fmt.Sprintf("%v", ((val+i)%10 + 1))
-	}
-	return replicas
+	return []string{"1"}
+	// replicas := make([]string, 4)
+	// val, err := strconv.Atoi(id)
+	// if err != nil {
+	// 	fmt.Println("Input id cannot be parsed to int")
+	// }
+	// for i := 0; i < 4; i++ {
+	// 	replicas[i] = fmt.Sprintf("%v", ((val+i)%10 + 1))
+	// }
+	// return replicas
 }
 
-func getHostNameFromID(id string) string {
+func getFullHostNameFromID(id string) string {
+	numID, err := strconv.Atoi(id) // Convert string to integer
+	if err != nil {
+		fmt.Println("getFullHostNameFromID: Invalid input ID")
+		return ""
+	}
+	return fmt.Sprintf("fa23-cs425-18%02d.cs.illinois.edu", numID) //
+}
+
+func getScpHostNameFromID(id string) string {
 	return fmt.Sprintf("cs425-%s", id)
 }
 
-func getIDFromHostName(hostName string) string {
+func getIDFromFullHostName(hostName string) string {
 	components := strings.Split(hostName, "-")
 	if len(components) < 3 {
 		fmt.Printf("Get ID from host name with invalid name: %v \n", hostName)

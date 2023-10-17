@@ -64,12 +64,14 @@ func ProcessUserInputInLoop(inputChan <-chan string) {
 			}
 			sdfsFileName := splitted[1]
 			VMList := listSDFSFileVMs(sdfsFileName)
-			fmt.Printf("%#v\n", VMList)
+			fmt.Printf("%+q\n", VMList)
 		} else if command == "store" {
 			if len(splitted) != 1 {
 				fmt.Printf("Expected 1 components for STORE command, but got %v \n", len(splitted))
 				continue
 			}
+		} else {
+			fmt.Println("Command Not Supported")
 		}
 
 	}

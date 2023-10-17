@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cs425-mp/internals/SDFS"
 	"cs425-mp/internals/failureDetector"
 	"fmt"
 	"sync"
@@ -8,8 +9,8 @@ import (
 
 func main() {
 	var wg sync.WaitGroup
-	go startFailureDetector(&wg)
-	go startSDFS(&wg)
+	// go startFailureDetector(&wg)
+	startSDFS(&wg)
 	wg.Wait()
 
 }
@@ -55,5 +56,10 @@ func startFailureDetector(wg *sync.WaitGroup) {
 }
 
 func startSDFS(wg *sync.WaitGroup) {
-
+	wg.Add(1)
+	fmt.Println("SDFS Started")
+	go func() {
+		defer wg.Done()
+		SDFS.HandleUserInput()
+	}()
 }
