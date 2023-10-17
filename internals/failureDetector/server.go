@@ -1,12 +1,13 @@
 package failureDetector
 
 import (
+	pb "cs425-mp/protobuf"
 	"fmt"
 	"math/rand"
 	"net"
 	"os"
 	"time"
-	pb "cs425-mp/protobuf"
+
 	"google.golang.org/protobuf/proto"
 )
 
@@ -73,6 +74,14 @@ func processJoinMessage(conn net.PacketConn, from net.Addr, message *pb.GroupMes
 	if err != nil {
 		fmt.Printf("Failed to write response to JOIN message: %v\n", err.Error())
 	}
+}
+
+func GetAllNodeAddresses() []string {
+	var allNodesAddresses []string
+	for _, node := range NodeInfoList {
+		allNodesAddresses = append(allNodesAddresses, node.NodeAddr)
+	}
+	return allNodesAddresses
 }
 
 // Process GOSSIP/LEAVE messages, updating membership list as needed

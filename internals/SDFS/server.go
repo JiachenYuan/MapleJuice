@@ -1,17 +1,25 @@
 package SDFS
 
 import (
+	"cs425-mp/internals/failureDetector"
+	pb "cs425-mp/protobuf"
 	"fmt"
+	"net"
 	"os"
 	"os/exec"
 	"os/user"
 	"path/filepath"
 	"strings"
+	"sync"
+	"time"
+
+	"google.golang.org/protobuf/proto"
 )
 
 const (
 	INTRODUCER_ADDRESS = "fa23-cs425-1801.cs.illinois.edu:55557" // Introducer node's receiving address
 	PORT               = "55557"
+	CONN_TIMEOUT       = 500 * time.Millisecond
 )
 
 var (
@@ -26,6 +34,54 @@ func init() {
 		fmt.Printf("Error getting user home directory: %v \n", err)
 	}
 	SDFS_PATH = filepath.Join(usr.HomeDir, "SDFS_Files")
+}
+
+func HandleSDFSMessages() {
+	conn, err := net.ListenPacket("udp", ":"+PORT)
+	if err != nil {
+		fmt.Println("Error listening to UDP packets: ", err)
+		os.Exit(1)
+	}
+	defer conn.Close()
+	buffer := make([]byte, 4096)
+	for {
+		n, _, err := conn.ReadFrom(buffer)
+		if err != nil {
+			fmt.Printf("Error reading: %v\n", err.Error())
+			continue
+		}
+		SDFSMessage := &pb.SDFSMessage{}
+		err = proto.Unmarshal(buffer[:n], SDFSMessage)
+		if err != nil {
+			fmt.Printf("Error unmarshalling SDFS message: %v\n", err.Error())
+		}
+		switch SDFSMessage.MessageType {
+		case pb.SDFSMessageType_UPDATE:
+			processUpdateMessage(SDFSMessage)
+		case pb.SDFSMessageType_DELETE:
+			processDeleteMessage(SDFSMessage)
+		}
+
+	}
+}
+
+func processDeleteMessage(message *pb.SDFSMessage) {
+	fmt.Println("Received Delete Message")
+	fileName := message.SdfsFileName
+	delete(fileToVMMap, fileName)
+	deleteLocalSDFSFile(fileName)
+}
+
+func processUpdateMessage(message *pb.SDFSMessage) {
+	fmt.Println("Received Update Message")
+	fileName := message.SdfsFileName
+	replicas := message.Replicas
+	if _, exists := fileToVMMap[fileName]; !exists {
+		fileToVMMap[fileName] = make(map[string]Empty)
+	}
+	for _, r := range replicas {
+		fileToVMMap[fileName][r] = Empty{}
+	}
 }
 
 func putFile(localFileName string, sdfsFileName string) {
@@ -62,7 +118,45 @@ func putFile(localFileName string, sdfsFileName string) {
 			fmt.Printf("Command finished with error: %v\n", err)
 		}
 	}
+	sendPutFileMessage(sdfsFileName, targetReplicas)
+}
 
+func sendPutFileMessage(fileName string, replicas []string) {
+	putMessage := &pb.SDFSMessage{
+		MessageType:  pb.SDFSMessageType_UPDATE,
+		Replicas:     replicas,
+		SdfsFileName: fileName,
+	}
+	messageBytes, err := proto.Marshal(putMessage)
+	if err != nil {
+		fmt.Printf("Failed to marshal PutMessage: %v\n", err.Error())
+	}
+	sendMesageToAllHosts(messageBytes)
+}
+
+func sendMesageToAllHosts(messageBytes []byte) {
+	allHosts := failureDetector.GetAllNodeAddresses()
+	var wg sync.WaitGroup
+	for _, hostAddr := range allHosts {
+		wg.Add(1)
+		go func(address string) {
+			defer wg.Done()
+
+			conn, err := net.DialTimeout("udp", address, CONN_TIMEOUT)
+			if err != nil {
+				// fmt.Println("Error dialing UDP: ", err)
+				return
+			}
+			conn.SetWriteDeadline(time.Now().Add(CONN_TIMEOUT))
+			defer conn.Close()
+			_, err = conn.Write(messageBytes)
+			if err != nil {
+				fmt.Println("Error sending UDP: ", err)
+				return
+			}
+		}(hostAddr)
+	}
+	wg.Wait()
 }
 
 func getFile(sdfsFileName string, localFileName string) {
@@ -93,6 +187,11 @@ func getFile(sdfsFileName string, localFileName string) {
 
 func deleteFile(sdfsFileName string) {
 	delete(fileToVMMap, sdfsFileName)
+	deleteLocalSDFSFile(sdfsFileName)
+	sendDeleteFileMessage(sdfsFileName)
+}
+
+func deleteLocalSDFSFile(sdfsFileName string) {
 	files, err := os.ReadDir(SDFS_PATH)
 	if err != nil {
 		fmt.Printf("Failed to list files in directory %s: %v\n", SDFS_PATH, err)
@@ -108,6 +207,18 @@ func deleteFile(sdfsFileName string) {
 			}
 		}
 	}
+}
+
+func sendDeleteFileMessage(fileName string) {
+	deleteMessage := &pb.SDFSMessage{
+		MessageType:  pb.SDFSMessageType_DELETE,
+		SdfsFileName: fileName,
+	}
+	messageBytes, err := proto.Marshal(deleteMessage)
+	if err != nil {
+		fmt.Printf("Failed to marshal DeleteMessage: %v\n", err.Error())
+	}
+	sendMesageToAllHosts(messageBytes)
 }
 
 func getAllLocalSDFSFiles() []string {

@@ -1,0 +1,16 @@
+syntax = "proto3";
+package cs425_mp3;
+
+option go_package = "./protobuf";
+
+enum SDFSMessageType {
+    DELETE = 0;
+    UPDATE = 1;
+}
+
+message SDFSMessage {
+    SDFSMessageType messageType = 1;
+    repeated string replicas = 2;
+    string sdfsFileName = 3;
+}
+
