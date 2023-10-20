@@ -22,10 +22,17 @@ const (
 )
 
 var (
-	SDFS_PATH   string
-	fileToVMMap = make(map[string]map[string]Empty)
-	VMToFileMap = make(map[string]map[string]Empty)
+	SDFS_PATH string
+	memTable  = &MemTable{
+		fileToVMMap: make(map[string]map[string]Empty), // go does not have sets, so we used a map with empty value to repersent set
+		VMToFileMap: make(map[string]map[string]Empty),
+	}
 )
+
+type MemTable struct {
+	fileToVMMap map[string]map[string]Empty
+	VMToFileMap map[string]map[string]Empty
+}
 
 func init() {
 	usr, err := user.Current()
@@ -35,6 +42,28 @@ func init() {
 	SDFS_PATH = filepath.Join(usr.HomeDir, "SDFS_Files")
 }
 
+// update mem tables
+func (mt *MemTable) delete(sdfsFileName string) {
+	for _, files := range mt.VMToFileMap {
+		delete(files, sdfsFileName)
+	}
+	delete(mt.fileToVMMap, sdfsFileName)
+}
+
+func (mt *MemTable) put(sdfsFileName string, replicas []string) {
+	if _, exists := mt.fileToVMMap[sdfsFileName]; !exists {
+		mt.fileToVMMap[sdfsFileName] = make(map[string]Empty)
+	}
+	for _, r := range replicas {
+		if _, exists := mt.VMToFileMap[r]; !exists {
+			mt.VMToFileMap[r] = make(map[string]Empty)
+		}
+		mt.VMToFileMap[r][sdfsFileName] = Empty{}
+		mt.fileToVMMap[sdfsFileName][r] = Empty{}
+	}
+}
+
+// handle incoming SDFS messages
 func HandleSDFSMessages() {
 	conn, err := net.ListenPacket("udp", ":"+global.SDFS_PORT)
 	if err != nil {
@@ -67,7 +96,7 @@ func HandleSDFSMessages() {
 func processDeleteMessage(message *pb.SDFSMessage) {
 	fmt.Println("Received Delete Message")
 	fileName := message.SdfsFileName
-	delete(fileToVMMap, fileName)
+	memTable.delete(fileName)
 	deleteLocalSDFSFile(fileName)
 }
 
@@ -75,12 +104,7 @@ func processPutMessage(message *pb.SDFSMessage) {
 	fmt.Println("Received Put Message")
 	fileName := message.SdfsFileName
 	replicas := message.Replicas
-	if _, exists := fileToVMMap[fileName]; !exists {
-		fileToVMMap[fileName] = make(map[string]Empty)
-	}
-	for _, r := range replicas {
-		fileToVMMap[fileName][r] = Empty{}
-	}
+	memTable.put(fileName, replicas)
 }
 
 func putFile(localFileName string, sdfsFileName string) {
@@ -89,13 +113,10 @@ func putFile(localFileName string, sdfsFileName string) {
 		return
 	}
 	var targetReplicas []string
-	val, exists := fileToVMMap[sdfsFileName]
+	val, exists := memTable.fileToVMMap[sdfsFileName]
 	if !exists {
-		fileToVMMap[sdfsFileName] = make(map[string]Empty)
 		targetReplicas = getDefaultReplicaMachineIDs(hashFileName(localFileName))
-		for _, r := range targetReplicas {
-			fileToVMMap[sdfsFileName][r] = Empty{}
-		}
+		memTable.put(sdfsFileName, targetReplicas)
 	} else {
 		for k := range val {
 			targetReplicas = append(targetReplicas, k)
@@ -159,7 +180,7 @@ func sendMesageToAllHosts(messageBytes []byte) {
 }
 
 func getFile(sdfsFileName string, localFileName string) {
-	replicas, exists := fileToVMMap[sdfsFileName]
+	replicas, exists := memTable.fileToVMMap[sdfsFileName]
 	if !exists {
 		fmt.Printf("SDFS file %v does not exist", sdfsFileName)
 	}
@@ -185,7 +206,7 @@ func getFile(sdfsFileName string, localFileName string) {
 }
 
 func deleteFile(sdfsFileName string) {
-	delete(fileToVMMap, sdfsFileName)
+	memTable.delete(sdfsFileName)
 	deleteLocalSDFSFile(sdfsFileName)
 	sendDeleteFileMessage(sdfsFileName)
 }
@@ -235,7 +256,7 @@ func getAllLocalSDFSFiles() []string {
 
 func listSDFSFileVMs(sdfsFileName string) []string {
 	var VMList []string
-	val, exists := fileToVMMap[sdfsFileName]
+	val, exists := memTable.fileToVMMap[sdfsFileName]
 	if !exists {
 		fmt.Println("Error: file not exist")
 	} else {
