@@ -1,7 +1,7 @@
 package SDFS
 
 import (
-	"cs425-mp/internals/failureDetector"
+	"cs425-mp/internals/global"
 	pb "cs425-mp/protobuf"
 	"fmt"
 	"net"
@@ -17,9 +17,8 @@ import (
 )
 
 const (
-	INTRODUCER_ADDRESS = "fa23-cs425-1801.cs.illinois.edu:55557" // Introducer node's receiving address
-	PORT               = "55557"
-	CONN_TIMEOUT       = 500 * time.Millisecond
+	LEADER_ADDRESS = "fa23-cs425-1801.cs.illinois.edu" // Introducer node's receiving address
+	CONN_TIMEOUT   = 500 * time.Millisecond
 )
 
 var (
@@ -37,7 +36,7 @@ func init() {
 }
 
 func HandleSDFSMessages() {
-	conn, err := net.ListenPacket("udp", ":"+PORT)
+	conn, err := net.ListenPacket("udp", ":"+global.SDFS_PORT)
 	if err != nil {
 		fmt.Println("Error listening to UDP packets: ", err)
 		os.Exit(1)
@@ -135,7 +134,7 @@ func sendPutFileMessage(fileName string, replicas []string) {
 }
 
 func sendMesageToAllHosts(messageBytes []byte) {
-	allHosts := failureDetector.GetAllNodeAddresses()
+	allHosts := make([]string, 0) //TODO: subjected to change
 	var wg sync.WaitGroup
 	for _, hostAddr := range allHosts {
 		wg.Add(1)

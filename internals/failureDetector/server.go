@@ -1,6 +1,7 @@
 package failureDetector
 
 import (
+	"cs425-mp/internals/global"
 	pb "cs425-mp/protobuf"
 	"fmt"
 	"math/rand"
@@ -13,7 +14,7 @@ import (
 
 // listen to group messages from other nodes and dispatch messages to corresponding handler pipelines
 func HandleGroupMessages() {
-	conn, err := net.ListenPacket("udp", ":"+PORT)
+	conn, err := net.ListenPacket("udp", ":"+global.FD_PORT)
 	if err != nil {
 		fmt.Println("Error listening to UDP packets: ", err)
 		os.Exit(1)

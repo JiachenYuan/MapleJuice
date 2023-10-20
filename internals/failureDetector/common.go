@@ -11,7 +11,6 @@ import (
 
 const (
 	INTRODUCER_ADDRESS = "fa23-cs425-1801.cs.illinois.edu:55556" // Introducer node's receiving address
-	PORT               = "55556"
 	CONN_TIMEOUT       = 500 * time.Millisecond
 )
 
