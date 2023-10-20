@@ -19,6 +19,8 @@ import (
 const (
 	LEADER_ADDRESS = "fa23-cs425-1801.cs.illinois.edu" // Introducer node's receiving address
 	CONN_TIMEOUT   = 500 * time.Millisecond
+	NUM_WRITE      = 4
+	NUM_READ       = 1
 )
 
 var (
@@ -96,8 +98,12 @@ func HandleSDFSMessages() {
 func processDeleteMessage(message *pb.SDFSMessage) {
 	fmt.Println("Received Delete Message")
 	fileName := message.SdfsFileName
+	err := deleteLocalSDFSFile(fileName)
+	if err != nil {
+		fmt.Printf("Failed to delete local file : %v\n", err)
+		return
+	}
 	memTable.delete(fileName)
-	deleteLocalSDFSFile(fileName)
 }
 
 func processPutMessage(message *pb.SDFSMessage) {
@@ -119,6 +125,7 @@ func putFile(localFileName string, sdfsFileName string) {
 		memTable.put(sdfsFileName, targetReplicas)
 	} else {
 		for k := range val {
+			//TODO: What about the condition when len(targetReplicas) < NUM_WRITE?
 			targetReplicas = append(targetReplicas, k)
 		}
 	}
@@ -136,6 +143,7 @@ func putFile(localFileName string, sdfsFileName string) {
 		err = cmd.Wait()
 		if err != nil {
 			fmt.Printf("Command finished with error: %v\n", err)
+			return
 		}
 	}
 	sendPutFileMessage(sdfsFileName, targetReplicas)
@@ -155,7 +163,7 @@ func sendPutFileMessage(fileName string, replicas []string) {
 }
 
 func sendMesageToAllHosts(messageBytes []byte) {
-	allHosts := make([]string, 0) //TODO: subjected to change
+	allHosts := make([]string, 0) //TODO: subjected to change, decide whether we should send it to all hosts or just the leader?
 	var wg sync.WaitGroup
 	for _, hostAddr := range allHosts {
 		wg.Add(1)
@@ -206,16 +214,19 @@ func getFile(sdfsFileName string, localFileName string) {
 }
 
 func deleteFile(sdfsFileName string) {
+	err := deleteLocalSDFSFile(sdfsFileName)
+	if err != nil {
+		fmt.Printf("Failed to delete local file : %v\n", err)
+		return
+	}
 	memTable.delete(sdfsFileName)
-	deleteLocalSDFSFile(sdfsFileName)
 	sendDeleteFileMessage(sdfsFileName)
 }
 
-func deleteLocalSDFSFile(sdfsFileName string) {
+func deleteLocalSDFSFile(sdfsFileName string) error {
 	files, err := os.ReadDir(SDFS_PATH)
 	if err != nil {
-		fmt.Printf("Failed to list files in directory %s: %v\n", SDFS_PATH, err)
-		return
+		return err
 	}
 	for _, file := range files {
 		filePath := filepath.Join(SDFS_PATH, file.Name())
@@ -223,10 +234,11 @@ func deleteLocalSDFSFile(sdfsFileName string) {
 			fmt.Printf("Try to delete file %s.\n", file.Name())
 			err := os.Remove(filePath)
 			if err != nil {
-				fmt.Printf("Failed to delete file %s: %v\n", filePath, err)
+				return err
 			}
 		}
 	}
+	return nil
 }
 
 func sendDeleteFileMessage(fileName string) {
@@ -261,7 +273,7 @@ func listSDFSFileVMs(sdfsFileName string) []string {
 		fmt.Println("Error: file not exist")
 	} else {
 		for k := range val {
-			VMList = append(VMList, getFullHostNameFromID(k))
+			VMList = append(VMList, k)
 		}
 	}
 	return VMList
