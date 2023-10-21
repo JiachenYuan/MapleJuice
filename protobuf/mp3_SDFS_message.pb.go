@@ -20,64 +20,129 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type SDFSMessageType int32
+type SDFSRequestType int32
 
 const (
-	SDFSMessageType_DELETE SDFSMessageType = 0
-	SDFSMessageType_PUT    SDFSMessageType = 1
+	SDFSRequestType_GET_REQ    SDFSRequestType = 0
+	SDFSRequestType_PUT_REQ    SDFSRequestType = 1
+	SDFSRequestType_DELETE_REQ SDFSRequestType = 2
+	SDFSRequestType_LS_REQ     SDFSRequestType = 3
+	SDFSRequestType_STORE_REQ  SDFSRequestType = 4
 )
 
-// Enum value maps for SDFSMessageType.
+// Enum value maps for SDFSRequestType.
 var (
-	SDFSMessageType_name = map[int32]string{
-		0: "DELETE",
-		1: "PUT",
+	SDFSRequestType_name = map[int32]string{
+		0: "GET_REQ",
+		1: "PUT_REQ",
+		2: "DELETE_REQ",
+		3: "LS_REQ",
+		4: "STORE_REQ",
 	}
-	SDFSMessageType_value = map[string]int32{
-		"DELETE": 0,
-		"PUT":    1,
+	SDFSRequestType_value = map[string]int32{
+		"GET_REQ":    0,
+		"PUT_REQ":    1,
+		"DELETE_REQ": 2,
+		"LS_REQ":     3,
+		"STORE_REQ":  4,
 	}
 )
 
-func (x SDFSMessageType) Enum() *SDFSMessageType {
-	p := new(SDFSMessageType)
+func (x SDFSRequestType) Enum() *SDFSRequestType {
+	p := new(SDFSRequestType)
 	*p = x
 	return p
 }
 
-func (x SDFSMessageType) String() string {
+func (x SDFSRequestType) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (SDFSMessageType) Descriptor() protoreflect.EnumDescriptor {
+func (SDFSRequestType) Descriptor() protoreflect.EnumDescriptor {
 	return file_mp3_SDFS_message_proto_enumTypes[0].Descriptor()
 }
 
-func (SDFSMessageType) Type() protoreflect.EnumType {
+func (SDFSRequestType) Type() protoreflect.EnumType {
 	return &file_mp3_SDFS_message_proto_enumTypes[0]
 }
 
-func (x SDFSMessageType) Number() protoreflect.EnumNumber {
+func (x SDFSRequestType) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use SDFSMessageType.Descriptor instead.
-func (SDFSMessageType) EnumDescriptor() ([]byte, []int) {
+// Deprecated: Use SDFSRequestType.Descriptor instead.
+func (SDFSRequestType) EnumDescriptor() ([]byte, []int) {
 	return file_mp3_SDFS_message_proto_rawDescGZIP(), []int{0}
 }
 
-type SDFSMessage struct {
+type SDFSResponseType int32
+
+const (
+	SDFSResponseType_GET_RES    SDFSResponseType = 0
+	SDFSResponseType_PUT_RES    SDFSResponseType = 1
+	SDFSResponseType_DELETE_RES SDFSResponseType = 2
+	SDFSResponseType_LS_RES     SDFSResponseType = 3
+	SDFSResponseType_STORE_RES  SDFSResponseType = 4
+)
+
+// Enum value maps for SDFSResponseType.
+var (
+	SDFSResponseType_name = map[int32]string{
+		0: "GET_RES",
+		1: "PUT_RES",
+		2: "DELETE_RES",
+		3: "LS_RES",
+		4: "STORE_RES",
+	}
+	SDFSResponseType_value = map[string]int32{
+		"GET_RES":    0,
+		"PUT_RES":    1,
+		"DELETE_RES": 2,
+		"LS_RES":     3,
+		"STORE_RES":  4,
+	}
+)
+
+func (x SDFSResponseType) Enum() *SDFSResponseType {
+	p := new(SDFSResponseType)
+	*p = x
+	return p
+}
+
+func (x SDFSResponseType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (SDFSResponseType) Descriptor() protoreflect.EnumDescriptor {
+	return file_mp3_SDFS_message_proto_enumTypes[1].Descriptor()
+}
+
+func (SDFSResponseType) Type() protoreflect.EnumType {
+	return &file_mp3_SDFS_message_proto_enumTypes[1]
+}
+
+func (x SDFSResponseType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use SDFSResponseType.Descriptor instead.
+func (SDFSResponseType) EnumDescriptor() ([]byte, []int) {
+	return file_mp3_SDFS_message_proto_rawDescGZIP(), []int{1}
+}
+
+// Specific to request
+type SDFSRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	MessageType  SDFSMessageType `protobuf:"varint,1,opt,name=messageType,proto3,enum=cs425_mp3.SDFSMessageType" json:"messageType,omitempty"`
-	Replicas     []string        `protobuf:"bytes,2,rep,name=replicas,proto3" json:"replicas,omitempty"`
-	SdfsFileName string          `protobuf:"bytes,3,opt,name=sdfsFileName,proto3" json:"sdfsFileName,omitempty"`
+	RequestType  SDFSRequestType `protobuf:"varint,1,opt,name=requestType,proto3,enum=cs425_mp3.SDFSRequestType" json:"requestType,omitempty"`
+	SdfsFileName string          `protobuf:"bytes,2,opt,name=sdfsFileName,proto3" json:"sdfsFileName,omitempty"`
+	VM           string          `protobuf:"bytes,3,opt,name=VM,proto3" json:"VM,omitempty"`
 }
 
-func (x *SDFSMessage) Reset() {
-	*x = SDFSMessage{}
+func (x *SDFSRequest) Reset() {
+	*x = SDFSRequest{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_mp3_SDFS_message_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -85,13 +150,13 @@ func (x *SDFSMessage) Reset() {
 	}
 }
 
-func (x *SDFSMessage) String() string {
+func (x *SDFSRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SDFSMessage) ProtoMessage() {}
+func (*SDFSRequest) ProtoMessage() {}
 
-func (x *SDFSMessage) ProtoReflect() protoreflect.Message {
+func (x *SDFSRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_mp3_SDFS_message_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -103,30 +168,102 @@ func (x *SDFSMessage) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SDFSMessage.ProtoReflect.Descriptor instead.
-func (*SDFSMessage) Descriptor() ([]byte, []int) {
+// Deprecated: Use SDFSRequest.ProtoReflect.Descriptor instead.
+func (*SDFSRequest) Descriptor() ([]byte, []int) {
 	return file_mp3_SDFS_message_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *SDFSMessage) GetMessageType() SDFSMessageType {
+func (x *SDFSRequest) GetRequestType() SDFSRequestType {
 	if x != nil {
-		return x.MessageType
+		return x.RequestType
 	}
-	return SDFSMessageType_DELETE
+	return SDFSRequestType_GET_REQ
 }
 
-func (x *SDFSMessage) GetReplicas() []string {
+func (x *SDFSRequest) GetSdfsFileName() string {
+	if x != nil {
+		return x.SdfsFileName
+	}
+	return ""
+}
+
+func (x *SDFSRequest) GetVM() string {
+	if x != nil {
+		return x.VM
+	}
+	return ""
+}
+
+// Specific to response
+type SDFSResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	ResponseType  SDFSResponseType `protobuf:"varint,1,opt,name=responseType,proto3,enum=cs425_mp3.SDFSResponseType" json:"responseType,omitempty"`
+	Replicas      []string         `protobuf:"bytes,2,rep,name=replicas,proto3" json:"replicas,omitempty"`
+	SdfsFileNames []string         `protobuf:"bytes,3,rep,name=sdfsFileNames,proto3" json:"sdfsFileNames,omitempty"`
+	VMAddresses   []string         `protobuf:"bytes,4,rep,name=VMAddresses,proto3" json:"VMAddresses,omitempty"`
+}
+
+func (x *SDFSResponse) Reset() {
+	*x = SDFSResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_mp3_SDFS_message_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SDFSResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SDFSResponse) ProtoMessage() {}
+
+func (x *SDFSResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_mp3_SDFS_message_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SDFSResponse.ProtoReflect.Descriptor instead.
+func (*SDFSResponse) Descriptor() ([]byte, []int) {
+	return file_mp3_SDFS_message_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *SDFSResponse) GetResponseType() SDFSResponseType {
+	if x != nil {
+		return x.ResponseType
+	}
+	return SDFSResponseType_GET_RES
+}
+
+func (x *SDFSResponse) GetReplicas() []string {
 	if x != nil {
 		return x.Replicas
 	}
 	return nil
 }
 
-func (x *SDFSMessage) GetSdfsFileName() string {
+func (x *SDFSResponse) GetSdfsFileNames() []string {
 	if x != nil {
-		return x.SdfsFileName
+		return x.SdfsFileNames
 	}
-	return ""
+	return nil
+}
+
+func (x *SDFSResponse) GetVMAddresses() []string {
+	if x != nil {
+		return x.VMAddresses
+	}
+	return nil
 }
 
 var File_mp3_SDFS_message_proto protoreflect.FileDescriptor
@@ -134,19 +271,39 @@ var File_mp3_SDFS_message_proto protoreflect.FileDescriptor
 var file_mp3_SDFS_message_proto_rawDesc = []byte{
 	0x0a, 0x16, 0x6d, 0x70, 0x33, 0x5f, 0x53, 0x44, 0x46, 0x53, 0x5f, 0x6d, 0x65, 0x73, 0x73, 0x61,
 	0x67, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x09, 0x63, 0x73, 0x34, 0x32, 0x35, 0x5f,
-	0x6d, 0x70, 0x33, 0x22, 0x8b, 0x01, 0x0a, 0x0b, 0x53, 0x44, 0x46, 0x53, 0x4d, 0x65, 0x73, 0x73,
-	0x61, 0x67, 0x65, 0x12, 0x3c, 0x0a, 0x0b, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x54, 0x79,
-	0x70, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x1a, 0x2e, 0x63, 0x73, 0x34, 0x32, 0x35,
-	0x5f, 0x6d, 0x70, 0x33, 0x2e, 0x53, 0x44, 0x46, 0x53, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65,
-	0x54, 0x79, 0x70, 0x65, 0x52, 0x0b, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x54, 0x79, 0x70,
-	0x65, 0x12, 0x1a, 0x0a, 0x08, 0x72, 0x65, 0x70, 0x6c, 0x69, 0x63, 0x61, 0x73, 0x18, 0x02, 0x20,
-	0x03, 0x28, 0x09, 0x52, 0x08, 0x72, 0x65, 0x70, 0x6c, 0x69, 0x63, 0x61, 0x73, 0x12, 0x22, 0x0a,
-	0x0c, 0x73, 0x64, 0x66, 0x73, 0x46, 0x69, 0x6c, 0x65, 0x4e, 0x61, 0x6d, 0x65, 0x18, 0x03, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x0c, 0x73, 0x64, 0x66, 0x73, 0x46, 0x69, 0x6c, 0x65, 0x4e, 0x61, 0x6d,
-	0x65, 0x2a, 0x26, 0x0a, 0x0f, 0x53, 0x44, 0x46, 0x53, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65,
-	0x54, 0x79, 0x70, 0x65, 0x12, 0x0a, 0x0a, 0x06, 0x44, 0x45, 0x4c, 0x45, 0x54, 0x45, 0x10, 0x00,
-	0x12, 0x07, 0x0a, 0x03, 0x50, 0x55, 0x54, 0x10, 0x01, 0x42, 0x0c, 0x5a, 0x0a, 0x2e, 0x2f, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x6d, 0x70, 0x33, 0x22, 0x7f, 0x0a, 0x0b, 0x53, 0x44, 0x46, 0x53, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x12, 0x3c, 0x0a, 0x0b, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x54, 0x79, 0x70,
+	0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x1a, 0x2e, 0x63, 0x73, 0x34, 0x32, 0x35, 0x5f,
+	0x6d, 0x70, 0x33, 0x2e, 0x53, 0x44, 0x46, 0x53, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x54,
+	0x79, 0x70, 0x65, 0x52, 0x0b, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x54, 0x79, 0x70, 0x65,
+	0x12, 0x22, 0x0a, 0x0c, 0x73, 0x64, 0x66, 0x73, 0x46, 0x69, 0x6c, 0x65, 0x4e, 0x61, 0x6d, 0x65,
+	0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x73, 0x64, 0x66, 0x73, 0x46, 0x69, 0x6c, 0x65,
+	0x4e, 0x61, 0x6d, 0x65, 0x12, 0x0e, 0x0a, 0x02, 0x56, 0x4d, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x02, 0x56, 0x4d, 0x22, 0xb3, 0x01, 0x0a, 0x0c, 0x53, 0x44, 0x46, 0x53, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3f, 0x0a, 0x0c, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x54, 0x79, 0x70, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x1b, 0x2e, 0x63, 0x73,
+	0x34, 0x32, 0x35, 0x5f, 0x6d, 0x70, 0x33, 0x2e, 0x53, 0x44, 0x46, 0x53, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x54, 0x79, 0x70, 0x65, 0x52, 0x0c, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x54, 0x79, 0x70, 0x65, 0x12, 0x1a, 0x0a, 0x08, 0x72, 0x65, 0x70, 0x6c, 0x69, 0x63,
+	0x61, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x09, 0x52, 0x08, 0x72, 0x65, 0x70, 0x6c, 0x69, 0x63,
+	0x61, 0x73, 0x12, 0x24, 0x0a, 0x0d, 0x73, 0x64, 0x66, 0x73, 0x46, 0x69, 0x6c, 0x65, 0x4e, 0x61,
+	0x6d, 0x65, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0d, 0x73, 0x64, 0x66, 0x73, 0x46,
+	0x69, 0x6c, 0x65, 0x4e, 0x61, 0x6d, 0x65, 0x73, 0x12, 0x20, 0x0a, 0x0b, 0x56, 0x4d, 0x41, 0x64,
+	0x64, 0x72, 0x65, 0x73, 0x73, 0x65, 0x73, 0x18, 0x04, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0b, 0x56,
+	0x4d, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x65, 0x73, 0x2a, 0x56, 0x0a, 0x0f, 0x53, 0x44,
+	0x46, 0x53, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x54, 0x79, 0x70, 0x65, 0x12, 0x0b, 0x0a,
+	0x07, 0x47, 0x45, 0x54, 0x5f, 0x52, 0x45, 0x51, 0x10, 0x00, 0x12, 0x0b, 0x0a, 0x07, 0x50, 0x55,
+	0x54, 0x5f, 0x52, 0x45, 0x51, 0x10, 0x01, 0x12, 0x0e, 0x0a, 0x0a, 0x44, 0x45, 0x4c, 0x45, 0x54,
+	0x45, 0x5f, 0x52, 0x45, 0x51, 0x10, 0x02, 0x12, 0x0a, 0x0a, 0x06, 0x4c, 0x53, 0x5f, 0x52, 0x45,
+	0x51, 0x10, 0x03, 0x12, 0x0d, 0x0a, 0x09, 0x53, 0x54, 0x4f, 0x52, 0x45, 0x5f, 0x52, 0x45, 0x51,
+	0x10, 0x04, 0x2a, 0x57, 0x0a, 0x10, 0x53, 0x44, 0x46, 0x53, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x54, 0x79, 0x70, 0x65, 0x12, 0x0b, 0x0a, 0x07, 0x47, 0x45, 0x54, 0x5f, 0x52, 0x45,
+	0x53, 0x10, 0x00, 0x12, 0x0b, 0x0a, 0x07, 0x50, 0x55, 0x54, 0x5f, 0x52, 0x45, 0x53, 0x10, 0x01,
+	0x12, 0x0e, 0x0a, 0x0a, 0x44, 0x45, 0x4c, 0x45, 0x54, 0x45, 0x5f, 0x52, 0x45, 0x53, 0x10, 0x02,
+	0x12, 0x0a, 0x0a, 0x06, 0x4c, 0x53, 0x5f, 0x52, 0x45, 0x53, 0x10, 0x03, 0x12, 0x0d, 0x0a, 0x09,
+	0x53, 0x54, 0x4f, 0x52, 0x45, 0x5f, 0x52, 0x45, 0x53, 0x10, 0x04, 0x42, 0x0c, 0x5a, 0x0a, 0x2e,
+	0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x33,
 }
 
 var (
@@ -161,19 +318,22 @@ func file_mp3_SDFS_message_proto_rawDescGZIP() []byte {
 	return file_mp3_SDFS_message_proto_rawDescData
 }
 
-var file_mp3_SDFS_message_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_mp3_SDFS_message_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_mp3_SDFS_message_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_mp3_SDFS_message_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_mp3_SDFS_message_proto_goTypes = []interface{}{
-	(SDFSMessageType)(0), // 0: cs425_mp3.SDFSMessageType
-	(*SDFSMessage)(nil),  // 1: cs425_mp3.SDFSMessage
+	(SDFSRequestType)(0),  // 0: cs425_mp3.SDFSRequestType
+	(SDFSResponseType)(0), // 1: cs425_mp3.SDFSResponseType
+	(*SDFSRequest)(nil),   // 2: cs425_mp3.SDFSRequest
+	(*SDFSResponse)(nil),  // 3: cs425_mp3.SDFSResponse
 }
 var file_mp3_SDFS_message_proto_depIdxs = []int32{
-	0, // 0: cs425_mp3.SDFSMessage.messageType:type_name -> cs425_mp3.SDFSMessageType
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	0, // 0: cs425_mp3.SDFSRequest.requestType:type_name -> cs425_mp3.SDFSRequestType
+	1, // 1: cs425_mp3.SDFSResponse.responseType:type_name -> cs425_mp3.SDFSResponseType
+	2, // [2:2] is the sub-list for method output_type
+	2, // [2:2] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_mp3_SDFS_message_proto_init() }
@@ -183,7 +343,19 @@ func file_mp3_SDFS_message_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_mp3_SDFS_message_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SDFSMessage); i {
+			switch v := v.(*SDFSRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_mp3_SDFS_message_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SDFSResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -200,8 +372,8 @@ func file_mp3_SDFS_message_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_mp3_SDFS_message_proto_rawDesc,
-			NumEnums:      1,
-			NumMessages:   1,
+			NumEnums:      2,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

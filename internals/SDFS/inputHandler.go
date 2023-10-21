@@ -38,7 +38,7 @@ func ProcessUserInputInLoop(inputChan <-chan string) {
 		command := splitted[0]
 		if command == "put" {
 			if len(splitted) != 3 {
-				fmt.Printf("Expected 3 components for PUT command, but got %v \n", len(splitted))
+				fmt.Printf("Expected 3 components for put command, but got %v \n", len(splitted))
 				continue
 			}
 			localFileName := splitted[1]
@@ -46,7 +46,7 @@ func ProcessUserInputInLoop(inputChan <-chan string) {
 			putFile(localFileName, sdfsFileName)
 		} else if command == "get" {
 			if len(splitted) != 3 {
-				fmt.Printf("Expected 3 components for GET command, but got %v \n", len(splitted))
+				fmt.Printf("Expected 3 components for get command, but got %v \n", len(splitted))
 				continue
 			}
 			sdfsFileName := splitted[1]
@@ -54,26 +54,24 @@ func ProcessUserInputInLoop(inputChan <-chan string) {
 			getFile(sdfsFileName, localFileName)
 		} else if command == "delete" {
 			if len(splitted) != 2 {
-				fmt.Printf("Expected 2 components for DELETE command, but got %v \n", len(splitted))
+				fmt.Printf("Expected 2 components for delete command, but got %v \n", len(splitted))
 				continue
 			}
 			sdfsFileName := splitted[1]
 			deleteFile(sdfsFileName)
 		} else if command == "ls" {
 			if len(splitted) != 2 {
-				fmt.Printf("Expected 2 components for LS command, but got %v \n", len(splitted))
+				fmt.Printf("Expected 2 components for ls command, but got %v \n", len(splitted))
 				continue
 			}
 			sdfsFileName := splitted[1]
-			VMList := listSDFSFileVMs(sdfsFileName)
-			fmt.Printf("%+q\n", VMList)
+			LS(sdfsFileName)
 		} else if command == "store" {
 			if len(splitted) != 1 {
-				fmt.Printf("Expected 1 components for STORE command, but got %v \n", len(splitted))
+				fmt.Printf("Expected 1 components for store command, but got %v \n", len(splitted))
 				continue
 			}
-			fileNameList := getAllLocalSDFSFiles()
-			fmt.Printf("%+q\n", fileNameList)
+			store()
 		} else {
 			fmt.Println("Command Not Supported")
 		}

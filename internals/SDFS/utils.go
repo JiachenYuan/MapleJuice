@@ -20,7 +20,10 @@ func hashFileName(fileName string) string {
 	return fmt.Sprintf("%v", total%10+1)
 }
 
-func getDefaultReplicaMachineIDs(id string) []string {
+func getDefaultReplicaVMAddresses(id string) []string {
+	//TODO: check for two conditions:
+	//1. membership list size smaller than 4
+	//2. node not exist in membership list in the for loop
 	replicas := make([]string, 4)
 	val, err := strconv.Atoi(id)
 	if err != nil {
@@ -41,7 +44,8 @@ func getFullHostNameFromID(id string) string {
 	return fmt.Sprintf("fa23-cs425-18%02d.cs.illinois.edu", numID)
 }
 
-func getScpHostNameFromID(id string) string {
+func getScpHostNameFromHostName(hostName string) string {
+	id := getIDFromFullHostName(hostName)
 	return fmt.Sprintf("cs425-%s", id)
 }
 
@@ -55,5 +59,33 @@ func getIDFromFullHostName(hostName string) string { // might use it later if we
 	idOnly := strings.Split(idWithSuffix, ".")[0]
 
 	id := idOnly[2:]
+	if len(id) > 1 && strings.HasPrefix(id, "0") {
+		return id[1:]
+	}
 	return id
+}
+
+func getAllLocalSDFSFilesForVM(vmAddress string) []string {
+	var fileNames []string
+	files, exists := memTable.VMToFileMap[vmAddress]
+	if !exists {
+		return fileNames
+	}
+	for fileName := range files {
+		fileNames = append(fileNames, fileName)
+	}
+	return fileNames
+}
+
+func listSDFSFileVMs(sdfsFileName string) []string {
+	var VMList []string
+	val, exists := memTable.fileToVMMap[sdfsFileName]
+	if !exists {
+		fmt.Println("Error: file not exist")
+	} else {
+		for k := range val {
+			VMList = append(VMList, k)
+		}
+	}
+	return VMList
 }

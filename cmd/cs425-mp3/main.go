@@ -46,13 +46,6 @@ func startFailureDetector(wg *sync.WaitGroup) {
 		// Periodic local state and memebrship refresh
 		failureDetector.PeriodicUpdate()
 	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		// Handle CLI input from user
-		failureDetector.HandleUserInput()
-	}()
 }
 
 func startSDFS(wg *sync.WaitGroup) {
@@ -61,5 +54,10 @@ func startSDFS(wg *sync.WaitGroup) {
 	go func() {
 		defer wg.Done()
 		SDFS.HandleUserInput()
+	}()
+
+	go func() {
+		defer wg.Done()
+		SDFS.HandleSDFSMessages()
 	}()
 }
