@@ -2,9 +2,14 @@ package SDFS
 
 import (
 	"crypto/md5"
+	"cs425-mp/internals/global"
 	"fmt"
+	"math/rand"
+	"os"
 	"strconv"
 	"strings"
+	"time"
+	fd "cs425-mp/internals/failureDetector"
 )
 
 type Empty struct{}
@@ -89,3 +94,62 @@ func listSDFSFileVMs(sdfsFileName string) []string {
 	}
 	return VMList
 }
+
+// Get local server ID based on hostname. Each machines should have a unique ID defined in global.go
+// Returns -1 if not defined
+func getLocalServerID() int {
+
+	hostname, err := os.Hostname()
+	if err != nil {
+		fmt.Println("Error getting host name: ", err)
+		return -1;
+	}
+	for i, addr := range global.SERVER_ADDRS {
+		if hostname == addr {
+			return i+1;
+		}
+	}
+	return -1;
+}
+
+// Returns server's hostname given its ID
+// Returns "" empty string if ID is not defined
+func getServerName(id int) string {
+	if (id < 1 || id > len(global.SERVER_ADDRS)) {
+		return ""
+	}
+	return global.SERVER_ADDRS[id-1];
+}
+
+
+// Generate random duration bewteen 4-6 seconds
+func randomDuration() time.Duration {
+	rand.Seed(time.Now().UnixNano())
+	n := rand.Intn(2) + 4
+	return time.Duration(n) * time.Second
+}
+
+func getAlivePeersAddrs() []string {
+	fd.NodeListLock.Lock()
+	addrList := []string{}
+	for _, node := range fd.NodeInfoList {
+		if node.Status == fd.Alive || node.Status == fd.Suspected {
+			addrList = append(addrList, node.NodeAddr)
+		}
+	}
+	fd.NodeListLock.Unlock()
+
+	// Strip away the trailing ":port" part for every address in the list
+	delimiter := ":"
+	for i := range addrList {
+		// Find the index of the delimiter
+		delimiterIndex := strings.Index(addrList[i], delimiter)
+
+		if delimiterIndex != -1 {
+			// Extract the part of the string before the delimiter
+			addrList[i] := addrList[i][:delimiterIndex]
+	}
+	return addrList
+} 
+
+

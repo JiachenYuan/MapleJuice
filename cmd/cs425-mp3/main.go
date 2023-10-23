@@ -5,12 +5,19 @@ import (
 	"cs425-mp/internals/failureDetector"
 	"fmt"
 	"sync"
+	"time"
 )
 
 func main() {
 	var wg sync.WaitGroup
-	// go startFailureDetector(&wg)
+	go startFailureDetector(&wg)
 	startSDFS(&wg)
+	SDFS.StartLeaderElection()
+
+	for {
+		fmt.Printf("*** Current Leader is VM%v ***", SDFS.GetLeaderID())
+		time.Sleep(5*time.Second)
+	}
 	wg.Wait()
 
 }
