@@ -10,7 +10,10 @@ import (
 
 func main() {
 	var wg sync.WaitGroup
-	startFailureDetector(&wg)
+	inputChan := make(chan string)
+	failureDetector.SetSDFSChannel(inputChan)
+	SDFS.SetFDChannel(inputChan)
+	go startFailureDetector(&wg)
 	startSDFS(&wg)
 	startLeaderElection(&wg)
 	go monitorLeader()
@@ -60,9 +63,16 @@ func startSDFS(wg *sync.WaitGroup) {
 		SDFS.HandleUserInput()
 	}()
 
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		SDFS.HandleSDFSMessages()
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		SDFS.ObserveFDChannel()
 	}()
 }
 

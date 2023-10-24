@@ -19,3 +19,9 @@ var (
 		"fa23-cs425-1809.cs.illinois.edu", "fa23-cs425-1810.cs.illinois.edu"}
 )
 
+func Min(a int, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
