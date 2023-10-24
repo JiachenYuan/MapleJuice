@@ -150,10 +150,11 @@ func leaderTask() {
 				go func(_hostname string) {
 					defer wg.Done()
 					// Set up a connection to the server
-					ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
-					conn, err := grpc.DialContext(ctx, _hostname+":"+global.LEADER_ELECTION_PORT) 
+					ctx, dialCancel := context.WithTimeout(context.Background(), 2*time.Second)
+					defer dialCancel()
+					conn, err := grpc.DialContext(ctx, _hostname+":"+global.LEADER_ELECTION_PORT, grpc.WithTransportCredentials(insecure.NewCredentials())) 
 					if err != nil {
-						log.Fatalf("Failed to dial: %v", err)
+						fmt.Printf("Failed to dial: %v", err)
 					}
 					defer conn.Close()
 					// Request vote to peers and and respond if states haven't changed since start of the election
@@ -168,10 +169,10 @@ func leaderTask() {
 					if err != nil {
 						// Check if the error is due to a timeout
 						if ctx.Err() == context.DeadlineExceeded {
-							log.Fatalf("gRPC call timed out after %s", timeout)
+							fmt.Printf("gRPC call timed out after %s", timeout)
 							return
 						} else {
-							log.Fatalf("Failed to call Heartbeat: %v", err)
+							fmt.Printf("Failed to call Heartbeat: %v", err)
 							return
 						}
 					}
@@ -269,7 +270,7 @@ func startElection() {
 			voteResponse, err := client.RequestVotes(ctx, &pb.VoteRequest{
 				Term: originalTerm,
 				CandidateID: int32(localID),
-			}, );
+			});
 			if err != nil {
 				// Check if the error is due to a timeout
 				if ctx.Err() == context.DeadlineExceeded {
@@ -292,6 +293,7 @@ func startElection() {
 				// if numVotes >= 10/2+1 { // Quorum reached
 				if numVotes >= 2 { // ! Testing
 					s.state = Leader
+					fmt.Println("Promoted to leader")
 					convertedToLeader = true
 					return
 				}
