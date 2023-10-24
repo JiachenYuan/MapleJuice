@@ -151,12 +151,7 @@ func getAlivePeersAddrs() []string {
 	fd.NodeListLock.Lock()
 	addrList := []string{}
 	for _, node := range fd.NodeInfoList {
-		// Strip away the trailing ":port" part for every address in the list
-		delimiterIndex := strings.Index(node.NodeAddr, ":")
-		if delimiterIndex == -1 {
-			panic("Something wrong in failure detector's NodeInfoList")
-		}
-		nodeName := node.NodeAddr[:delimiterIndex]
+		nodeName := node.NodeAddr
 		if (nodeName != localServerAddr) && (node.Status == fd.Alive || node.Status == fd.Suspected){
 			addrList = append(addrList, nodeName)
 		}
