@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // Server states enum
@@ -251,7 +252,7 @@ func startElection() {
 			
 			ctx, dialCancel := context.WithTimeout(context.Background(), 2*time.Second)
 			defer dialCancel()
-			conn, err := grpc.DialContext(ctx, _hostname+":"+global.LEADER_ELECTION_PORT, grpc.EmptyDialOption{}) 
+			conn, err := grpc.DialContext(ctx, _hostname+":"+global.LEADER_ELECTION_PORT, grpc.WithTransportCredentials(insecure.NewCredentials())) 
 			
 			if err != nil {
 				fmt.Printf("Failed to dial: %v\n", err)
