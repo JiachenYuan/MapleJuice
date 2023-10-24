@@ -244,6 +244,8 @@ func startElection() {
 	
 	// send request vote to every live peers
 	aliveServerAddrs := getAlivePeersAddrs()
+	// Quick way to converge, if alive peer count is less than the quorum-1, never going to achieve leader
+	s.leaderID = -1
 
 	// fmt.Printf("Going to send request vote to %v\n", aliveServerAddrs)
 	
