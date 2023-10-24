@@ -96,6 +96,7 @@ func (s *MemberServer) RequestVotes(ctx context.Context, request *pb.VoteRequest
 		s.currentTerm = request.Term
 		s.state = Follower
 		s.votedFor = request.CandidateID
+		s.leaderID = -1
 		refreshDeadline("RequestVotes")
 
 		return &pb.VoteResponse{
