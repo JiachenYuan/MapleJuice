@@ -15,7 +15,7 @@ func main() {
 	SDFS.StartLeaderElection()
 
 	for {
-		fmt.Printf("*** Current Leader is VM%v ***", SDFS.GetLeaderID())
+		fmt.Printf("*** Current Leader is VM %v ***\n", SDFS.GetLeaderID())
 		time.Sleep(5*time.Second)
 	}
 	wg.Wait()

@@ -5,8 +5,10 @@ import (
 	_ "cs425-mp/internals/failureDetector"
 	"cs425-mp/internals/global"
 	pb "cs425-mp/protobuf"
+	"fmt"
 	"log"
 	"net"
+	"os"
 	"sync"
 	"time"
 
@@ -34,6 +36,10 @@ type MemberServer struct {
 	serverStateLock sync.Mutex // protects the above local states
 }
 
+func init() {
+	s = newMemberServer()
+}
+
 func GetLeaderID() int {
 	return int(s.leaderID)
 }
@@ -45,7 +51,7 @@ func newMemberServer() *MemberServer {
 		votedFor:        -1,
 		state:           Follower,
 		serverStateLock: sync.Mutex{},
-		electionDeadline:   time.Now(),
+		electionDeadline:   time.Now().Add(randomDuration()),
 	}
 }
 
@@ -101,7 +107,12 @@ func (s *MemberServer) RequestVotes(ctx context.Context, request *pb.VoteRequest
 }
 
 func startServer() {
-	lis, err := net.Listen("tcp", global.LEADER_ELECTION_PORT)
+	hostname, err := os.Hostname()
+	if err != nil {
+		return
+	}
+
+	lis, err := net.Listen("tcp", hostname + ":" + global.LEADER_ELECTION_PORT)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
@@ -109,7 +120,6 @@ func startServer() {
 	grpcServer := grpc.NewServer()
 
 	// Register services
-	s = newMemberServer()
 	pb.RegisterLeaderElectionServer(grpcServer, s)
 
 	log.Printf("GRPC server listening on %v", lis.Addr())
@@ -140,7 +150,7 @@ func leaderTask() {
 					defer wg.Done()
 					// Set up a connection to the server
 					ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
-					conn, err := grpc.DialContext(ctx, hostname+":"+global.LEADER_ELECTION_PORT) 
+					conn, err := grpc.DialContext(ctx, _hostname+":"+global.LEADER_ELECTION_PORT) 
 					if err != nil {
 						log.Fatalf("Failed to dial: %v", err)
 					}
@@ -188,14 +198,21 @@ func leaderTask() {
 }
 
 func followerTask() {
+	lastTerm := int64(-1)
 	for {
 		s.serverStateLock.Lock()
-		if s.state == Follower || s.state == Candidate {
+		
+		if (s.state == Follower || s.state == Candidate) {
 			if time.Now().After(s.electionDeadline) {
 				s.state = Candidate
+				originalTerm := s.currentTerm
 				s.serverStateLock.Unlock()
-				go startElection()
-				return
+				if lastTerm == -1 || originalTerm != lastTerm {
+					fmt.Println("Timer goes off, starting election")
+					go startElection()
+					lastTerm = originalTerm
+				}
+				continue
 			}
 		}
 		s.serverStateLock.Unlock()
@@ -210,6 +227,7 @@ func startElection() {
 	localID := getLocalServerID()
 	s.serverStateLock.Lock()
 	s.electionDeadline = time.Now().Add(randomDuration())
+	fmt.Printf("Next deadline is %v\n", s.electionDeadline)
 	originalState := s.state
 	s.currentTerm++
 	originalTerm := s.currentTerm
@@ -218,6 +236,8 @@ func startElection() {
 	
 	// send request vote to every live peers
 	aliveServerAddrs := getAlivePeersAddrs()
+
+	fmt.Printf("Going to send request vote to %v\n", aliveServerAddrs)
 	
 	var wg sync.WaitGroup
 	
@@ -262,7 +282,8 @@ func startElection() {
 
 			if  (!convertedToLeader) && voteResponse.VoteGranted{
 				numVotes++
-				if numVotes >= 10/2+1 { // Quorum reached
+				// if numVotes >= 10/2+1 { // Quorum reached
+				if numVotes >= 2 { // ! Testing
 					s.state = Leader
 					convertedToLeader = true
 					return
@@ -277,6 +298,8 @@ func startElection() {
 		}(hostname)
 	}
 	wg.Wait()
+
+	fmt.Println("Finished election")
 
 }
 

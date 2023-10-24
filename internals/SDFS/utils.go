@@ -125,31 +125,28 @@ func getServerName(id int) string {
 // Generate random duration bewteen 4-6 seconds
 func randomDuration() time.Duration {
 	rand.Seed(time.Now().UnixNano())
-	n := rand.Intn(2) + 4
+	n := rand.Intn(3) + 4
 	return time.Duration(n) * time.Second
 }
 
 func getAlivePeersAddrs() []string {
+	localServerAddr := getServerName(getLocalServerID())
 	fd.NodeListLock.Lock()
 	addrList := []string{}
 	for _, node := range fd.NodeInfoList {
-		if node.Status == fd.Alive || node.Status == fd.Suspected {
-			addrList = append(addrList, node.NodeAddr)
+		// Strip away the trailing ":port" part for every address in the list
+		delimiterIndex := strings.Index(node.NodeAddr, ":")
+		if delimiterIndex == -1 {
+			panic("Something wrong in failure detector's NodeInfoList")
+		}
+		nodeName := node.NodeAddr[:delimiterIndex]
+		if (nodeName != localServerAddr) && (node.Status == fd.Alive || node.Status == fd.Suspected){
+			addrList = append(addrList, nodeName)
 		}
 	}
 	fd.NodeListLock.Unlock()
 
-	// Strip away the trailing ":port" part for every address in the list
-	delimiter := ":"
-	for i := range addrList {
-		// Find the index of the delimiter
-		delimiterIndex := strings.Index(addrList[i], delimiter)
-
-		if delimiterIndex != -1 {
-			// Extract the part of the string before the delimiter
-			addrList[i] := addrList[i][:delimiterIndex]
-	}
 	return addrList
-} 
+}
 
 
