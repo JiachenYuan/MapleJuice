@@ -10,14 +10,11 @@ import (
 
 func main() {
 	var wg sync.WaitGroup
-	go startFailureDetector(&wg)
+	startFailureDetector(&wg)
 	startSDFS(&wg)
-	SDFS.StartLeaderElection()
-
-	for {
-		fmt.Printf("*** Current Leader is VM %v ***\n", SDFS.GetLeaderID())
-		time.Sleep(5*time.Second)
-	}
+	startLeaderElection(&wg)
+	go monitorLeader()
+	
 	wg.Wait()
 
 }
@@ -67,4 +64,20 @@ func startSDFS(wg *sync.WaitGroup) {
 		defer wg.Done()
 		SDFS.HandleSDFSMessages()
 	}()
+}
+
+func startLeaderElection(wg *sync.WaitGroup) {
+	wg.Add(1)
+	fmt.Println("Leader Election running in background")
+	go func() {
+		defer wg.Done()
+		SDFS.StartLeaderElection()
+	}()
+}
+
+func monitorLeader() {
+	for {
+		fmt.Printf("*** Current Leader is VM %v ***\n", SDFS.GetLeaderID())
+		time.Sleep(5*time.Second)
+	}
 }

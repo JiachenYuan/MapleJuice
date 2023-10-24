@@ -195,7 +195,7 @@ func leaderTask() {
 			
 		}
 		// s.serverStateLock.Unlock()
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(2 * time.Second)
 	}
 }
 
@@ -230,7 +230,7 @@ func startElection() {
 	localID := getLocalServerID()
 	s.serverStateLock.Lock()
 	s.electionDeadline = time.Now().Add(randomDuration())
-	fmt.Printf("Next deadline is %v\n", s.electionDeadline)
+	// fmt.Printf("Next deadline is %v\n", s.electionDeadline)
 	originalState := s.state
 	s.currentTerm++
 	originalTerm := s.currentTerm
@@ -240,7 +240,7 @@ func startElection() {
 	// send request vote to every live peers
 	aliveServerAddrs := getAlivePeersAddrs()
 
-	fmt.Printf("Going to send request vote to %v\n", aliveServerAddrs)
+	// fmt.Printf("Going to send request vote to %v\n", aliveServerAddrs)
 	
 	var wg sync.WaitGroup
 	
@@ -260,14 +260,14 @@ func startElection() {
 				fmt.Printf("Failed to dial: %v\n", err)
 				return
 			}
-			fmt.Println("dialing")
+			// fmt.Println("dialing")
 			defer conn.Close()
 			// Request vote to peers and and respond if states haven't changed since start of the election
 			client := pb.NewLeaderElectionClient(conn)
 			timeout := 2 * time.Second
 			ctx, callCancel := context.WithTimeout(context.Background(), timeout)
 			defer callCancel()
-			fmt.Println("sending RequestVotes")
+			// fmt.Println("sending RequestVotes")
 			voteResponse, err := client.RequestVotes(ctx, &pb.VoteRequest{
 				Term: originalTerm,
 				CandidateID: int32(localID),
@@ -291,8 +291,7 @@ func startElection() {
 
 			if  (!convertedToLeader) && voteResponse.VoteGranted{
 				numVotes++
-				// if numVotes >= 10/2+1 { // Quorum reached
-				if numVotes >= 2 { // ! Testing
+				if numVotes >= global.QUORUM { // Quorum reached
 					s.state = Leader
 					fmt.Println("Promoted to leader")
 					s.leaderID = int32(localID)
@@ -310,7 +309,7 @@ func startElection() {
 	}
 	wg.Wait()
 
-	fmt.Println("Finished election")
+	// fmt.Println("Finished election")
 
 }
 
@@ -320,7 +319,7 @@ func startClient() {
 }
 
 func StartLeaderElection() {
-	go startServer()
 	startClient()
+	startServer()
 }
 
