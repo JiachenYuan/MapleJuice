@@ -60,6 +60,7 @@ func NodeStatusUpdateAndNewGossip() *pb.GroupMessage {
 					customLog(true, "Marking %v as from suspected to failed, over time for %v time", key, sinceLastTimestamp.Seconds()-T_FAIL.Seconds())
 				}
 				node.Status = Failed
+				SDFS_CHANNEL <- fmt.Sprintf("Failed: %v", node.NodeAddr)
 				node.TimeStamp = time.Now()
 			}
 		}

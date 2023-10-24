@@ -29,6 +29,7 @@ var (
 
 	DNS_Cache_Lock = &sync.Mutex{}           // mutex to protect DNS_Cache
 	DNS_Cache      = make(map[string]string) // local cache to store the response of DNS request
+	SDFS_CHANNEL   chan string               // channel to communicate with SDFS
 )
 
 // Node struct to represent each row in the membership list
@@ -78,6 +79,10 @@ const (
 
 func init() {
 	updateLocalNodeKey()
+}
+
+func SetSDFSChannel(channel chan string) {
+	SDFS_CHANNEL = channel
 }
 
 // Refresh current node's ID key

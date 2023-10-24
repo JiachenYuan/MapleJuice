@@ -19,6 +19,11 @@ enum SDFSResponseType {
     STORE_RES = 4;
 }
 
+enum SDFSResponseStatus {
+    RES_STATUS_OK = 0;
+    RES_STATUS_FAILED = 1;
+}
+
 // Specific to request
 message SDFSRequest {
     SDFSRequestType requestType = 1;
@@ -29,7 +34,9 @@ message SDFSRequest {
 // Specific to response
 message SDFSResponse {
     SDFSResponseType responseType = 1;
-    repeated string replicas = 2;
-    repeated string sdfsFileNames = 3;
-    repeated string VMAddresses = 4;
+    SDFSResponseStatus responseStatus = 2;
+    repeated string replicas = 3;
+    repeated string sdfsFileNames = 4;
+    repeated string VMAddresses = 5;
+    string error = 6;
 }

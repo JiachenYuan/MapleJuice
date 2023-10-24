@@ -85,6 +85,17 @@ func GetAllNodeAddresses() []string {
 	return allNodesAddresses
 }
 
+func IsNodeAlive(nodeAddr string) bool {
+	NodeListLock.Lock()
+	defer NodeListLock.Unlock()
+	for _, node := range NodeInfoList {
+		if node.NodeAddr == nodeAddr && node.Status == Alive {
+			return true
+		}
+	}
+	return false
+}
+
 // Process GOSSIP/LEAVE messages, updating membership list as needed
 func processGossipMessage(message *pb.GroupMessage) {
 	// fmt.Println("Processing gossip message")

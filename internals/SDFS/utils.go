@@ -2,6 +2,7 @@ package SDFS
 
 import (
 	"crypto/md5"
+	"cs425-mp/internals/failureDetector"
 	"fmt"
 	"strconv"
 	"strings"
@@ -20,17 +21,32 @@ func hashFileName(fileName string) string {
 	return fmt.Sprintf("%v", total%10+1)
 }
 
+func isCurrentNodeLeader() bool {
+	return HOSTNAME == LEADER_ADDRESS
+}
+
 func getDefaultReplicaVMAddresses(id string) []string {
-	//TODO: check for two conditions:
-	//1. membership list size smaller than 4
-	//2. node not exist in membership list in the for loop
-	replicas := make([]string, 4)
-	val, err := strconv.Atoi(id)
-	if err != nil {
-		fmt.Println("Input id cannot be parsed to int")
-	}
-	for i := 0; i < 4; i++ {
-		replicas[i] = getFullHostNameFromID(fmt.Sprintf("%v", ((val+i)%10 + 1)))
+	membershipList := failureDetector.GetAllNodeAddresses()
+	replicaSize := max(4, len(membershipList))
+
+	replicas := make([]string, replicaSize)
+
+	if replicaSize < NUM_WRITE {
+		replicas = append(replicas, membershipList...)
+	} else {
+		val, err := strconv.Atoi(id)
+		if err != nil {
+			fmt.Println("Input id cannot be parsed to int")
+		}
+		i := 0
+		for i < 4 {
+			hostName := getFullHostNameFromID(fmt.Sprintf("%v", ((val+i)%10 + 1)))
+			if failureDetector.IsNodeAlive(hostName) {
+				replicas[i] = hostName
+				i++
+			}
+
+		}
 	}
 	return replicas
 }
@@ -88,4 +104,11 @@ func listSDFSFileVMs(sdfsFileName string) []string {
 		}
 	}
 	return VMList
+}
+
+func max(a int, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }
