@@ -64,7 +64,7 @@ func decompressServerTimeID(input string) string {
 	parts := strings.Split(input, "_")
 	serverNumber := parts[0]
 	millisecond := parts[1]
-	decompressedID := fmt.Sprintf("fa23-cs425-18%s.cs.illinois.edu:55556:22097-09-05 97:23:35.%s", serverNumber, millisecond)
+	decompressedID := fmt.Sprintf("fa23-cs425-18%s.cs.illinois.edu:%v:22097-09-05 97:23:35.%s", serverNumber, global.FD_PORT, millisecond)
 	return decompressedID
 }
 

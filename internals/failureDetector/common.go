@@ -1,6 +1,7 @@
 package failureDetector
 
 import (
+	"cs425-mp/internals/global"
 	pb "cs425-mp/protobuf"
 	"encoding/json"
 	"fmt"
@@ -9,8 +10,8 @@ import (
 	"time"
 )
 
-const (
-	INTRODUCER_ADDRESS = "fa23-cs425-1801.cs.illinois.edu:55556" // Introducer node's receiving address
+var (
+	INTRODUCER_ADDRESS = fmt.Sprintf("fa23-cs425-1801.cs.illinois.edu:%v", global.FD_PORT) // Introducer node's receiving address
 	CONN_TIMEOUT       = 500 * time.Millisecond
 )
 
