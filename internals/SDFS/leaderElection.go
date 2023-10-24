@@ -58,7 +58,7 @@ func newMemberServer() *MemberServer {
 
 func refreshDeadline(triggerBy string) {
 	s.electionDeadline = time.Now().Add(randomDuration())
-	fmt.Printf("New election deadline is %v, reset by %s\n", s.electionDeadline, triggerBy)
+	// fmt.Printf("New election deadline is %v, reset by %s\n", s.electionDeadline, triggerBy)
 }
 
 // HeartBeat implements protobuf.LeaderElectionServer.
@@ -96,6 +96,7 @@ func (s *MemberServer) RequestVotes(ctx context.Context, request *pb.VoteRequest
 		s.currentTerm = request.Term
 		s.state = Follower
 		s.votedFor = request.CandidateID
+		fmt.Printf("My term is %v, and request term is %v \n", s.currentTerm, request.Term)
 		refreshDeadline("RequestVotes")
 
 		return &pb.VoteResponse{
