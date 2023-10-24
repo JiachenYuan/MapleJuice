@@ -294,6 +294,7 @@ func startElection() {
 				if numVotes >= 2 { // ! Testing
 					s.state = Leader
 					fmt.Println("Promoted to leader")
+					s.leaderID = int32(localID)
 					convertedToLeader = true
 					return
 				}
