@@ -126,7 +126,7 @@ func randomPeersToPB(newcomerKey string) *pb.NodeInfoList {
 	}
 	rand.Shuffle(len(keyPool), func(i, j int) { keyPool[i], keyPool[j] = keyPool[j], keyPool[i] })
 
-	numPeersToSend := min(NUM_NODES_TO_GOSSIP, len(keyPool))
+	numPeersToSend := global.Min(NUM_NODES_TO_GOSSIP, len(keyPool))
 
 	for _, nodeID := range keyPool {
 		nodeInfo := NodeInfoList[nodeID]

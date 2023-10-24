@@ -190,7 +190,11 @@ func processPutMessage(message *pb.SDFSRequest, conn net.Conn) {
 	if err != nil {
 		fmt.Printf("Failed to marshal Put Response: %v\n", err.Error())
 	}
-	conn.Write(responseBytes)
+	_, err = conn.Write(responseBytes)
+	if err != nil {
+		fmt.Println("Error writing to TCP: ", err)
+		return
+	}
 }
 
 func processDeleteMessage(message *pb.SDFSRequest, conn net.Conn) {
@@ -303,7 +307,7 @@ func putFile(localFileName string, sdfsFileName string) {
 			return
 		}
 	}
-	fmt.Printf("Put file to 4 replicas: %+q\n", targetReplicas)
+	fmt.Printf("Put file to replicas: %+q\n", targetReplicas)
 }
 
 func deleteFile(sdfsFileName string) {

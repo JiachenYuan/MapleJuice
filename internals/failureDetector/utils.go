@@ -13,7 +13,7 @@ import (
 
 // Helper function to randomly select <= NUM nodes to gossip to
 func randomlySelectNodes(num int) []*Node {
-	num = min(num, len(NodeInfoList)-1)
+	num = global.Min(num, len(NodeInfoList)-1)
 	keys := make([]string, 0, len(NodeInfoList))
 	for k := range NodeInfoList {
 		// do not add self to target list
@@ -75,13 +75,6 @@ func GetAddrFromNodeKey(nodeKey string) string {
 	peer_name := idSplitted[0]
 	peer_port := idSplitted[1]
 	return peer_name + ":" + peer_port
-}
-
-func min(a int, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }
 
 // Log setup function. Should call before starting anything
