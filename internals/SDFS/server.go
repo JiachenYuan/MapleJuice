@@ -155,7 +155,6 @@ func handleConnection(conn net.Conn) {
 }
 
 func processGetMessage(message *pb.SDFSRequest, conn net.Conn) {
-	fmt.Println("Received Get Message")
 	fileName := message.SdfsFileName
 	vmList := listSDFSFileVMs(fileName)
 	response := &pb.SDFSResponse{
@@ -170,7 +169,6 @@ func processGetMessage(message *pb.SDFSRequest, conn net.Conn) {
 }
 
 func processPutMessage(message *pb.SDFSRequest, conn net.Conn) {
-	fmt.Println("Received Put Message")
 	fileName := message.SdfsFileName
 	var targetReplicas []string
 	val, exists := memTable.fileToVMMap[fileName]
@@ -198,7 +196,6 @@ func processPutMessage(message *pb.SDFSRequest, conn net.Conn) {
 }
 
 func processDeleteMessage(message *pb.SDFSRequest, conn net.Conn) {
-	fmt.Println("Received Delete Message")
 	if isCurrentNodeLeader() {
 		fileName := message.SdfsFileName
 		vmList := listSDFSFileVMs(fileName)
@@ -231,7 +228,6 @@ func processDeleteMessage(message *pb.SDFSRequest, conn net.Conn) {
 }
 
 func processLSMessage(message *pb.SDFSRequest, conn net.Conn) {
-	fmt.Println("Received LS Message")
 	fileName := message.SdfsFileName
 	vmList := listSDFSFileVMs(fileName)
 	response := &pb.SDFSResponse{
@@ -246,7 +242,6 @@ func processLSMessage(message *pb.SDFSRequest, conn net.Conn) {
 }
 
 func processStoreMessage(message *pb.SDFSRequest, conn net.Conn) {
-	fmt.Println("Received Store Message")
 	requestorHostName := message.VM
 	fileNameList := getAllSDFSFilesForVM(requestorHostName)
 	response := &pb.SDFSResponse{
