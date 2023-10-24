@@ -143,8 +143,10 @@ func handleConnection(conn net.Conn) {
 			processGetMessage(request, conn)
 		case pb.SDFSRequestType_PUT_REQ:
 			processPutMessage(request, conn)
-		case pb.SDFSRequestType_DELETE_REQ:
-			processDeleteMessage(request, conn)
+		case pb.SDFSRequestType_DELETE_REQ_LEADER:
+			processDeleteMessageLeader(request, conn)
+		case pb.SDFSRequestType_DELETE_REQ_FOLLOWER:
+			processDeleteMessageFollower(request, conn)
 		case pb.SDFSRequestType_LS_REQ:
 			processLSMessage(request, conn)
 		case pb.SDFSRequestType_STORE_REQ:
@@ -195,36 +197,41 @@ func processPutMessage(message *pb.SDFSRequest, conn net.Conn) {
 	}
 }
 
-func processDeleteMessage(message *pb.SDFSRequest, conn net.Conn) {
-	if isCurrentNodeLeader() {
-		fileName := message.SdfsFileName
-		vmList := listSDFSFileVMs(fileName)
-		response := sendDeleteFileMessageToReplicaNodes(fileName, vmList)
-		responseBytes, err := proto.Marshal(response)
-		if err != nil {
-			fmt.Printf("Failed to marshal Delete Response: %v\n", err.Error())
-		}
-		conn.Write(responseBytes)
-		memTable.delete(fileName)
-	} else {
-		fileName := message.SdfsFileName
-		err := deleteLocalSDFSFile(fileName)
-		response := &pb.SDFSResponse{
-			ResponseType: pb.SDFSResponseType_DELETE_RES,
-		}
-		if err != nil {
-			fmt.Printf("Failed to delete local file : %v\n", err)
-			response.Error = err.Error()
-			response.ResponseStatus = pb.SDFSResponseStatus_RES_STATUS_FAILED
-		} else {
-			response.ResponseStatus = pb.SDFSResponseStatus_RES_STATUS_OK
-		}
-		responseBytes, err := proto.Marshal(response)
-		if err != nil {
-			fmt.Printf("Failed to marshal Delete Response: %v\n", err.Error())
-		}
-		conn.Write(responseBytes)
+func processDeleteMessageLeader(message *pb.SDFSRequest, conn net.Conn) {
+	if !isCurrentNodeLeader() {
+		fmt.Println("Not leader, cannot process delete message")
+		return
 	}
+
+	fileName := message.SdfsFileName
+	vmList := listSDFSFileVMs(fileName)
+	response := sendDeleteFileMessageToReplicaNodes(fileName, vmList)
+	responseBytes, err := proto.Marshal(response)
+	if err != nil {
+		fmt.Printf("Failed to marshal Delete Response: %v\n", err.Error())
+	}
+	conn.Write(responseBytes)
+	memTable.delete(fileName)
+}
+
+func processDeleteMessageFollower(message *pb.SDFSRequest, conn net.Conn) {
+	fileName := message.SdfsFileName
+	err := deleteLocalSDFSFile(fileName)
+	response := &pb.SDFSResponse{
+		ResponseType: pb.SDFSResponseType_DELETE_RES_LEADER,
+	}
+	if err != nil {
+		fmt.Printf("Failed to delete local file : %v\n", err)
+		response.Error = err.Error()
+		response.ResponseStatus = pb.SDFSResponseStatus_RES_STATUS_FAILED
+	} else {
+		response.ResponseStatus = pb.SDFSResponseStatus_RES_STATUS_OK
+	}
+	responseBytes, err := proto.Marshal(response)
+	if err != nil {
+		fmt.Printf("Failed to marshal Delete Response: %v\n", err.Error())
+	}
+	conn.Write(responseBytes)
 }
 
 func processLSMessage(message *pb.SDFSRequest, conn net.Conn) {
@@ -310,7 +317,12 @@ func deleteFile(sdfsFileName string) {
 		fmt.Printf("Failed to delete local file : %v\n", err)
 		return
 	}
-	sendDeleteFileMessageToLeader(sdfsFileName)
+	res := sendDeleteFileMessageToLeader(sdfsFileName)
+	if res.ResponseStatus == pb.SDFSResponseStatus_RES_STATUS_OK {
+		fmt.Printf("Successfully deleted file %s\n", sdfsFileName)
+	} else {
+		fmt.Printf("Failed to delete file %s: %s\n", sdfsFileName, res.Error)
+	}
 }
 
 func deleteLocalSDFSFile(sdfsFileName string) error {
@@ -321,7 +333,6 @@ func deleteLocalSDFSFile(sdfsFileName string) error {
 	for _, file := range files {
 		filePath := filepath.Join(SDFS_PATH, file.Name())
 		if !file.IsDir() && strings.HasPrefix(file.Name(), sdfsFileName) {
-			fmt.Printf("Try to delete file %s.\n", file.Name())
 			err := os.Remove(filePath)
 			if err != nil {
 				return err
@@ -401,7 +412,7 @@ func sendPutFileMessage(fileName string) *pb.SDFSResponse {
 
 func sendDeleteFileMessageToLeader(fileName string) *pb.SDFSResponse {
 	deleteMessage := &pb.SDFSRequest{
-		RequestType:  pb.SDFSRequestType_DELETE_REQ,
+		RequestType:  pb.SDFSRequestType_DELETE_REQ_LEADER,
 		SdfsFileName: fileName,
 	}
 	messageBytes, err := proto.Marshal(deleteMessage)
@@ -414,7 +425,7 @@ func sendDeleteFileMessageToLeader(fileName string) *pb.SDFSResponse {
 
 func sendDeleteFileMessageToReplicaNodes(fileName string, replicas []string) *pb.SDFSResponse {
 	deleteMessage := &pb.SDFSRequest{
-		RequestType:  pb.SDFSRequestType_DELETE_REQ,
+		RequestType:  pb.SDFSRequestType_DELETE_REQ_FOLLOWER,
 		SdfsFileName: fileName,
 	}
 	messageBytes, err := proto.Marshal(deleteMessage)
@@ -422,7 +433,8 @@ func sendDeleteFileMessageToReplicaNodes(fileName string, replicas []string) *pb
 		fmt.Printf("Failed to marshal DeleteMessage: %v\n", err.Error())
 	}
 	response := &pb.SDFSResponse{
-		ResponseType: pb.SDFSResponseType_DELETE_RES,
+		ResponseType:   pb.SDFSResponseType_DELETE_RES_FOLLOWER,
+		ResponseStatus: pb.SDFSResponseStatus_RES_STATUS_OK,
 	}
 	for _, r := range replicas {
 		res := sendMesageToNode(r, messageBytes)
