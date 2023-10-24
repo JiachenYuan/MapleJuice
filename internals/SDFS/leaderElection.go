@@ -93,7 +93,6 @@ func (s *MemberServer) RequestVotes(ctx context.Context, request *pb.VoteRequest
 
 	if s.currentTerm < request.Term {
 		// update current term and convert back to follower
-		fmt.Printf("My term is %v, and request term is %v \n", s.currentTerm, request.Term)
 		s.currentTerm = request.Term
 		s.state = Follower
 		s.votedFor = request.CandidateID
@@ -244,8 +243,6 @@ func startElection() {
 	
 	// send request vote to every live peers
 	aliveServerAddrs := getAlivePeersAddrs()
-	// Quick way to converge, if alive peer count is less than the quorum-1, never going to achieve leader
-	s.leaderID = -1
 
 	// fmt.Printf("Going to send request vote to %v\n", aliveServerAddrs)
 	
