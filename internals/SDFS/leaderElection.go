@@ -269,14 +269,14 @@ func startElection() {
 			voteResponse, err := client.RequestVotes(ctx, &pb.VoteRequest{
 				Term: originalTerm,
 				CandidateID: int32(localID),
-			});
+			}, );
 			if err != nil {
 				// Check if the error is due to a timeout
 				if ctx.Err() == context.DeadlineExceeded {
-					log.Fatalf("gRPC call timed out after %s", timeout)
+					fmt.Printf("gRPC call timed out after %s", timeout)
 					return
 				} else {
-					log.Fatalf("Failed to call RequestVotes: %v", err)
+					fmt.Printf("Failed to call RequestVotes: %v", err)
 					return
 				}
 			}
