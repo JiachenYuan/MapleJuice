@@ -154,7 +154,7 @@ func leaderTask() {
 					defer dialCancel()
 					conn, err := grpc.DialContext(ctx, _hostname+":"+global.LEADER_ELECTION_PORT, grpc.WithTransportCredentials(insecure.NewCredentials())) 
 					if err != nil {
-						fmt.Printf("Failed to dial: %v", err)
+						fmt.Printf("Failed to dial: %v\n", err)
 					}
 					defer conn.Close()
 					// Request vote to peers and and respond if states haven't changed since start of the election
@@ -169,10 +169,10 @@ func leaderTask() {
 					if err != nil {
 						// Check if the error is due to a timeout
 						if ctx.Err() == context.DeadlineExceeded {
-							fmt.Printf("gRPC call timed out after %s", timeout)
+							fmt.Printf("gRPC call timed out after %s\n", timeout)
 							return
 						} else {
-							fmt.Printf("Failed to call Heartbeat: %v", err)
+							fmt.Printf("Failed to call Heartbeat: %v\n", err)
 							return
 						}
 					}
@@ -207,6 +207,7 @@ func followerTask() {
 		if (s.state == Follower || s.state == Candidate) {
 			if time.Now().After(s.electionDeadline) {
 				s.state = Candidate
+				s.leaderID = -1 // reset leader id 
 				originalTerm := s.currentTerm
 				s.serverStateLock.Unlock()
 				if lastTerm == -1 || originalTerm != lastTerm {
@@ -274,10 +275,10 @@ func startElection() {
 			if err != nil {
 				// Check if the error is due to a timeout
 				if ctx.Err() == context.DeadlineExceeded {
-					fmt.Printf("gRPC call timed out after %s", timeout)
+					fmt.Printf("gRPC call timed out after %s\n", timeout)
 					return
 				} else {
-					fmt.Printf("Failed to call RequestVotes: %v", err)
+					fmt.Printf("Failed to call RequestVotes: %v\n", err)
 					return
 				}
 			}
