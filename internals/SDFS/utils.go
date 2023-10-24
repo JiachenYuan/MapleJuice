@@ -84,7 +84,7 @@ func getIDFromFullHostName(hostName string) string { // might use it later if we
 	return id
 }
 
-func getAllLocalSDFSFilesForVM(vmAddress string) []string {
+func getAllSDFSFilesForVM(vmAddress string) []string {
 	var fileNames []string
 	files, exists := memTable.VMToFileMap[vmAddress]
 	if !exists {

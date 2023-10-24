@@ -248,7 +248,7 @@ func processLSMessage(message *pb.SDFSRequest, conn net.Conn) {
 func processStoreMessage(message *pb.SDFSRequest, conn net.Conn) {
 	fmt.Println("Received Store Message")
 	requestorHostName := message.VM
-	fileNameList := getAllLocalSDFSFilesForVM(requestorHostName)
+	fileNameList := getAllSDFSFilesForVM(requestorHostName)
 	response := &pb.SDFSResponse{
 		ResponseType:  pb.SDFSResponseType_LS_RES,
 		SdfsFileNames: fileNameList,
@@ -293,7 +293,6 @@ func putFile(localFileName string, sdfsFileName string) {
 	for _, r := range targetReplicas {
 		targetHostName := getScpHostNameFromHostName(r)
 		remotePath := targetHostName + ":" + filepath.Join(SDFS_PATH, sdfsFileName)
-		fmt.Printf("Remote path is: %s\n", remotePath)
 		cmd := exec.Command("scp", localFileName, remotePath)
 		err := cmd.Start()
 		if err != nil {

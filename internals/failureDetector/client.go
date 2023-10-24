@@ -1,6 +1,7 @@
 package failureDetector
 
 import (
+	"cs425-mp/internals/global"
 	pb "cs425-mp/protobuf"
 	"errors"
 	"fmt"
@@ -112,7 +113,7 @@ func sendGossipToNodes(selectedNodes []*Node, gossip []byte) {
 				return
 			}
 			customLog(false, "Sent gossip with size of %v bytes", len(gossip))
-		}(node.NodeAddr)
+		}(addPortNumberToNodeAddr(node.NodeAddr))
 	}
 	wg.Wait()
 }
@@ -143,7 +144,7 @@ func JoinGroupAndInit() error {
 		fmt.Printf("Failed to marshal GroupMessage: %v\n", err.Error())
 	}
 
-	conn, err := net.Dial("udp", INTRODUCER_ADDRESS)
+	conn, err := net.Dial("udp", INTRODUCER_ADDRESS+":"+global.FD_PORT)
 	if err != nil {
 		return err
 	}

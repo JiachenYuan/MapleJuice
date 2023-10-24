@@ -77,6 +77,7 @@ func processJoinMessage(conn net.PacketConn, from net.Addr, message *pb.GroupMes
 	}
 }
 
+// get all node's addresses
 func GetAllNodeAddresses() []string {
 	var allNodesAddresses []string
 	for _, node := range NodeInfoList {

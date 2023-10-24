@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	INTRODUCER_ADDRESS = "fa23-cs425-1801.cs.illinois.edu:55556" // Introducer node's receiving address
+	INTRODUCER_ADDRESS = "fa23-cs425-1801.cs.illinois.edu" // Introducer node's receiving address
 	CONN_TIMEOUT       = 500 * time.Millisecond
 )
 
