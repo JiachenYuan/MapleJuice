@@ -56,9 +56,9 @@ func newMemberServer() *MemberServer {
 	}
 }
 
-func refreshDeadline() {
+func refreshDeadline(triggerBy string) {
 	s.electionDeadline = time.Now().Add(randomDuration())
-	fmt.Printf("New election deadline is %v\n", s.electionDeadline)
+	fmt.Printf("New election deadline is %v, reset by %s\n", s.electionDeadline, triggerBy)
 }
 
 // HeartBeat implements protobuf.LeaderElectionServer.
@@ -71,7 +71,7 @@ func (s *MemberServer) HeartBeat(ctx context.Context, ping *pb.Ping) (*pb.Pong, 
 		s.currentTerm = ping.Term
 		s.leaderID = ping.LeaderID
 		s.state = Follower
-		refreshDeadline()
+		refreshDeadline("HeatBeat")
 
 		return &pb.Pong{
 			Term:    s.currentTerm,
@@ -96,7 +96,7 @@ func (s *MemberServer) RequestVotes(ctx context.Context, request *pb.VoteRequest
 		s.currentTerm = request.Term
 		s.state = Follower
 		s.votedFor = request.CandidateID
-		refreshDeadline()
+		refreshDeadline("RequestVotes")
 
 		return &pb.VoteResponse{
 			Term:        s.currentTerm,
@@ -188,7 +188,7 @@ func leaderTask() {
 					if pong.Term > s.currentTerm {
 						s.currentTerm = pong.Term
 						s.state = Follower
-						refreshDeadline()
+						refreshDeadline("Leader Task")
 					}
 
 					s.serverStateLock.Unlock()
@@ -205,8 +205,6 @@ func leaderTask() {
 func followerTask() {
 	lastTerm := int64(-1)
 	for {
-		fmt.Printf("Current time is %v\n", time.Now())
-		
 		s.serverStateLock.Lock()
 		
 		if (s.state == Follower || s.state == Candidate) {
@@ -234,7 +232,7 @@ func startElection() {
 	}
 	localID := getLocalServerID()
 	s.serverStateLock.Lock()
-	refreshDeadline()
+	refreshDeadline("StartElection")
 
 	// fmt.Printf("Next deadline is %v\n", s.electionDeadline)
 	originalState := s.state
@@ -309,7 +307,7 @@ func startElection() {
 				// update current term and convert back to follower
 				s.currentTerm = voteResponse.Term
 				s.state = Follower
-				refreshDeadline()
+				refreshDeadline("StartElection 2")
 
 			}
 		}(hostname)
