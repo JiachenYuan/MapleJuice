@@ -342,6 +342,7 @@ func putFile(localFileName string, sdfsFileName string) {
 	conn, err := grpc.DialContext(ctx, LEADER_ADDRESS+":"+global.SDFS_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		fmt.Printf("did not connect: %v\n", err)
+		return
 	}
 	defer conn.Close()
 
@@ -354,23 +355,29 @@ func putFile(localFileName string, sdfsFileName string) {
 	})
 
 	if err != nil {
-		// Check if the error is due to a timeout
 		if ctx.Err() == context.DeadlineExceeded {
 			fmt.Printf("gRPC call timed out after %s\n", timeout)
 		} else {
 			fmt.Printf("Failed to call replicate: %v\n", err)
 		}
+		return
 	}
-	if !r.Success {
+
+	if r == nil || !r.Success {
 		fmt.Printf("Failed to put file %s to sdfs %s \n", localFileName, sdfsFileName)
 		return
-	} else {
-		targetReplicas := r.VMAddresses
-		fmt.Printf("Put file %s to sdfs %s \n", localFileName, sdfsFileName)
-		err = transferFile(localFileName, sdfsFileName, targetReplicas)
-		if err != nil {
-			fmt.Printf("Failed to transfer file: %v\n", err)
-		}
+	}
+
+	targetReplicas := r.VMAddresses
+	if len(targetReplicas) == 0 {
+		fmt.Printf("No target replicas provided\n")
+		return
+	}
+
+	fmt.Printf("Put file %s to sdfs %s \n", localFileName, sdfsFileName)
+	err = transferFile(localFileName, sdfsFileName, targetReplicas)
+	if err != nil {
+		fmt.Printf("Failed to transfer file: %v\n", err)
 	}
 }
 
