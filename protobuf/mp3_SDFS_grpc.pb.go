@@ -23,8 +23,8 @@ const (
 	SDFS_PutFile_FullMethodName            = "/cs425_mp3.SDFS/PutFile"
 	SDFS_DeleteFileLeader_FullMethodName   = "/cs425_mp3.SDFS/DeleteFileLeader"
 	SDFS_DeleteFileFollower_FullMethodName = "/cs425_mp3.SDFS/DeleteFileFollower"
-	SDFS_LsFile_FullMethodName             = "/cs425_mp3.SDFS/LsFile"
-	SDFS_StoreFile_FullMethodName          = "/cs425_mp3.SDFS/StoreFile"
+	SDFS_ListFileHolder_FullMethodName     = "/cs425_mp3.SDFS/ListFileHolder"
+	SDFS_ListLocalFiles_FullMethodName     = "/cs425_mp3.SDFS/ListLocalFiles"
 	SDFS_ReplicateFile_FullMethodName      = "/cs425_mp3.SDFS/ReplicateFile"
 )
 
@@ -36,8 +36,8 @@ type SDFSClient interface {
 	PutFile(ctx context.Context, in *PutRequest, opts ...grpc.CallOption) (*PutResponse, error)
 	DeleteFileLeader(ctx context.Context, in *DeleteRequestLeader, opts ...grpc.CallOption) (*DeleteResponseLeader, error)
 	DeleteFileFollower(ctx context.Context, in *DeleteRequestFollower, opts ...grpc.CallOption) (*DeleteResponseFollower, error)
-	LsFile(ctx context.Context, in *LsRequest, opts ...grpc.CallOption) (*LsResponse, error)
-	StoreFile(ctx context.Context, in *StoreRequest, opts ...grpc.CallOption) (*StoreResponse, error)
+	ListFileHolder(ctx context.Context, in *ListFileHolderRequest, opts ...grpc.CallOption) (*ListFileHolderResponse, error)
+	ListLocalFiles(ctx context.Context, in *ListLocalFilesRequest, opts ...grpc.CallOption) (*ListLocalFilesResponse, error)
 	ReplicateFile(ctx context.Context, in *ReplicationRequest, opts ...grpc.CallOption) (*ReplicationResponse, error)
 }
 
@@ -85,18 +85,18 @@ func (c *sDFSClient) DeleteFileFollower(ctx context.Context, in *DeleteRequestFo
 	return out, nil
 }
 
-func (c *sDFSClient) LsFile(ctx context.Context, in *LsRequest, opts ...grpc.CallOption) (*LsResponse, error) {
-	out := new(LsResponse)
-	err := c.cc.Invoke(ctx, SDFS_LsFile_FullMethodName, in, out, opts...)
+func (c *sDFSClient) ListFileHolder(ctx context.Context, in *ListFileHolderRequest, opts ...grpc.CallOption) (*ListFileHolderResponse, error) {
+	out := new(ListFileHolderResponse)
+	err := c.cc.Invoke(ctx, SDFS_ListFileHolder_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *sDFSClient) StoreFile(ctx context.Context, in *StoreRequest, opts ...grpc.CallOption) (*StoreResponse, error) {
-	out := new(StoreResponse)
-	err := c.cc.Invoke(ctx, SDFS_StoreFile_FullMethodName, in, out, opts...)
+func (c *sDFSClient) ListLocalFiles(ctx context.Context, in *ListLocalFilesRequest, opts ...grpc.CallOption) (*ListLocalFilesResponse, error) {
+	out := new(ListLocalFilesResponse)
+	err := c.cc.Invoke(ctx, SDFS_ListLocalFiles_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -120,8 +120,8 @@ type SDFSServer interface {
 	PutFile(context.Context, *PutRequest) (*PutResponse, error)
 	DeleteFileLeader(context.Context, *DeleteRequestLeader) (*DeleteResponseLeader, error)
 	DeleteFileFollower(context.Context, *DeleteRequestFollower) (*DeleteResponseFollower, error)
-	LsFile(context.Context, *LsRequest) (*LsResponse, error)
-	StoreFile(context.Context, *StoreRequest) (*StoreResponse, error)
+	ListFileHolder(context.Context, *ListFileHolderRequest) (*ListFileHolderResponse, error)
+	ListLocalFiles(context.Context, *ListLocalFilesRequest) (*ListLocalFilesResponse, error)
 	ReplicateFile(context.Context, *ReplicationRequest) (*ReplicationResponse, error)
 	mustEmbedUnimplementedSDFSServer()
 }
@@ -142,11 +142,11 @@ func (UnimplementedSDFSServer) DeleteFileLeader(context.Context, *DeleteRequestL
 func (UnimplementedSDFSServer) DeleteFileFollower(context.Context, *DeleteRequestFollower) (*DeleteResponseFollower, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteFileFollower not implemented")
 }
-func (UnimplementedSDFSServer) LsFile(context.Context, *LsRequest) (*LsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method LsFile not implemented")
+func (UnimplementedSDFSServer) ListFileHolder(context.Context, *ListFileHolderRequest) (*ListFileHolderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListFileHolder not implemented")
 }
-func (UnimplementedSDFSServer) StoreFile(context.Context, *StoreRequest) (*StoreResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method StoreFile not implemented")
+func (UnimplementedSDFSServer) ListLocalFiles(context.Context, *ListLocalFilesRequest) (*ListLocalFilesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListLocalFiles not implemented")
 }
 func (UnimplementedSDFSServer) ReplicateFile(context.Context, *ReplicationRequest) (*ReplicationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReplicateFile not implemented")
@@ -236,38 +236,38 @@ func _SDFS_DeleteFileFollower_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SDFS_LsFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(LsRequest)
+func _SDFS_ListFileHolder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListFileHolderRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SDFSServer).LsFile(ctx, in)
+		return srv.(SDFSServer).ListFileHolder(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: SDFS_LsFile_FullMethodName,
+		FullMethod: SDFS_ListFileHolder_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SDFSServer).LsFile(ctx, req.(*LsRequest))
+		return srv.(SDFSServer).ListFileHolder(ctx, req.(*ListFileHolderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SDFS_StoreFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StoreRequest)
+func _SDFS_ListLocalFiles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListLocalFilesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SDFSServer).StoreFile(ctx, in)
+		return srv.(SDFSServer).ListLocalFiles(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: SDFS_StoreFile_FullMethodName,
+		FullMethod: SDFS_ListLocalFiles_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SDFSServer).StoreFile(ctx, req.(*StoreRequest))
+		return srv.(SDFSServer).ListLocalFiles(ctx, req.(*ListLocalFilesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -314,12 +314,12 @@ var SDFS_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _SDFS_DeleteFileFollower_Handler,
 		},
 		{
-			MethodName: "LsFile",
-			Handler:    _SDFS_LsFile_Handler,
+			MethodName: "ListFileHolder",
+			Handler:    _SDFS_ListFileHolder_Handler,
 		},
 		{
-			MethodName: "StoreFile",
-			Handler:    _SDFS_StoreFile_Handler,
+			MethodName: "ListLocalFiles",
+			Handler:    _SDFS_ListLocalFiles_Handler,
 		},
 		{
 			MethodName: "ReplicateFile",
