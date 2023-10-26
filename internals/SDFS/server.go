@@ -152,7 +152,7 @@ func (s *SDFSServer) PutFile(ctx context.Context, in *pb.PutRequest) (*pb.PutRes
 }
 
 // update file table (sent to leader)
-func (s *SDFSServer) updateLeaderFileTable(ctx context.Context, in *pb.UpdateLeaderFileTableRequest) (*pb.UpdateLeaderFileTableResponse, error) {
+func (s *SDFSServer) UpdateLeaderFileTable(ctx context.Context, in *pb.UpdateLeaderFileTableRequest) (*pb.UpdateLeaderFileTableResponse, error) {
 	fileName := in.FileName
 	vmAddress := in.ReplicaAddresses
 	//update file table
