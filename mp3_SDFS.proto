@@ -1,0 +1,84 @@
+syntax = "proto3";
+package cs425_mp3;
+
+option go_package = "./protobuf";
+
+service SDFS {
+  rpc GetFile(GetRequest) returns (GetResponse);
+  rpc PutFile(PutRequest) returns (PutResponse);
+  rpc DeleteFileLeader(DeleteRequestLeader) returns (DeleteResponseLeader);
+  rpc DeleteFileFollower(DeleteRequestFollower) returns (DeleteResponseFollower);
+  rpc LsFile(LsRequest) returns (LsResponse);
+  rpc StoreFile(StoreRequest) returns (StoreResponse);
+  rpc ReplicateFile(ReplicationRequest) returns (ReplicationResponse);
+}
+
+//Get
+message GetRequest {
+  string fileName = 1;
+}
+
+message GetResponse {
+  bool success = 1;
+  repeated string VMAddresses = 2;
+}
+
+//Put
+message PutRequest {
+  string fileName = 1;
+}
+
+message PutResponse {
+  bool success = 1;
+  repeated string VMAddresses = 2;
+}
+
+//Delete (sent to leader)
+message DeleteRequestLeader {
+  string fileName = 1;
+}
+
+message DeleteResponseLeader {
+  bool success = 1;
+}
+
+//Delete (sent to followers)
+message DeleteRequestFollower {
+  string fileName = 1;
+  string senderAddress = 2;
+}
+
+message DeleteResponseFollower {
+  bool success = 1;
+}
+
+//ls
+message LsRequest{
+  string fileName = 1;
+}
+
+message LsResponse {
+  bool success = 1;
+  repeated string VMAddresses = 2;
+}
+
+//store
+message StoreRequest {
+  string senderAddress = 1;
+}
+
+message StoreResponse {
+  bool success = 1;
+  repeated string fileNames = 2;
+}
+
+//Replicate
+message ReplicationRequest {
+  string fileName = 1;
+  string senderMachine = 2;
+  string receiverMachine = 3;
+}
+
+message ReplicationResponse {
+  bool success = 1;
+}

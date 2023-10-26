@@ -17,7 +17,7 @@ func main() {
 	startSDFS(&wg)
 	startLeaderElection(&wg)
 	go monitorLeader()
-	
+
 	wg.Wait()
 
 }
@@ -64,15 +64,17 @@ func startSDFS(wg *sync.WaitGroup) {
 	}()
 
 	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		SDFS.HandleSDFSMessages()
-	}()
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		SDFS.ObserveFDChannel()
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		SDFS.StartSDFSServer()
 	}()
 }
 
@@ -93,6 +95,6 @@ func monitorLeader() {
 		} else {
 			fmt.Println("*** Current Leader is NIL ***")
 		}
-		time.Sleep(5*time.Second)
+		time.Sleep(5 * time.Second)
 	}
 }

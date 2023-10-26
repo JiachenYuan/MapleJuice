@@ -1,17 +1,21 @@
 package SDFS
 
 import (
+	"context"
 	"cs425-mp/internals/global"
 	pb "cs425-mp/protobuf"
 	"fmt"
+	"math/rand"
 	"net"
 	"os"
 	"os/exec"
 	"os/user"
 	"path/filepath"
 	"strings"
+	"time"
 
-	"google.golang.org/protobuf/proto"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
@@ -66,112 +70,79 @@ func ObserveFDChannel() {
 	}
 }
 
+// handle failure of a node
 func handleNodeFailure(failedNodeAddr string) {
+	if !isCurrentNodeLeader() {
+		return
+	}
 	//find out all the files that the failed node has
 	filesToReplicate := memTable.VMToFileMap[failedNodeAddr]
 	//for each file, get a list of alived machines that contain the file
 	for fileName := range filesToReplicate {
 		replicas := listSDFSFileVMs(fileName)
-		replicaSize := len(replicas)
-		// randomly select a machine to replicate the file
-		// if the current machine is selected, replicate the file
-		for replicaSize < NUM_WRITE {
-			//randomly select an alive machine, send message to it to ask it to replicate the file
+		senderAddress := replicas[0]
+		allAliveNodes := getAlivePeersAddrs()
+		// randomly select an alive machine to replicate the file
+		receiverAddress := allAliveNodes[rand.Intn(len(allAliveNodes))]
+		r := sendReplicateFileRequest(senderAddress, receiverAddress, fileName)
+		if !r.Success {
+			//TODO: add logic for failed replication
+			fmt.Printf("Failed to replicate file %s from %s to %s\n", fileName, senderAddress, receiverAddress)
+		} else {
+			fmt.Printf("Successfully replicated file %s from %s to %s\n", fileName, senderAddress, receiverAddress)
 		}
 	}
 	//remove the VM from the mem table
 	delete(memTable.VMToFileMap, failedNodeAddr)
 }
 
-// update mem tables
-func (mt *MemTable) delete(sdfsFileName string) {
-	for _, files := range mt.VMToFileMap {
-		delete(files, sdfsFileName)
-	}
-	delete(mt.fileToVMMap, sdfsFileName)
-}
-
-func (mt *MemTable) put(sdfsFileName string, replicas []string) {
-	if _, exists := mt.fileToVMMap[sdfsFileName]; !exists {
-		mt.fileToVMMap[sdfsFileName] = make(map[string]Empty)
-	}
-	for _, r := range replicas {
-		if _, exists := mt.VMToFileMap[r]; !exists {
-			mt.VMToFileMap[r] = make(map[string]Empty)
-		}
-		mt.VMToFileMap[r][sdfsFileName] = Empty{}
-		mt.fileToVMMap[sdfsFileName][r] = Empty{}
-	}
-}
-
-// handle incoming SDFS messages
-func HandleSDFSMessages() {
-	listener, err := net.Listen("tcp", ":"+global.SDFS_PORT)
+func sendReplicateFileRequest(senderMachine string, receiverMachine string, fileName string) *pb.ReplicationResponse {
+	ctx, dialCancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer dialCancel()
+	conn, err := grpc.DialContext(ctx, receiverMachine+":"+global.SDFS_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		fmt.Println("Error listening to TCP connections: ", err)
-		os.Exit(1)
+		fmt.Printf("did not connect: %v\n", err)
 	}
-	defer listener.Close()
-
-	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			fmt.Printf("Error accepting: %v\n", err.Error())
-			continue
-		}
-		go handleConnection(conn)
-	}
-}
-
-func handleConnection(conn net.Conn) {
 	defer conn.Close()
-	buffer := make([]byte, 4096)
-	for {
-		n, err := conn.Read(buffer)
-		if err != nil {
-			fmt.Printf("Error reading: %v\n", err.Error())
-			return
-		}
-		request := &pb.SDFSRequest{}
-		err = proto.Unmarshal(buffer[:n], request)
-		if err != nil {
-			fmt.Printf("Error unmarshalling SDFS message: %v\n", err.Error())
-			return
-		}
-		switch request.RequestType {
-		case pb.SDFSRequestType_GET_REQ:
-			processGetMessage(request, conn)
-		case pb.SDFSRequestType_PUT_REQ:
-			processPutMessage(request, conn)
-		case pb.SDFSRequestType_DELETE_REQ_LEADER:
-			processDeleteMessageLeader(request, conn)
-		case pb.SDFSRequestType_DELETE_REQ_FOLLOWER:
-			processDeleteMessageFollower(request, conn)
-		case pb.SDFSRequestType_LS_REQ:
-			processLSMessage(request, conn)
-		case pb.SDFSRequestType_STORE_REQ:
-			processStoreMessage(request, conn)
-		}
 
-	}
-}
+	c := pb.NewSDFSClient(conn)
+	timeout := 2 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
 
-func processGetMessage(message *pb.SDFSRequest, conn net.Conn) {
-	fileName := message.SdfsFileName
-	vmList := listSDFSFileVMs(fileName)
-	response := &pb.SDFSResponse{
-		ResponseType: pb.SDFSResponseType_GET_RES,
-		VMAddresses:  vmList,
-	}
-	responseBytes, err := proto.Marshal(response)
+	r, err := c.ReplicateFile(ctx, &pb.ReplicationRequest{
+		FileName:        fileName,
+		SenderMachine:   senderMachine,
+		ReceiverMachine: receiverMachine,
+	})
 	if err != nil {
-		fmt.Printf("Failed to marshal Get Response: %v\n", err.Error())
+		// Check if the error is due to a timeout
+		if ctx.Err() == context.DeadlineExceeded {
+			fmt.Printf("gRPC call timed out after %s\n", timeout)
+		} else {
+			fmt.Printf("Failed to call replicate: %v\n", err)
+		}
 	}
-	conn.Write(responseBytes)
+	return r
 }
 
-func processPutMessage(message *pb.SDFSRequest, conn net.Conn) {
-	fileName := message.SdfsFileName
+// SDFS Server
+type SDFSServer struct {
+	pb.UnimplementedSDFSServer
+}
+
+// Get file
+func (s *SDFSServer) GetFile(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, error) {
+	vmList := listSDFSFileVMs(in.FileName)
+	resp := &pb.GetResponse{
+		VMAddresses: vmList,
+	}
+	return resp, nil
+}
+
+// Put file
+func (s *SDFSServer) PutFile(ctx context.Context, in *pb.PutRequest) (*pb.PutResponse, error) {
+	fileName := in.FileName
 	var targetReplicas []string
 	val, exists := memTable.fileToVMMap[fileName]
 	if !exists {
@@ -182,146 +153,268 @@ func processPutMessage(message *pb.SDFSRequest, conn net.Conn) {
 			targetReplicas = append(targetReplicas, k)
 		}
 	}
-	response := &pb.SDFSResponse{
-		ResponseType: pb.SDFSResponseType_GET_RES,
-		VMAddresses:  targetReplicas,
+	resp := &pb.PutResponse{
+		VMAddresses: targetReplicas,
 	}
-	responseBytes, err := proto.Marshal(response)
-	if err != nil {
-		fmt.Printf("Failed to marshal Put Response: %v\n", err.Error())
-	}
-	_, err = conn.Write(responseBytes)
-	if err != nil {
-		fmt.Println("Error writing to TCP: ", err)
-		return
-	}
+	return resp, nil
 }
 
-func processDeleteMessageLeader(message *pb.SDFSRequest, conn net.Conn) {
-	if !isCurrentNodeLeader() {
-		fmt.Println("Not leader, cannot process delete message")
-		return
-	}
-
-	fileName := message.SdfsFileName
+// Delete file (leader)
+func (s *SDFSServer) DeleteFileLeader(ctx context.Context, in *pb.DeleteRequestLeader) (*pb.DeleteResponseLeader, error) {
+	fileName := in.FileName
 	vmList := listSDFSFileVMs(fileName)
-	response := sendDeleteFileMessageToReplicaNodes(fileName, vmList)
-	responseBytes, err := proto.Marshal(response)
+	err := sendDeleteFileMessageToTargetFollowers(vmList, fileName)
+	resp := &pb.DeleteResponseLeader{}
 	if err != nil {
-		fmt.Printf("Failed to marshal Delete Response: %v\n", err.Error())
+		resp.Success = false
+	} else {
+		resp.Success = true
+		memTable.delete(fileName)
 	}
-	conn.Write(responseBytes)
-	memTable.delete(fileName)
+	return resp, nil
 }
 
-func processDeleteMessageFollower(message *pb.SDFSRequest, conn net.Conn) {
-	fileName := message.SdfsFileName
-	err := deleteLocalSDFSFile(fileName)
-	response := &pb.SDFSResponse{
-		ResponseType: pb.SDFSResponseType_DELETE_RES_LEADER,
+func sendDeleteFileMessageToTargetFollowers(targetFollowers []string, fileName string) error {
+	var err error
+	errCh := make(chan error, len(targetFollowers))
+	for _, f := range targetFollowers {
+		go func(f string) {
+			err := sendDeleteFileRequestsToFollower(f, fileName)
+			errCh <- err
+		}(f)
 	}
+
+	for i := 0; i < len(targetFollowers); i++ {
+		err = <-errCh
+		if err != nil {
+			fmt.Printf("Error deleting file on follower: %v\n", err)
+		}
+	}
+	close(errCh)
+	return err
+}
+
+func sendDeleteFileRequestsToFollower(targetFollower string, fileName string) error {
+	ctx, dialCancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer dialCancel()
+	conn, err := grpc.DialContext(ctx, targetFollower+":"+global.SDFS_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		fmt.Printf("did not connect: %v\n", err)
+	}
+	defer conn.Close()
+
+	c := pb.NewSDFSClient(conn)
+	timeout := 2 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	r, err := c.DeleteFileFollower(ctx, &pb.DeleteRequestFollower{
+		FileName: fileName,
+	})
+
+	if err != nil {
+		// Check if the error is due to a timeout
+		if ctx.Err() == context.DeadlineExceeded {
+			fmt.Printf("gRPC call timed out after %s\n", timeout)
+		} else {
+			fmt.Printf("Failed to call delete on followers: %v\n", err)
+		}
+	}
+	if !r.Success {
+		return fmt.Errorf("failed to delete file %s on follower %s", fileName, targetFollower)
+	}
+	return nil
+}
+
+// Delete file (follower)
+func (s *SDFSServer) DeleteFileFollower(ctx context.Context, in *pb.DeleteRequestFollower) (*pb.DeleteResponseFollower, error) {
+	fileName := in.FileName
+	err := deleteLocalSDFSFile(fileName)
+	resp := &pb.DeleteResponseFollower{}
 	if err != nil {
 		fmt.Printf("Failed to delete local file : %v\n", err)
-		response.Error = err.Error()
-		response.ResponseStatus = pb.SDFSResponseStatus_RES_STATUS_FAILED
+		resp.Success = false
 	} else {
-		response.ResponseStatus = pb.SDFSResponseStatus_RES_STATUS_OK
+		resp.Success = true
 	}
-	responseBytes, err := proto.Marshal(response)
-	if err != nil {
-		fmt.Printf("Failed to marshal Delete Response: %v\n", err.Error())
-	}
-	conn.Write(responseBytes)
+	return resp, nil
 }
 
-func processLSMessage(message *pb.SDFSRequest, conn net.Conn) {
-	fileName := message.SdfsFileName
-	vmList := listSDFSFileVMs(fileName)
-	response := &pb.SDFSResponse{
-		ResponseType: pb.SDFSResponseType_LS_RES,
-		VMAddresses:  vmList,
-	}
-	responseBytes, err := proto.Marshal(response)
-	if err != nil {
-		fmt.Printf("Failed to marshal GetResponse: %v\n", err.Error())
-	}
-	conn.Write(responseBytes)
-}
-
-func processStoreMessage(message *pb.SDFSRequest, conn net.Conn) {
-	requestorHostName := message.VM
+// Store
+func (s *SDFSServer) StoreFile(ctx context.Context, in *pb.StoreRequest) (*pb.StoreResponse, error) {
+	requestorHostName := in.SenderAddress
 	fileNameList := getAllSDFSFilesForVM(requestorHostName)
-	response := &pb.SDFSResponse{
-		ResponseType:  pb.SDFSResponseType_LS_RES,
-		SdfsFileNames: fileNameList,
+	resp := &pb.StoreResponse{
+		Success:   true,
+		FileNames: fileNameList,
 	}
-	responseBytes, err := proto.Marshal(response)
+	return resp, nil
+}
+
+// List files
+func (s *SDFSServer) LsFile(ctx context.Context, in *pb.LsRequest) (*pb.LsResponse, error) {
+	fileName := in.FileName
+	vmList := listSDFSFileVMs(fileName)
+	resp := &pb.LsResponse{
+		VMAddresses: vmList,
+	}
+	return resp, nil
+}
+
+// replicate file upon detecting failures
+func (s *SDFSServer) ReplicateFile(ctx context.Context, in *pb.ReplicationRequest) (*pb.ReplicationResponse, error) {
+	resp := &pb.ReplicationResponse{}
+	if in.SenderMachine != HOSTNAME {
+		fmt.Println("Error: received replication request for a different machine")
+		resp.Success = false
+	}
+	localSDFSFilePath := filepath.Join(SDFS_PATH, in.FileName)
+	err := transferFile(localSDFSFilePath, in.FileName, []string{in.ReceiverMachine})
 	if err != nil {
-		fmt.Printf("Failed to marshal GetResponse: %v\n", err.Error())
+		fmt.Printf("Failed to transfer file: %v\n", err)
+		resp.Success = false
+	} else {
+		resp.Success = true
 	}
-	conn.Write(responseBytes)
+	return resp, err
 }
 
 // SDFS file operations
 func getFile(sdfsFileName string, localFileName string) {
-	res := sendGetFileMessage(sdfsFileName)
-	replicas := res.VMAddresses
-	for _, r := range replicas {
-		remotePath := getScpHostNameFromHostName(r) + ":" + filepath.Join(SDFS_PATH, sdfsFileName)
-		cmd := exec.Command("scp", remotePath, localFileName)
-		err := cmd.Start()
-		if err != nil {
-			fmt.Printf("Failed to start command: %v\n", err)
-			return
-		}
+	ctx, dialCancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer dialCancel()
+	conn, err := grpc.DialContext(ctx, LEADER_ADDRESS+":"+global.SDFS_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		fmt.Printf("did not connect: %v\n", err)
+	}
+	defer conn.Close()
 
-		err = cmd.Wait()
-		if err != nil {
-			fmt.Printf("Command finished with error: %v\n", err)
-			continue
+	c := pb.NewSDFSClient(conn)
+	timeout := 2 * time.Second
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	r, err := c.GetFile(context.Background(), &pb.GetRequest{
+		FileName: sdfsFileName,
+	})
+
+	if err != nil {
+		// Check if the error is due to a timeout
+		if ctx.Err() == context.DeadlineExceeded {
+			fmt.Printf("gRPC call timed out after %s\n", timeout)
+		} else {
+			fmt.Printf("Failed to call replicate: %v\n", err)
 		}
-		break
 	}
 
+	if !r.Success {
+		fmt.Println("failed to acquire the list of vms to read the file from")
+		return
+	} else {
+		replicas := r.VMAddresses
+		for _, r := range replicas {
+			remotePath := getScpHostNameFromHostName(r) + ":" + filepath.Join(SDFS_PATH, sdfsFileName)
+			cmd := exec.Command("scp", remotePath, localFileName)
+			err := cmd.Start()
+			if err != nil {
+				fmt.Printf("Failed to start command: %v\n", err)
+				return
+			}
+
+			err = cmd.Wait()
+			if err != nil {
+				fmt.Printf("Command finished with error: %v\n", err)
+				continue
+			}
+			break
+		}
+	}
 }
 func putFile(localFileName string, sdfsFileName string) {
 	if _, err := os.Stat(localFileName); os.IsNotExist(err) {
 		fmt.Printf("Local file not exist: %s\n", localFileName)
 		return
 	}
-	res := sendPutFileMessage(sdfsFileName)
-	targetReplicas := res.VMAddresses
+	ctx, dialCancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer dialCancel()
+	conn, err := grpc.DialContext(ctx, LEADER_ADDRESS+":"+global.SDFS_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		fmt.Printf("did not connect: %v\n", err)
+	}
+	defer conn.Close()
+
+	c := pb.NewSDFSClient(conn)
+	timeout := 2 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	r, err := c.PutFile(ctx, &pb.PutRequest{
+		FileName: sdfsFileName,
+	})
+
+	if err != nil {
+		// Check if the error is due to a timeout
+		if ctx.Err() == context.DeadlineExceeded {
+			fmt.Printf("gRPC call timed out after %s\n", timeout)
+		} else {
+			fmt.Printf("Failed to call replicate: %v\n", err)
+		}
+	}
+	targetReplicas := r.VMAddresses
 	fmt.Printf("Put file %s to sdfs %s \n", localFileName, sdfsFileName)
+	err = transferFile(localFileName, sdfsFileName, targetReplicas)
+	if err != nil {
+		fmt.Printf("Failed to transfer file: %v\n", err)
+	}
+}
+
+func transferFile(localFileName string, sdfsFileName string, targetReplicas []string) error {
+	var err error
 	for _, r := range targetReplicas {
 		targetHostName := getScpHostNameFromHostName(r)
 		remotePath := targetHostName + ":" + filepath.Join(SDFS_PATH, sdfsFileName)
 		cmd := exec.Command("scp", localFileName, remotePath)
-		err := cmd.Start()
+		err = cmd.Start()
 		if err != nil {
 			fmt.Printf("Failed to start command: %v\n", err)
-			return
 		}
 
 		err = cmd.Wait()
 		if err != nil {
 			fmt.Printf("Command finished with error: %v\n", err)
-			return
 		}
 	}
 	fmt.Printf("Put file to replicas: %+q\n", targetReplicas)
+	return err
 }
 
 func deleteFile(sdfsFileName string) {
-	err := deleteLocalSDFSFile(sdfsFileName)
+	ctx, dialCancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer dialCancel()
+	conn, err := grpc.DialContext(ctx, LEADER_ADDRESS+":"+global.SDFS_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		fmt.Printf("Failed to delete local file : %v\n", err)
-		return
+		fmt.Printf("did not connect: %v\n", err)
 	}
-	res := sendDeleteFileMessageToLeader(sdfsFileName)
-	if res.ResponseStatus == pb.SDFSResponseStatus_RES_STATUS_OK {
+	defer conn.Close()
+
+	c := pb.NewSDFSClient(conn)
+	timeout := 2 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	r, err := c.DeleteFileLeader(ctx, &pb.DeleteRequestLeader{
+		FileName: sdfsFileName,
+	})
+
+	if err != nil {
+		// Check if the error is due to a timeout
+		if ctx.Err() == context.DeadlineExceeded {
+			fmt.Printf("gRPC call timed out after %s\n", timeout)
+		} else {
+			fmt.Printf("Failed to call replicate: %v\n", err)
+		}
+	}
+	if r.Success {
 		fmt.Printf("Successfully deleted file %s\n", sdfsFileName)
 	} else {
-		fmt.Printf("Failed to delete file %s: %s\n", sdfsFileName, res.Error)
+		fmt.Printf("Failed to delete file %s\n", sdfsFileName)
 	}
 }
 
@@ -343,132 +436,77 @@ func deleteLocalSDFSFile(sdfsFileName string) error {
 }
 
 func LS(sdfsFileName string) {
-	res := sendLSMessage(sdfsFileName)
-	VMList := res.VMAddresses
-	fmt.Printf("%+q\n", VMList)
+	ctx, dialCancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer dialCancel()
+	conn, err := grpc.DialContext(ctx, LEADER_ADDRESS+":"+global.SDFS_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		fmt.Printf("did not connect: %v\n", err)
+	}
+	defer conn.Close()
+
+	c := pb.NewSDFSClient(conn)
+	timeout := 2 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	r, err := c.LsFile(ctx, &pb.LsRequest{
+		FileName: sdfsFileName,
+	})
+
+	if err != nil {
+		// Check if the error is due to a timeout
+		if ctx.Err() == context.DeadlineExceeded {
+			fmt.Printf("gRPC call timed out after %s\n", timeout)
+		} else {
+			fmt.Printf("Failed to call replicate: %v\n", err)
+		}
+	}
+	if r.Success {
+		fmt.Printf("%+q\n", r.VMAddresses)
+	} else {
+		fmt.Printf("Failed to list VMs for file: %s\n", sdfsFileName)
+	}
 }
 
 func store() {
-	res := sendStoreMessage(HOSTNAME)
-	fileNameList := res.SdfsFileNames
-	fmt.Printf("%+q\n", fileNameList)
-}
-
-// Send messages to leader server
-func sendMesageToLeader(messageBytes []byte) *pb.SDFSResponse {
-	return sendMesageToNode(LEADER_ADDRESS, messageBytes)
-}
-
-func sendMesageToNode(nodeAddr string, messageBytes []byte) *pb.SDFSResponse {
-	conn, err := net.Dial("tcp", nodeAddr+":"+global.SDFS_PORT)
+	ctx, dialCancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer dialCancel()
+	conn, err := grpc.DialContext(ctx, LEADER_ADDRESS+":"+global.SDFS_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		fmt.Println("Error dialing TCP: ", err)
-		return nil
+		fmt.Printf("did not connect: %v\n", err)
 	}
 	defer conn.Close()
-	_, err = conn.Write(messageBytes)
-	if err != nil {
-		fmt.Println("Error sending TCP: ", err)
-		return nil
-	}
-	buffer := make([]byte, 4096)
-	n, err := conn.Read(buffer)
-	if err != nil {
-		fmt.Println("Error reading from TCP: ", err)
-	}
-	res := &pb.SDFSResponse{}
-	err = proto.Unmarshal(buffer[:n], res)
-	if err != nil {
-		fmt.Println("Deserialization error: ", err)
-	}
-	return res
-}
 
-func sendGetFileMessage(fileName string) *pb.SDFSResponse {
-	putMessage := &pb.SDFSRequest{
-		RequestType:  pb.SDFSRequestType_GET_REQ,
-		SdfsFileName: fileName,
-	}
-	messageBytes, err := proto.Marshal(putMessage)
-	if err != nil {
-		fmt.Printf("Failed to marshal PutMessage: %v\n", err.Error())
-	}
-	res := sendMesageToLeader(messageBytes)
-	return res
-}
+	c := pb.NewSDFSClient(conn)
+	timeout := 2 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	r, err := c.StoreFile(ctx, &pb.StoreRequest{
+		SenderAddress: HOSTNAME,
+	})
 
-func sendPutFileMessage(fileName string) *pb.SDFSResponse {
-	putMessage := &pb.SDFSRequest{
-		RequestType:  pb.SDFSRequestType_PUT_REQ,
-		SdfsFileName: fileName,
-	}
-	messageBytes, err := proto.Marshal(putMessage)
 	if err != nil {
-		fmt.Printf("Failed to marshal PutMessage: %v\n", err.Error())
-	}
-	res := sendMesageToLeader(messageBytes)
-	return res
-}
-
-func sendDeleteFileMessageToLeader(fileName string) *pb.SDFSResponse {
-	deleteMessage := &pb.SDFSRequest{
-		RequestType:  pb.SDFSRequestType_DELETE_REQ_LEADER,
-		SdfsFileName: fileName,
-	}
-	messageBytes, err := proto.Marshal(deleteMessage)
-	if err != nil {
-		fmt.Printf("Failed to marshal DeleteMessage: %v\n", err.Error())
-	}
-	res := sendMesageToLeader(messageBytes)
-	return res
-}
-
-func sendDeleteFileMessageToReplicaNodes(fileName string, replicas []string) *pb.SDFSResponse {
-	deleteMessage := &pb.SDFSRequest{
-		RequestType:  pb.SDFSRequestType_DELETE_REQ_FOLLOWER,
-		SdfsFileName: fileName,
-	}
-	messageBytes, err := proto.Marshal(deleteMessage)
-	if err != nil {
-		fmt.Printf("Failed to marshal DeleteMessage: %v\n", err.Error())
-	}
-	response := &pb.SDFSResponse{
-		ResponseType:   pb.SDFSResponseType_DELETE_RES_FOLLOWER,
-		ResponseStatus: pb.SDFSResponseStatus_RES_STATUS_OK,
-	}
-	for _, r := range replicas {
-		res := sendMesageToNode(r, messageBytes)
-		if res.ResponseStatus == pb.SDFSResponseStatus_RES_STATUS_FAILED {
-			response.Error = res.Error
-			response.ResponseStatus = pb.SDFSResponseStatus_RES_STATUS_FAILED
-			continue
+		// Check if the error is due to a timeout
+		if ctx.Err() == context.DeadlineExceeded {
+			fmt.Printf("gRPC call timed out after %s\n", timeout)
+		} else {
+			fmt.Printf("Failed to call replicate: %v\n", err)
 		}
 	}
-	return response
+	if r.Success {
+		fmt.Printf("%+q\n", r.FileNames)
+	} else {
+		fmt.Printf("Failed to list local files for machine %s\n", HOSTNAME)
+	}
 }
 
-func sendLSMessage(fileName string) *pb.SDFSResponse {
-	lsMessage := &pb.SDFSRequest{
-		RequestType:  pb.SDFSRequestType_LS_REQ,
-		SdfsFileName: fileName,
-	}
-	messageBytes, err := proto.Marshal(lsMessage)
+func StartSDFSServer() {
+	lis, err := net.Listen("tcp", ":"+global.SDFS_PORT)
 	if err != nil {
-		fmt.Printf("Failed to marshal lsMessage: %v\n", err.Error())
+		fmt.Printf("failed to listen: %v\n", err)
 	}
-	res := sendMesageToLeader(messageBytes)
-	return res
-}
-
-func sendStoreMessage(vmName string) *pb.SDFSResponse {
-	storeMessage := &pb.SDFSRequest{
-		RequestType: pb.SDFSRequestType_STORE_REQ,
-		VM:          vmName,
+	s := grpc.NewServer()
+	pb.RegisterSDFSServer(s, &SDFSServer{})
+	if err := s.Serve(lis); err != nil {
+		fmt.Printf("failed to serve: %v\n", err)
 	}
-	messageBytes, err := proto.Marshal(storeMessage)
-	if err != nil {
-		fmt.Printf("Failed to marshal StoreMessage: %v\n", err.Error())
-	}
-	res := sendMesageToLeader(messageBytes)
-	return res
 }

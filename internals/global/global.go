@@ -1,9 +1,9 @@
 package global
 
 const (
-	LOGGER_PORT = "55559"
-	FD_PORT     = "55560"
-	SDFS_PORT   = "55561"
+	LOGGER_PORT          = "55559"
+	FD_PORT              = "55560"
+	SDFS_PORT            = "55561"
 	LEADER_ELECTION_PORT = "55562"
 
 	QUORUM = 6

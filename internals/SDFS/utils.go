@@ -2,6 +2,7 @@ package SDFS
 
 import (
 	"crypto/md5"
+	fd "cs425-mp/internals/failureDetector"
 	"cs425-mp/internals/global"
 	"fmt"
 	"math/rand"
@@ -9,10 +10,30 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	fd "cs425-mp/internals/failureDetector"
 )
 
 type Empty struct{}
+
+// update mem tables
+func (mt *MemTable) delete(sdfsFileName string) {
+	for _, files := range mt.VMToFileMap {
+		delete(files, sdfsFileName)
+	}
+	delete(mt.fileToVMMap, sdfsFileName)
+}
+
+func (mt *MemTable) put(sdfsFileName string, replicas []string) {
+	if _, exists := mt.fileToVMMap[sdfsFileName]; !exists {
+		mt.fileToVMMap[sdfsFileName] = make(map[string]Empty)
+	}
+	for _, r := range replicas {
+		if _, exists := mt.VMToFileMap[r]; !exists {
+			mt.VMToFileMap[r] = make(map[string]Empty)
+		}
+		mt.VMToFileMap[r][sdfsFileName] = Empty{}
+		mt.fileToVMMap[sdfsFileName][r] = Empty{}
+	}
+}
 
 func hashFileName(fileName string) string {
 	hash := md5.Sum([]byte(fileName))
@@ -119,25 +140,24 @@ func getLocalServerID() int {
 	hostname, err := os.Hostname()
 	if err != nil {
 		fmt.Println("Error getting host name: ", err)
-		return -1;
+		return -1
 	}
 	for i, addr := range global.SERVER_ADDRS {
 		if hostname == addr {
-			return i+1;
+			return i + 1
 		}
 	}
-	return -1;
+	return -1
 }
 
 // Returns server's hostname given its ID
 // Returns "" empty string if ID is not defined
 func getServerName(id int) string {
-	if (id < 1 || id > len(global.SERVER_ADDRS)) {
+	if id < 1 || id > len(global.SERVER_ADDRS) {
 		return ""
 	}
-	return global.SERVER_ADDRS[id-1];
+	return global.SERVER_ADDRS[id-1]
 }
-
 
 // Generate random duration bewteen 3-5 seconds
 func randomDuration() time.Duration {
@@ -152,7 +172,7 @@ func getAlivePeersAddrs() []string {
 	addrList := []string{}
 	for _, node := range fd.NodeInfoList {
 		nodeName := node.NodeAddr
-		if (nodeName != localServerAddr) && (node.Status == fd.Alive || node.Status == fd.Suspected){
+		if (nodeName != localServerAddr) && (node.Status == fd.Alive || node.Status == fd.Suspected) {
 			addrList = append(addrList, nodeName)
 		}
 	}
@@ -160,5 +180,3 @@ func getAlivePeersAddrs() []string {
 
 	return addrList
 }
-
-
