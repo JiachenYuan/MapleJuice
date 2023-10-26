@@ -93,7 +93,6 @@ func (s *MemberServer) RequestVotes(ctx context.Context, request *pb.VoteRequest
 
 	if s.currentTerm < request.Term {
 		// update current term and convert back to follower
-		fmt.Printf("My term=%v, received term=%v from VM %v ", s.currentTerm, request.Term, request.CandidateID)
 		s.currentTerm = request.Term
 		s.state = Follower
 		s.votedFor = request.CandidateID
