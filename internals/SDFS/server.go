@@ -337,9 +337,7 @@ func putFile(localFileName string, sdfsFileName string) {
 		fmt.Printf("Local file not exist: %s\n", localFileName)
 		return
 	}
-	ctx, dialCancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer dialCancel()
-	conn, err := grpc.DialContext(ctx, LEADER_ADDRESS+":"+global.SDFS_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(LEADER_ADDRESS+":"+global.SDFS_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		fmt.Printf("did not connect: %v\n", err)
 		return
@@ -347,19 +345,12 @@ func putFile(localFileName string, sdfsFileName string) {
 	defer conn.Close()
 
 	c := pb.NewSDFSClient(conn)
-	timeout := 2 * time.Second
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	r, err := c.PutFile(ctx, &pb.PutRequest{
+	r, err := c.PutFile(context.Background(), &pb.PutRequest{
 		FileName: sdfsFileName,
 	})
 
 	if err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
-			fmt.Printf("gRPC call timed out after %s\n", timeout)
-		} else {
-			fmt.Printf("Failed to call replicate: %v\n", err)
-		}
+		fmt.Printf("Failed to call put: %v\n", err)
 		return
 	}
 
@@ -423,7 +414,7 @@ func deleteFile(sdfsFileName string) {
 		if ctx.Err() == context.DeadlineExceeded {
 			fmt.Printf("gRPC call timed out after %s\n", timeout)
 		} else {
-			fmt.Printf("Failed to call replicate: %v\n", err)
+			fmt.Printf("Failed to call delete: %v\n", err)
 		}
 	}
 	if r.Success {
@@ -472,7 +463,7 @@ func LS(sdfsFileName string) {
 		if ctx.Err() == context.DeadlineExceeded {
 			fmt.Printf("gRPC call timed out after %s\n", timeout)
 		} else {
-			fmt.Printf("Failed to call replicate: %v\n", err)
+			fmt.Printf("Failed to call ls: %v\n", err)
 		}
 	}
 	if r.Success {
@@ -504,7 +495,7 @@ func store() {
 		if ctx.Err() == context.DeadlineExceeded {
 			fmt.Printf("gRPC call timed out after %s\n", timeout)
 		} else {
-			fmt.Printf("Failed to call replicate: %v\n", err)
+			fmt.Printf("Failed to call store: %v\n", err)
 		}
 	}
 	if r.Success {
