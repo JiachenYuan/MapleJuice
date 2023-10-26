@@ -361,11 +361,16 @@ func putFile(localFileName string, sdfsFileName string) {
 			fmt.Printf("Failed to call replicate: %v\n", err)
 		}
 	}
-	targetReplicas := r.VMAddresses
-	fmt.Printf("Put file %s to sdfs %s \n", localFileName, sdfsFileName)
-	err = transferFile(localFileName, sdfsFileName, targetReplicas)
-	if err != nil {
-		fmt.Printf("Failed to transfer file: %v\n", err)
+	if !r.Success {
+		fmt.Printf("Failed to put file %s to sdfs %s \n", localFileName, sdfsFileName)
+		return
+	} else {
+		targetReplicas := r.VMAddresses
+		fmt.Printf("Put file %s to sdfs %s \n", localFileName, sdfsFileName)
+		err = transferFile(localFileName, sdfsFileName, targetReplicas)
+		if err != nil {
+			fmt.Printf("Failed to transfer file: %v\n", err)
+		}
 	}
 }
 
