@@ -75,6 +75,7 @@ func handleNodeFailure(failedNodeAddr string) {
 	if !isCurrentNodeLeader() {
 		return
 	}
+	fmt.Println("Handling node failure")
 	//find out all the files that the failed node has
 	filesToReplicate := memTable.VMToFileMap[failedNodeAddr]
 	//for each file, get a list of alived machines that contain the file
@@ -82,8 +83,9 @@ func handleNodeFailure(failedNodeAddr string) {
 		replicas := listSDFSFileVMs(fileName)
 		senderAddress := replicas[0]
 		allAliveNodes := getAlivePeersAddrs()
+		disjointAddresses := findDisjointElements(allAliveNodes, replicas)
 		// randomly select an alive machine to replicate the file
-		receiverAddress := allAliveNodes[rand.Intn(len(allAliveNodes))]
+		receiverAddress := disjointAddresses[rand.Intn(len(disjointAddresses))]
 		r := sendReplicateFileRequest(senderAddress, receiverAddress, fileName)
 		if !r.Success {
 			//TODO: add logic for failed replication
@@ -256,6 +258,7 @@ func (s *SDFSServer) LsFile(ctx context.Context, in *pb.LsRequest) (*pb.LsRespon
 	fileName := in.FileName
 	vmList := listSDFSFileVMs(fileName)
 	resp := &pb.LsResponse{
+		Success:     true,
 		VMAddresses: vmList,
 	}
 	return resp, nil

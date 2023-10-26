@@ -180,3 +180,22 @@ func getAlivePeersAddrs() []string {
 
 	return addrList
 }
+
+// find elements in a that are not in b
+func findDisjointElements(A, B []string) []string {
+	// Create a map to store elements of array B
+	bMap := make(map[string]bool)
+	for _, elem := range B {
+		bMap[elem] = true
+	}
+
+	// Find elements in A that are not in B
+	var disjoint []string
+	for _, elem := range A {
+		if _, exists := bMap[elem]; !exists {
+			disjoint = append(disjoint, elem)
+		}
+	}
+
+	return disjoint
+}
