@@ -19,13 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	SDFS_GetFile_FullMethodName            = "/cs425_mp3.SDFS/GetFile"
-	SDFS_PutFile_FullMethodName            = "/cs425_mp3.SDFS/PutFile"
-	SDFS_DeleteFileLeader_FullMethodName   = "/cs425_mp3.SDFS/DeleteFileLeader"
-	SDFS_DeleteFileFollower_FullMethodName = "/cs425_mp3.SDFS/DeleteFileFollower"
-	SDFS_ListFileHolder_FullMethodName     = "/cs425_mp3.SDFS/ListFileHolder"
-	SDFS_ListLocalFiles_FullMethodName     = "/cs425_mp3.SDFS/ListLocalFiles"
-	SDFS_ReplicateFile_FullMethodName      = "/cs425_mp3.SDFS/ReplicateFile"
+	SDFS_GetFile_FullMethodName               = "/cs425_mp3.SDFS/GetFile"
+	SDFS_PutFile_FullMethodName               = "/cs425_mp3.SDFS/PutFile"
+	SDFS_UpdateLeaderFileTable_FullMethodName = "/cs425_mp3.SDFS/UpdateLeaderFileTable"
+	SDFS_DeleteFileLeader_FullMethodName      = "/cs425_mp3.SDFS/DeleteFileLeader"
+	SDFS_DeleteFileFollower_FullMethodName    = "/cs425_mp3.SDFS/DeleteFileFollower"
+	SDFS_ListFileHolder_FullMethodName        = "/cs425_mp3.SDFS/ListFileHolder"
+	SDFS_ListLocalFiles_FullMethodName        = "/cs425_mp3.SDFS/ListLocalFiles"
+	SDFS_ReplicateFile_FullMethodName         = "/cs425_mp3.SDFS/ReplicateFile"
 )
 
 // SDFSClient is the client API for SDFS service.
@@ -34,6 +35,7 @@ const (
 type SDFSClient interface {
 	GetFile(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
 	PutFile(ctx context.Context, in *PutRequest, opts ...grpc.CallOption) (*PutResponse, error)
+	UpdateLeaderFileTable(ctx context.Context, in *UpdateLeaderFileTableRequest, opts ...grpc.CallOption) (*UpdateLeaderFileTableResponse, error)
 	DeleteFileLeader(ctx context.Context, in *DeleteRequestLeader, opts ...grpc.CallOption) (*DeleteResponseLeader, error)
 	DeleteFileFollower(ctx context.Context, in *DeleteRequestFollower, opts ...grpc.CallOption) (*DeleteResponseFollower, error)
 	ListFileHolder(ctx context.Context, in *ListFileHolderRequest, opts ...grpc.CallOption) (*ListFileHolderResponse, error)
@@ -61,6 +63,15 @@ func (c *sDFSClient) GetFile(ctx context.Context, in *GetRequest, opts ...grpc.C
 func (c *sDFSClient) PutFile(ctx context.Context, in *PutRequest, opts ...grpc.CallOption) (*PutResponse, error) {
 	out := new(PutResponse)
 	err := c.cc.Invoke(ctx, SDFS_PutFile_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *sDFSClient) UpdateLeaderFileTable(ctx context.Context, in *UpdateLeaderFileTableRequest, opts ...grpc.CallOption) (*UpdateLeaderFileTableResponse, error) {
+	out := new(UpdateLeaderFileTableResponse)
+	err := c.cc.Invoke(ctx, SDFS_UpdateLeaderFileTable_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -118,6 +129,7 @@ func (c *sDFSClient) ReplicateFile(ctx context.Context, in *ReplicationRequest, 
 type SDFSServer interface {
 	GetFile(context.Context, *GetRequest) (*GetResponse, error)
 	PutFile(context.Context, *PutRequest) (*PutResponse, error)
+	UpdateLeaderFileTable(context.Context, *UpdateLeaderFileTableRequest) (*UpdateLeaderFileTableResponse, error)
 	DeleteFileLeader(context.Context, *DeleteRequestLeader) (*DeleteResponseLeader, error)
 	DeleteFileFollower(context.Context, *DeleteRequestFollower) (*DeleteResponseFollower, error)
 	ListFileHolder(context.Context, *ListFileHolderRequest) (*ListFileHolderResponse, error)
@@ -135,6 +147,9 @@ func (UnimplementedSDFSServer) GetFile(context.Context, *GetRequest) (*GetRespon
 }
 func (UnimplementedSDFSServer) PutFile(context.Context, *PutRequest) (*PutResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PutFile not implemented")
+}
+func (UnimplementedSDFSServer) UpdateLeaderFileTable(context.Context, *UpdateLeaderFileTableRequest) (*UpdateLeaderFileTableResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateLeaderFileTable not implemented")
 }
 func (UnimplementedSDFSServer) DeleteFileLeader(context.Context, *DeleteRequestLeader) (*DeleteResponseLeader, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteFileLeader not implemented")
@@ -196,6 +211,24 @@ func _SDFS_PutFile_Handler(srv interface{}, ctx context.Context, dec func(interf
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SDFSServer).PutFile(ctx, req.(*PutRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SDFS_UpdateLeaderFileTable_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateLeaderFileTableRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SDFSServer).UpdateLeaderFileTable(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SDFS_UpdateLeaderFileTable_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SDFSServer).UpdateLeaderFileTable(ctx, req.(*UpdateLeaderFileTableRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -304,6 +337,10 @@ var SDFS_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PutFile",
 			Handler:    _SDFS_PutFile_Handler,
+		},
+		{
+			MethodName: "UpdateLeaderFileTable",
+			Handler:    _SDFS_UpdateLeaderFileTable_Handler,
 		},
 		{
 			MethodName: "DeleteFileLeader",

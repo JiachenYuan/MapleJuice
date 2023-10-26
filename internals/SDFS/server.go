@@ -139,7 +139,6 @@ func (s *SDFSServer) PutFile(ctx context.Context, in *pb.PutRequest) (*pb.PutRes
 	val, exists := memTable.fileToVMMap[fileName]
 	if !exists {
 		targetReplicas = getDefaultReplicaVMAddresses(hashFileName(fileName))
-		memTable.put(fileName, targetReplicas)
 	} else {
 		for k := range val {
 			targetReplicas = append(targetReplicas, k)
@@ -148,6 +147,18 @@ func (s *SDFSServer) PutFile(ctx context.Context, in *pb.PutRequest) (*pb.PutRes
 	resp := &pb.PutResponse{
 		Success:     true,
 		VMAddresses: targetReplicas,
+	}
+	return resp, nil
+}
+
+// update file table (sent to leader)
+func (s *SDFSServer) updateLeaderFileTable(ctx context.Context, in *pb.UpdateLeaderFileTableRequest) (*pb.UpdateLeaderFileTableResponse, error) {
+	fileName := in.FileName
+	vmAddress := in.ReplicaAddresses
+	//update file table
+	memTable.put(fileName, vmAddress)
+	resp := &pb.UpdateLeaderFileTableResponse{
+		Success: true,
 	}
 	return resp, nil
 }

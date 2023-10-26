@@ -6,6 +6,7 @@ option go_package = "./protobuf";
 service SDFS {
   rpc GetFile(GetRequest) returns (GetResponse);
   rpc PutFile(PutRequest) returns (PutResponse);
+  rpc UpdateLeaderFileTable (UpdateLeaderFileTableRequest) returns (UpdateLeaderFileTableResponse);
   rpc DeleteFileLeader(DeleteRequestLeader) returns (DeleteResponseLeader);
   rpc DeleteFileFollower(DeleteRequestFollower) returns (DeleteResponseFollower);
   rpc ListFileHolder(ListFileHolderRequest) returns (ListFileHolderResponse);
@@ -31,6 +32,16 @@ message PutRequest {
 message PutResponse {
   bool success = 1;
   repeated string VMAddresses = 2;
+}
+
+//update leader file table request
+message UpdateLeaderFileTableRequest {
+  string fileName = 1;
+  repeated string replicaAddresses = 2;
+}
+
+message UpdateLeaderFileTableResponse {
+  bool success = 1;
 }
 
 //Delete (sent to leader)

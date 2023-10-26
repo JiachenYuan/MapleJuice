@@ -91,6 +91,19 @@ func handlePutFile(localFileName string, sdfsFileName string) {
 	err = transferFile(localFileName, sdfsFileName, targetReplicas)
 	if err != nil {
 		fmt.Printf("Failed to transfer file: %v\n", err)
+	} else {
+		r, err := c.UpdateLeaderFileTable(context.Background(), &pb.UpdateLeaderFileTableRequest{
+			FileName:         sdfsFileName,
+			ReplicaAddresses: targetReplicas,
+		})
+		if err != nil {
+			fmt.Printf("Failed to update leader file table: %v\n", err)
+			return
+		}
+		if r == nil || !r.Success {
+			fmt.Printf("Failed to update leader file table: %v\n", err)
+			return
+		}
 	}
 }
 
