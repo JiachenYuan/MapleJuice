@@ -91,9 +91,9 @@ func monitorLeader() {
 	for {
 		leaderID := SDFS.GetLeaderID()
 		if leaderID != -1 {
-			// fmt.Printf("*** Current Leader is VM %v ***\n", leaderID)
+			fmt.Printf("*** Current Leader is VM %v ***\n", leaderID)
 		} else {
-			// fmt.Println("*** Current Leader is NIL ***")
+			fmt.Println("*** Current Leader is NIL ***")
 		}
 		time.Sleep(5 * time.Second)
 	}

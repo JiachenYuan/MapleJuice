@@ -79,8 +79,6 @@ func handleNodeFailure(failedNodeAddr string) {
 	fmt.Println("Handling node failure")
 	//find out all the files that the failed node has
 	filesToReplicate := memTable.VMToFileMap[failedNodeAddr]
-	fmt.Println("failedNodeAddr: ", failedNodeAddr)
-	fmt.Println("filesToReplicate: ", filesToReplicate)
 	//for each file, get a list of alived machines that contain the file
 	for fileName := range filesToReplicate {
 		replicas := listSDFSFileVMs(fileName)
@@ -89,11 +87,7 @@ func handleNodeFailure(failedNodeAddr string) {
 		disjointAddresses := findDisjointElements(allAliveNodes, replicas)
 		// randomly select an alive machine to replicate the file
 		receiverAddress := disjointAddresses[rand.Intn(len(disjointAddresses))]
-		fmt.Println("receiverAddress: ", receiverAddress)
 		r := sendReplicateFileRequest(senderAddress, receiverAddress, fileName)
-		if r == nil {
-			fmt.Println("received a nil response for replication")
-		}
 		if r == nil || !r.Success {
 			//TODO: add logic for failed replication
 			fmt.Printf("Failed to replicate file %s from %s to %s\n", fileName, senderAddress, receiverAddress)
@@ -106,7 +100,7 @@ func handleNodeFailure(failedNodeAddr string) {
 }
 
 func sendReplicateFileRequest(senderMachine string, receiverMachine string, fileName string) *pb.ReplicationResponse {
-	conn, err := grpc.Dial(receiverMachine+":"+global.SDFS_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(senderMachine+":"+global.SDFS_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		fmt.Printf("did not connect: %v\n", err)
 	}
@@ -260,6 +254,7 @@ func (s *SDFSServer) ReplicateFile(ctx context.Context, in *pb.ReplicationReques
 		fmt.Println("Error: received replication request for a different machine")
 		resp.Success = false
 	}
+	fmt.Println("Replicating file")
 	localSDFSFilePath := filepath.Join(SDFS_PATH, in.FileName)
 	err := transferFile(localSDFSFilePath, in.FileName, []string{in.ReceiverMachine})
 	if err != nil {
