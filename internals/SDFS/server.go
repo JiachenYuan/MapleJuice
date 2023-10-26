@@ -45,6 +45,7 @@ func init() {
 		fmt.Printf("Error getting user home directory: %v \n", err)
 	}
 	SDFS_PATH = filepath.Join(usr.HomeDir, "SDFS_Files")
+	deleteAllFiles(SDFS_PATH)
 	hn, err := os.Hostname()
 	if err != nil {
 		fmt.Printf("Error getting hostname: %v \n", err)
@@ -78,6 +79,8 @@ func handleNodeFailure(failedNodeAddr string) {
 	fmt.Println("Handling node failure")
 	//find out all the files that the failed node has
 	filesToReplicate := memTable.VMToFileMap[failedNodeAddr]
+	fmt.Println("failedNodeAddr: ", failedNodeAddr)
+	fmt.Println("filesToReplicate: ", filesToReplicate)
 	//for each file, get a list of alived machines that contain the file
 	for fileName := range filesToReplicate {
 		replicas := listSDFSFileVMs(fileName)
@@ -86,8 +89,12 @@ func handleNodeFailure(failedNodeAddr string) {
 		disjointAddresses := findDisjointElements(allAliveNodes, replicas)
 		// randomly select an alive machine to replicate the file
 		receiverAddress := disjointAddresses[rand.Intn(len(disjointAddresses))]
+		fmt.Println("receiverAddress: ", receiverAddress)
 		r := sendReplicateFileRequest(senderAddress, receiverAddress, fileName)
-		if !r.Success {
+		if r == nil {
+			fmt.Println("received a nil response for replication")
+		}
+		if r == nil || !r.Success {
 			//TODO: add logic for failed replication
 			fmt.Printf("Failed to replicate file %s from %s to %s\n", fileName, senderAddress, receiverAddress)
 		} else {
@@ -127,6 +134,7 @@ type SDFSServer struct {
 func (s *SDFSServer) GetFile(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, error) {
 	vmList := listSDFSFileVMs(in.FileName)
 	resp := &pb.GetResponse{
+		Success:     true,
 		VMAddresses: vmList,
 	}
 	return resp, nil
@@ -146,6 +154,7 @@ func (s *SDFSServer) PutFile(ctx context.Context, in *pb.PutRequest) (*pb.PutRes
 		}
 	}
 	resp := &pb.PutResponse{
+		Success:     true,
 		VMAddresses: targetReplicas,
 	}
 	return resp, nil

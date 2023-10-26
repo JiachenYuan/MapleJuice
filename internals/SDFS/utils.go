@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -54,11 +55,13 @@ func getDefaultReplicaVMAddresses(id string) []string {
 	membershipList := fd.GetAllNodeAddresses()
 	replicaSize := global.Min(4, len(membershipList))
 
-	replicas := make([]string, replicaSize)
+	replicas := make([]string, 0)
 
 	if replicaSize < NUM_WRITE {
 		for i := 0; i < replicaSize; i++ {
-			replicas[i] = membershipList[i]
+			if fd.IsNodeAlive(membershipList[i]) {
+				replicas = append(replicas, membershipList[i])
+			}
 		}
 	} else {
 		val, err := strconv.Atoi(id)
@@ -66,13 +69,13 @@ func getDefaultReplicaVMAddresses(id string) []string {
 			fmt.Println("Input id cannot be parsed to int")
 		}
 		i := 0
-		for i < replicaSize {
+
+		for len(replicas) < replicaSize {
 			hostName := getFullHostNameFromID(fmt.Sprintf("%v", ((val+i)%10 + 1)))
 			if fd.IsNodeAlive(hostName) {
-				replicas[i] = hostName
-				i++
+				replicas = append(replicas, hostName)
 			}
-
+			i++
 		}
 	}
 	return replicas
@@ -198,4 +201,29 @@ func findDisjointElements(A, B []string) []string {
 	}
 
 	return disjoint
+}
+
+func deleteAllFiles(dir string) error {
+	// Open the directory.
+	d, err := os.Open(dir)
+	if err != nil {
+		return err
+	}
+	defer d.Close()
+
+	// Read directory entries.
+	names, err := d.Readdirnames(-1)
+	if err != nil {
+		return err
+	}
+
+	// Iterate over the directory entries and delete each file.
+	for _, name := range names {
+		filePath := filepath.Join(dir, name)
+		err = os.Remove(filePath)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
