@@ -99,31 +99,21 @@ func handleNodeFailure(failedNodeAddr string) {
 }
 
 func sendReplicateFileRequest(senderMachine string, receiverMachine string, fileName string) *pb.ReplicationResponse {
-	ctx, dialCancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer dialCancel()
-	conn, err := grpc.DialContext(ctx, receiverMachine+":"+global.SDFS_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(receiverMachine+":"+global.SDFS_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		fmt.Printf("did not connect: %v\n", err)
 	}
 	defer conn.Close()
 
 	c := pb.NewSDFSClient(conn)
-	timeout := 2 * time.Second
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
 
-	r, err := c.ReplicateFile(ctx, &pb.ReplicationRequest{
+	r, err := c.ReplicateFile(context.Background(), &pb.ReplicationRequest{
 		FileName:        fileName,
 		SenderMachine:   senderMachine,
 		ReceiverMachine: receiverMachine,
 	})
 	if err != nil {
-		// Check if the error is due to a timeout
-		if ctx.Err() == context.DeadlineExceeded {
-			fmt.Printf("gRPC call timed out after %s\n", timeout)
-		} else {
-			fmt.Printf("Failed to call replicate: %v\n", err)
-		}
+		fmt.Printf("Failed to call replicate: %v\n", err)
 	}
 	return r
 }
@@ -197,30 +187,20 @@ func sendDeleteFileMessageToTargetFollowers(targetFollowers []string, fileName s
 }
 
 func sendDeleteFileRequestsToFollower(targetFollower string, fileName string) error {
-	ctx, dialCancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer dialCancel()
-	conn, err := grpc.DialContext(ctx, targetFollower+":"+global.SDFS_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(targetFollower+":"+global.SDFS_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		fmt.Printf("did not connect: %v\n", err)
 	}
 	defer conn.Close()
 
 	c := pb.NewSDFSClient(conn)
-	timeout := 2 * time.Second
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
 
-	r, err := c.DeleteFileFollower(ctx, &pb.DeleteRequestFollower{
+	r, err := c.DeleteFileFollower(context.Background(), &pb.DeleteRequestFollower{
 		FileName: fileName,
 	})
 
 	if err != nil {
-		// Check if the error is due to a timeout
-		if ctx.Err() == context.DeadlineExceeded {
-			fmt.Printf("gRPC call timed out after %s\n", timeout)
-		} else {
-			fmt.Printf("Failed to call delete on followers: %v\n", err)
-		}
+		fmt.Printf("Failed to call delete on followers: %v\n", err)
 	}
 	if !r.Success {
 		return fmt.Errorf("failed to delete file %s on follower %s", fileName, targetFollower)
@@ -284,29 +264,20 @@ func (s *SDFSServer) ReplicateFile(ctx context.Context, in *pb.ReplicationReques
 
 // SDFS file operations
 func getFile(sdfsFileName string, localFileName string) {
-	ctx, dialCancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer dialCancel()
-	conn, err := grpc.DialContext(ctx, LEADER_ADDRESS+":"+global.SDFS_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(LEADER_ADDRESS+":"+global.SDFS_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		fmt.Printf("did not connect: %v\n", err)
 	}
 	defer conn.Close()
 
 	c := pb.NewSDFSClient(conn)
-	timeout := 2 * time.Second
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
+
 	r, err := c.GetFile(context.Background(), &pb.GetRequest{
 		FileName: sdfsFileName,
 	})
 
 	if err != nil {
-		// Check if the error is due to a timeout
-		if ctx.Err() == context.DeadlineExceeded {
-			fmt.Printf("gRPC call timed out after %s\n", timeout)
-		} else {
-			fmt.Printf("Failed to call replicate: %v\n", err)
-		}
+		fmt.Printf("Failed to call get: %v\n", err)
 	}
 
 	if !r.Success {
@@ -393,29 +364,19 @@ func transferFile(localFileName string, sdfsFileName string, targetReplicas []st
 }
 
 func deleteFile(sdfsFileName string) {
-	ctx, dialCancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer dialCancel()
-	conn, err := grpc.DialContext(ctx, LEADER_ADDRESS+":"+global.SDFS_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(LEADER_ADDRESS+":"+global.SDFS_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		fmt.Printf("did not connect: %v\n", err)
 	}
 	defer conn.Close()
 
 	c := pb.NewSDFSClient(conn)
-	timeout := 2 * time.Second
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	r, err := c.DeleteFileLeader(ctx, &pb.DeleteRequestLeader{
+	r, err := c.DeleteFileLeader(context.Background(), &pb.DeleteRequestLeader{
 		FileName: sdfsFileName,
 	})
 
 	if err != nil {
-		// Check if the error is due to a timeout
-		if ctx.Err() == context.DeadlineExceeded {
-			fmt.Printf("gRPC call timed out after %s\n", timeout)
-		} else {
-			fmt.Printf("Failed to call delete: %v\n", err)
-		}
+		fmt.Printf("Failed to call delete: %v\n", err)
 	}
 	if r.Success {
 		fmt.Printf("Successfully deleted file %s\n", sdfsFileName)
