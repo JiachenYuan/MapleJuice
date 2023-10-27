@@ -53,6 +53,17 @@ func handleGetFile(sdfsFileName string, localFileName string) {
 		}
 		break
 	}
+	ackResponse, err := c.GetACK(context.Background(), &pb.GetACKRequest{
+		FileName: sdfsFileName,
+	})
+	if err != nil {
+		fmt.Printf("Leader failed to process get ACK: %v\n", err)
+		return
+	}
+	if ackResponse == nil || !ackResponse.Success {
+		fmt.Printf("Leader process get ACK unsuccessfully: %v\n", err)
+		return
+	}
 }
 func handlePutFile(localFileName string, sdfsFileName string) {
 	if _, err := os.Stat(localFileName); os.IsNotExist(err) {
@@ -92,16 +103,16 @@ func handlePutFile(localFileName string, sdfsFileName string) {
 	if err != nil {
 		fmt.Printf("Failed to transfer file: %v\n", err)
 	} else {
-		r, err := c.UpdateLeaderFileTable(context.Background(), &pb.UpdateLeaderFileTableRequest{
+		r, err := c.PutACK(context.Background(), &pb.PutACKRequest{
 			FileName:         sdfsFileName,
 			ReplicaAddresses: targetReplicas,
 		})
 		if err != nil {
-			fmt.Printf("Failed to update leader file table: %v\n", err)
+			fmt.Printf("Leader failed to process put ACK: %v\n", err)
 			return
 		}
 		if r == nil || !r.Success {
-			fmt.Printf("Failed to update leader file table: %v\n", err)
+			fmt.Printf("Leader process put ACK unsuccessfully: %v\n", err)
 			return
 		}
 	}

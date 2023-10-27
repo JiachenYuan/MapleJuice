@@ -124,6 +124,8 @@ type SDFSServer struct {
 
 // Get file
 func (s *SDFSServer) GetFile(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, error) {
+	fileName := in.FileName
+	requestLock(in.RequesterAddress, fileName, READ)
 	vmList := listSDFSFileVMs(in.FileName)
 	resp := &pb.GetResponse{
 		Success:     true,
@@ -132,9 +134,19 @@ func (s *SDFSServer) GetFile(ctx context.Context, in *pb.GetRequest) (*pb.GetRes
 	return resp, nil
 }
 
+// Get ACK (sent to leader)
+func (s *SDFSServer) GetACK(ctx context.Context, in *pb.GetACKRequest) (*pb.GetACKResponse, error) {
+	releaseLock(in.FileName, READ)
+	resp := &pb.GetACKResponse{
+		Success: true,
+	}
+	return resp, nil
+}
+
 // Put file
 func (s *SDFSServer) PutFile(ctx context.Context, in *pb.PutRequest) (*pb.PutResponse, error) {
 	fileName := in.FileName
+	requestLock(in.RequesterAddress, fileName, WRITE)
 	var targetReplicas []string
 	val, exists := memTable.fileToVMMap[fileName]
 	if !exists {
@@ -151,13 +163,14 @@ func (s *SDFSServer) PutFile(ctx context.Context, in *pb.PutRequest) (*pb.PutRes
 	return resp, nil
 }
 
-// update file table (sent to leader)
-func (s *SDFSServer) UpdateLeaderFileTable(ctx context.Context, in *pb.UpdateLeaderFileTableRequest) (*pb.UpdateLeaderFileTableResponse, error) {
+// put ACK (sent to leader)
+func (s *SDFSServer) PutACK(ctx context.Context, in *pb.PutACKRequest) (*pb.PutACKResponse, error) {
 	fileName := in.FileName
 	vmAddress := in.ReplicaAddresses
 	//update file table
 	memTable.put(fileName, vmAddress)
-	resp := &pb.UpdateLeaderFileTableResponse{
+	releaseLock(fileName, WRITE)
+	resp := &pb.PutACKResponse{
 		Success: true,
 	}
 	return resp, nil
