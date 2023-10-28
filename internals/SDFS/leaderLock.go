@@ -1,6 +1,7 @@
 package SDFS
 
 import (
+	"fmt"
 	"sync"
 )
 
@@ -43,7 +44,12 @@ func requestLock(requestorAddress string, fileName string, requestType RequestTy
 		lock.writeQueue = append(lock.writeQueue, requestorAddress)
 	}
 	canProceed := false
+	hasPrintedLog := false
 	for !canProceed {
+		if !hasPrintedLog {
+			fmt.Printf("Waiting for lock for file %s\n", fileName)
+			hasPrintedLog = true
+		}
 		switch requestType {
 		case READ:
 			canProceed = lock.writeCount == 0 && lock.readCount < 2 && lock.consecutiveReads < 4 && lock.readQueue[0] == requestorAddress
@@ -59,10 +65,12 @@ func requestLock(requestorAddress string, fileName string, requestType RequestTy
 	}
 	// Grant lock
 	if requestType == READ {
+		fmt.Printf("Granted read lock for file %s\n", fileName)
 		lock.readCount++
 		lock.consecutiveReads++
 		lock.consecutiveWrites = 0
 	} else {
+		fmt.Printf("Granted write lock for file %s\n", fileName)
 		lock.writeCount++
 		lock.consecutiveWrites++
 		lock.consecutiveReads = 0
@@ -78,11 +86,12 @@ func releaseLock(fileName string, requestType RequestType) {
 	}
 	lock.fileLocksMutex.Lock()
 	defer lock.fileLocksMutex.Unlock()
-
 	if requestType == READ {
+		fmt.Printf("Released read lock for file %s\n", fileName)
 		lock.readCount--
 		lock.readQueue = lock.readQueue[1:]
 	} else {
+		fmt.Printf("Released write lock for file %s\n", fileName)
 		lock.writeCount--
 		lock.writeQueue = lock.writeQueue[1:]
 	}

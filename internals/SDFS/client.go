@@ -38,6 +38,7 @@ func handleGetFile(sdfsFileName string, localFileName string) {
 	}
 	replicas := r.VMAddresses
 	for _, r := range replicas {
+		fmt.Printf("Trying to get file %s from replica: %s\n", sdfsFileName, r)
 		remotePath := getScpHostNameFromHostName(r) + ":" + filepath.Join(SDFS_PATH, sdfsFileName)
 		cmd := exec.Command("scp", remotePath, localFileName)
 		err := cmd.Start()
@@ -64,6 +65,7 @@ func handleGetFile(sdfsFileName string, localFileName string) {
 		fmt.Printf("Leader process get ACK unsuccessfully: %v\n", err)
 		return
 	}
+	fmt.Printf("Successfully get file %s\n", sdfsFileName)
 }
 func handlePutFile(localFileName string, sdfsFileName string) {
 	if _, err := os.Stat(localFileName); os.IsNotExist(err) {
@@ -98,7 +100,7 @@ func handlePutFile(localFileName string, sdfsFileName string) {
 		return
 	}
 
-	fmt.Printf("Put file %s to sdfs %s \n", localFileName, sdfsFileName)
+	fmt.Printf("Starting to put file: %s to SDFS file: %s \n", localFileName, sdfsFileName)
 	err = transferFile(localFileName, sdfsFileName, targetReplicas)
 	if err != nil {
 		fmt.Printf("Failed to transfer file: %v\n", err)
