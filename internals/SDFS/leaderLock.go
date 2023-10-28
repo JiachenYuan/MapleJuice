@@ -48,9 +48,9 @@ func requestLock(requestorAddress string, fileName string, requestType RequestTy
 	for !canProceed {
 		switch requestType {
 		case READ:
-			canProceed = lock.writeCount == 0 && lock.readCount < 2 && lock.consecutiveReads < 4 && lock.readQueue[0] == requestorAddress
+			canProceed = lock.writeCount == 0 && lock.readCount < 2 && (len(lock.writeQueue) == 0 || lock.consecutiveReads < 4) && lock.readQueue[0] == requestorAddress
 		case WRITE:
-			canProceed = lock.writeCount == 0 && lock.readCount == 0 && lock.consecutiveWrites < 4 && lock.writeQueue[0] == requestorAddress
+			canProceed = lock.writeCount == 0 && lock.readCount == 0 && (len(lock.readQueue) == 0 || lock.consecutiveWrites < 4) && lock.writeQueue[0] == requestorAddress
 		}
 		if !canProceed {
 			if !hasPrintedLog {
