@@ -46,10 +46,6 @@ func requestLock(requestorAddress string, fileName string, requestType RequestTy
 	canProceed := false
 	hasPrintedLog := false
 	for !canProceed {
-		if !hasPrintedLog {
-			fmt.Printf("Waiting for lock for file %s\n", fileName)
-			hasPrintedLog = true
-		}
 		switch requestType {
 		case READ:
 			canProceed = lock.writeCount == 0 && lock.readCount < 2 && lock.consecutiveReads < 4 && lock.readQueue[0] == requestorAddress
@@ -57,6 +53,10 @@ func requestLock(requestorAddress string, fileName string, requestType RequestTy
 			canProceed = lock.writeCount == 0 && lock.readCount == 0 && lock.consecutiveWrites < 4 && lock.writeQueue[0] == requestorAddress
 		}
 		if !canProceed {
+			if !hasPrintedLog {
+				fmt.Printf("Waiting for lock for file %s\n", fileName)
+				hasPrintedLog = true
+			}
 			lock.fileLocksMutex.Unlock()
 			// Optionally, sleep for a short time before trying again
 			// time.Sleep(time.Millisecond * 50)
