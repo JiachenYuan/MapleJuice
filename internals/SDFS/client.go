@@ -26,6 +26,7 @@ func handleGetFile(sdfsFileName string, localFileName string) {
 
 	shouldWaitForLock := true
 	resp := &pb.GetResponse{}
+	numRetry := 0
 	for shouldWaitForLock {
 		r, err := c.GetFile(context.Background(), &pb.GetRequest{
 			FileName: sdfsFileName,
@@ -35,18 +36,29 @@ func handleGetFile(sdfsFileName string, localFileName string) {
 			fmt.Printf("Failed to call get: %v\n", err)
 		}
 
-		if !r.Success {
-			fmt.Println("failed to acquire the list of vms to read the file from")
-			return
+		if r != nil {
+			if !r.Success {
+				fmt.Println("failed to acquire the list of vms to read the file from")
+				return
+			}
+
+			if r.ShouldWait {
+				fmt.Printf("Waiting for read lock on file %s\n", sdfsFileName)
+				time.Sleep(1 * time.Second)
+			} else {
+				shouldWaitForLock = false
+				resp = r
+			}
+		} else {
+			if numRetry > global.MAX_NUM_RETRY {
+				break
+			} else {
+				fmt.Printf("Retrying to get file %s for %v time \n", sdfsFileName, numRetry)
+				time.Sleep(3 * time.Second)
+			}
+			numRetry++
 		}
 
-		if r.ShouldWait {
-			fmt.Printf("Waiting for read lock on file %s\n", sdfsFileName)
-			time.Sleep(1 * time.Second)
-		} else {
-			shouldWaitForLock = false
-			resp = r
-		}
 	}
 
 	replicas := resp.VMAddresses
@@ -96,6 +108,7 @@ func handlePutFile(localFileName string, sdfsFileName string) {
 
 	shouldWaitForLock := true
 	resp := &pb.PutResponse{}
+	numRetry := 0
 	for shouldWaitForLock {
 		r, err := c.PutFile(context.Background(), &pb.PutRequest{
 			FileName: sdfsFileName,
@@ -106,18 +119,29 @@ func handlePutFile(localFileName string, sdfsFileName string) {
 			return
 		}
 
-		if r == nil || !r.Success {
-			fmt.Printf("Failed to put file %s to sdfs %s \n", localFileName, sdfsFileName)
-			return
+		if r != nil {
+			if !r.Success {
+				fmt.Printf("Failed to put file %s to sdfs %s \n", localFileName, sdfsFileName)
+				return
+			}
+
+			if r.ShouldWait {
+				fmt.Printf("Waiting for write lock on file %s\n", sdfsFileName)
+				time.Sleep(1 * time.Second)
+			} else {
+				shouldWaitForLock = false
+				resp = r
+			}
+		} else {
+			if numRetry > global.MAX_NUM_RETRY {
+				break
+			} else {
+				fmt.Printf("Retrying to get file %s for %v time \n", sdfsFileName, numRetry)
+				time.Sleep(3 * time.Second)
+			}
+			numRetry++
 		}
 
-		if r.ShouldWait {
-			fmt.Printf("Waiting for write lock on file %s\n", sdfsFileName)
-			time.Sleep(1 * time.Second)
-		} else {
-			shouldWaitForLock = false
-			resp = r
-		}
 	}
 	targetReplicas := resp.VMAddresses
 	if len(targetReplicas) == 0 {
