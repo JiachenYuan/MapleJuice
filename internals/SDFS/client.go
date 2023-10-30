@@ -132,7 +132,7 @@ func sendGetACKToLeader(sdfsFileName string) {
 			conn.Close()
 			return
 		}
-		fmt.Printf("Leader processed get ACK successfully")
+		fmt.Printf("Leader processed get ACK successfully \n")
 		conn.Close()
 		break
 	}
@@ -292,7 +292,7 @@ func sendPutACKToLeader(sdfsFileName string, targetReplicas []string) {
 			conn.Close()
 			return
 		}
-		fmt.Printf("Leader processed put ACK successfully")
+		fmt.Printf("Leader processed put ACK successfully \n")
 		conn.Close()
 		break
 	}
