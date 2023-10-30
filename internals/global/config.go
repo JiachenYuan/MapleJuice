@@ -6,8 +6,7 @@ const (
 	SDFS_PORT            = "55557"
 	LEADER_ELECTION_PORT = "55558"
 
-	QUORUM        = 6
-	MAX_NUM_RETRY = 5
+	QUORUM = 6
 )
 
 var (
