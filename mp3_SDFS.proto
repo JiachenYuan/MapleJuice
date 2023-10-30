@@ -24,6 +24,7 @@ message GetRequest {
 message GetResponse {
   bool success = 1;
   repeated string VMAddresses = 2;
+  bool shouldWait = 3;
 }
 
 //get ack
@@ -45,6 +46,7 @@ message PutRequest {
 message PutResponse {
   bool success = 1;
   repeated string VMAddresses = 2;
+  bool shouldWait = 3;
 }
 
 //put ack

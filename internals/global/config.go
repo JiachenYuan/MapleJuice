@@ -1,9 +1,9 @@
 package global
 
 const (
-	LOGGER_PORT = "55555"
-	FD_PORT     = "55556"
-	SDFS_PORT   = "55557"
+	LOGGER_PORT          = "55555"
+	FD_PORT              = "55556"
+	SDFS_PORT            = "55557"
 	LEADER_ELECTION_PORT = "55558"
 
 	QUORUM = 6
@@ -24,4 +24,14 @@ func Min(a int, b int) int {
 		return a
 	}
 	return b
+}
+
+// adapted from: https://stackoverflow.com/questions/10485743/contains-method-for-a-slice
+func Contains[T comparable](s []T, e T) bool {
+	for _, v := range s {
+		if v == e {
+			return true
+		}
+	}
+	return false
 }

@@ -24,19 +24,32 @@ func handleGetFile(sdfsFileName string, localFileName string) {
 
 	c := pb.NewSDFSClient(conn)
 
-	r, err := c.GetFile(context.Background(), &pb.GetRequest{
-		FileName: sdfsFileName,
-	})
+	shouldWaitForLock := true
+	resp := &pb.GetResponse{}
+	for shouldWaitForLock {
+		r, err := c.GetFile(context.Background(), &pb.GetRequest{
+			FileName: sdfsFileName,
+		})
 
-	if err != nil {
-		fmt.Printf("Failed to call get: %v\n", err)
+		if err != nil {
+			fmt.Printf("Failed to call get: %v\n", err)
+		}
+
+		if !r.Success {
+			fmt.Println("failed to acquire the list of vms to read the file from")
+			return
+		}
+
+		if r.ShouldWait {
+			fmt.Printf("Waiting for read lock on file %s\n", sdfsFileName)
+			time.Sleep(1 * time.Second)
+		} else {
+			shouldWaitForLock = false
+			resp = r
+		}
 	}
 
-	if !r.Success {
-		fmt.Println("failed to acquire the list of vms to read the file from")
-		return
-	}
-	replicas := r.VMAddresses
+	replicas := resp.VMAddresses
 	for _, r := range replicas {
 		fmt.Printf("Trying to get file %s from replica: %s\n", sdfsFileName, r)
 		remotePath := getScpHostNameFromHostName(r) + ":" + filepath.Join(SDFS_PATH, sdfsFileName)
@@ -80,21 +93,33 @@ func handlePutFile(localFileName string, sdfsFileName string) {
 	defer conn.Close()
 
 	c := pb.NewSDFSClient(conn)
-	r, err := c.PutFile(context.Background(), &pb.PutRequest{
-		FileName: sdfsFileName,
-	})
 
-	if err != nil {
-		fmt.Printf("Failed to call put: %v\n", err)
-		return
+	shouldWaitForLock := true
+	resp := &pb.PutResponse{}
+	for shouldWaitForLock {
+		r, err := c.PutFile(context.Background(), &pb.PutRequest{
+			FileName: sdfsFileName,
+		})
+
+		if err != nil {
+			fmt.Printf("Failed to call put: %v\n", err)
+			return
+		}
+
+		if r == nil || !r.Success {
+			fmt.Printf("Failed to put file %s to sdfs %s \n", localFileName, sdfsFileName)
+			return
+		}
+
+		if r.ShouldWait {
+			fmt.Printf("Waiting for write lock on file %s\n", sdfsFileName)
+			time.Sleep(1 * time.Second)
+		} else {
+			shouldWaitForLock = false
+			resp = r
+		}
 	}
-
-	if r == nil || !r.Success {
-		fmt.Printf("Failed to put file %s to sdfs %s \n", localFileName, sdfsFileName)
-		return
-	}
-
-	targetReplicas := r.VMAddresses
+	targetReplicas := resp.VMAddresses
 	if len(targetReplicas) == 0 {
 		fmt.Printf("No target replicas provided\n")
 		return

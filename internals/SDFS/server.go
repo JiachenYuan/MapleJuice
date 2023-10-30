@@ -94,7 +94,7 @@ func handleNodeFailure(failedNodeAddr string) {
 		}
 	}
 	//remove the VM from the mem table
-	delete(global.MemTable.VMToFileMap, failedNodeAddr)
+	global.MemTable.DeleteVM(failedNodeAddr)
 }
 
 func sendReplicateFileRequest(senderMachine string, receiverMachine string, fileName string) *pb.ReplicationResponse {
@@ -125,11 +125,15 @@ type SDFSServer struct {
 // Get file
 func (s *SDFSServer) GetFile(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, error) {
 	fileName := in.FileName
-	requestLock(in.RequesterAddress, fileName, global.READ)
-	vmList := listSDFSFileVMs(in.FileName)
+	var vmList []string
+	canProceed := requestLock(in.RequesterAddress, fileName, global.READ)
+	if canProceed {
+		vmList = listSDFSFileVMs(in.FileName)
+	}
 	resp := &pb.GetResponse{
 		Success:     true,
 		VMAddresses: vmList,
+		ShouldWait:  !canProceed,
 	}
 	return resp, nil
 }
@@ -146,19 +150,23 @@ func (s *SDFSServer) GetACK(ctx context.Context, in *pb.GetACKRequest) (*pb.GetA
 // Put file
 func (s *SDFSServer) PutFile(ctx context.Context, in *pb.PutRequest) (*pb.PutResponse, error) {
 	fileName := in.FileName
-	requestLock(in.RequesterAddress, fileName, global.WRITE)
+	canProceed := requestLock(in.RequesterAddress, fileName, global.WRITE)
 	var targetReplicas []string
-	val, exists := global.MemTable.FileToVMMap[fileName]
-	if !exists {
-		targetReplicas = getDefaultReplicaVMAddresses(hashFileName(fileName))
-	} else {
-		for k := range val {
-			targetReplicas = append(targetReplicas, k)
+	if canProceed {
+		val, exists := global.MemTable.FileToVMMap[fileName]
+		if !exists {
+			targetReplicas = getDefaultReplicaVMAddresses(hashFileName(fileName))
+		} else {
+			for k := range val {
+				targetReplicas = append(targetReplicas, k)
+			}
 		}
 	}
+
 	resp := &pb.PutResponse{
 		Success:     true,
 		VMAddresses: targetReplicas,
+		ShouldWait:  !canProceed,
 	}
 	return resp, nil
 }
@@ -191,7 +199,7 @@ func (s *SDFSServer) DeleteFileLeader(ctx context.Context, in *pb.DeleteRequestL
 	resp := &pb.DeleteResponseLeader{
 		Success: true,
 	}
-	global.MemTable.Delete(fileName)
+	global.MemTable.DeleteFile(fileName)
 	return resp, nil
 }
 
