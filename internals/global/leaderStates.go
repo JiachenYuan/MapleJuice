@@ -145,6 +145,7 @@ func UpdateLeaderStateIfNecessary(leaderStates *pb.LeaderState) {
 	}
 	MemTable.VMToFileMap = new_VM_to_file_map
 
+	FileLocks = make(map[string]*FileLock)
 	for filename, v := range leaderStates.FileLocks {
 		FileLocks[filename].ReadQueue = v.ReadQueue
 		FileLocks[filename].WriteQueue = v.WriteQueue
