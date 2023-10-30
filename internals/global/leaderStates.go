@@ -84,6 +84,7 @@ func LeaderStatesToPB(myAddr string) *pb.LeaderState {
 		}
 	}
 
+	res.VMToFileMap = make(map[string]*pb.LeaderState_FileList)
 	for key, value := range MemTable.VMToFileMap {
 		file_list, ok := res.VMToFileMap[key]
 		if !ok {
