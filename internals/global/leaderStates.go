@@ -120,6 +120,9 @@ func LeaderStatesToPB(myAddr string) *pb.LeaderState {
 	}
 	res.Version = int64(Version)
 
+	fmt.Printf("Leader State is = %v\n", MemTable.FileToVMMap)
+	fmt.Printf("Serialized to = %v\n", res.FileToVMMap)
+
 	return res
 }
 
@@ -167,10 +170,6 @@ func UpdateLeaderStateIfNecessary(leaderStates *pb.LeaderState) {
 		FileLocks[filename].ConsecutiveWrites = int(v.ConsecutiveWrites)
 	}
 
-	
-
-	fmt.Printf("My leader state replica's version = %v\n", Version)
-	fmt.Printf("My leader state's fileToVMMap = %v\n", MemTable.FileToVMMap)
 }
 
 
