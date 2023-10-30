@@ -73,29 +73,21 @@ func LeaderStatesToPB(myAddr string) *pb.LeaderState {
 	// !TODO: Memtable not lock???
 	res.FileToVMMap = make(map[string]*pb.LeaderState_AddrList)
 	for key, value := range MemTable.FileToVMMap {
-		vm_addr_list, ok := res.FileToVMMap[key]
-		if !ok {
-			res.FileToVMMap[key] = &pb.LeaderState_AddrList{}
-			vm_addr_list = res.FileToVMMap[key]
-		}
-		vm_addr_list.VMAddr = make([]string, 0)
-		vm_list := vm_addr_list.VMAddr
+		res.FileToVMMap[key] = &pb.LeaderState_AddrList{}
+		res.FileToVMMap[key].VMAddr = make([]string, 0)
+		// vm_list := vm_addr_list.VMAddr
 		for vm_addr := range value {
-			vm_list = append(vm_list, vm_addr)
+			res.FileToVMMap[key].VMAddr= append(res.FileToVMMap[key].VMAddr, vm_addr)
 		}
 	}
 
 	res.VMToFileMap = make(map[string]*pb.LeaderState_FileList)
 	for key, value := range MemTable.VMToFileMap {
-		file_list, ok := res.VMToFileMap[key]
-		if !ok {
-			res.VMToFileMap[key] = &pb.LeaderState_FileList{}
-			file_list = res.VMToFileMap[key]
-		}
-		file_list.FileNames = make([]string, 0)
-		file_name_list := file_list.FileNames
+		res.VMToFileMap[key] = &pb.LeaderState_FileList{}
+		res.VMToFileMap[key].FileNames = make([]string, 0)
+		// file_name_list := file_list.FileNames
 		for file_name := range value {
-			file_name_list = append(file_name_list, file_name)
+			res.VMToFileMap[key].FileNames = append(res.VMToFileMap[key].FileNames, file_name)
 		}
 	}
 
