@@ -116,17 +116,17 @@ func LeaderStatesToPB(myAddr string) *pb.LeaderState {
 
 	// fmt.Printf("Leader State is = %v\n", MemTable.FileToVMMap)
 	// fmt.Printf("Serialized to = %v\n", res.FileToVMMap)
-	for k, v := range MemTable.FileToVMMap {
-		if len(res.FileToVMMap[k].VMAddr) != len(v) {
-			panic("1. Not equal length")
-		}
-	}
-	for k, v := range MemTable.VMToFileMap {
-		if len(res.VMToFileMap[k].FileNames) != len(v) {
-			panic("2. Not equal length")
-		}
-	}
-	fmt.Println()
+	// for k, v := range MemTable.FileToVMMap {
+	// 	if len(res.FileToVMMap[k].VMAddr) != len(v) {
+	// 		panic("1. Not equal length")
+	// 	}
+	// }
+	// for k, v := range MemTable.VMToFileMap {
+	// 	if len(res.VMToFileMap[k].FileNames) != len(v) {
+	// 		panic("2. Not equal length")
+	// 	}
+	// }
+	// fmt.Println()
 
 	return res
 }
