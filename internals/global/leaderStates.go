@@ -100,6 +100,8 @@ func LeaderStatesToPB(myAddr string) *pb.LeaderState {
 	res.FileLocks = make(map[string]*pb.LeaderState_FileLock)
 	for filename, filelock := range FileLocks {
 		res.FileLocks[filename] = &pb.LeaderState_FileLock{}
+		res.FileLocks[filename].ReadQueue = make([]string, 0)
+		res.FileLocks[filename].WriteQueue = make([]string, 0)
 		res.FileLocks[filename].ReadQueue = append(res.FileLocks[filename].ReadQueue, filelock.ReadQueue...)
 		res.FileLocks[filename].WriteQueue = append(res.FileLocks[filename].WriteQueue, filelock.WriteQueue...)
 		res.FileLocks[filename].ReadCount = int32(filelock.ReadCount)
@@ -147,6 +149,7 @@ func UpdateLeaderStateIfNecessary(leaderStates *pb.LeaderState) {
 
 	FileLocks = make(map[string]*FileLock)
 	for filename, v := range leaderStates.FileLocks {
+		fmt.Printf("%v\n", v)
 		FileLocks[filename].ReadQueue = v.ReadQueue
 		FileLocks[filename].WriteQueue = v.WriteQueue
 		FileLocks[filename].ReadCount = int(v.ReadCount)
