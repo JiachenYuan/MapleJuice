@@ -224,7 +224,7 @@ func newMessageOfType(messageType pb.GroupMessage_MessageType, includeLeaderStat
 	}
 
 	// Gossip message with leader states piggybacked
-	if len(includeLeaderStates) == 1 {
+	if (len(includeLeaderStates) == 1) && includeLeaderStates[0] {
 		localHostname, _ := getLocalNodeAddress()
 		message := &pb.GroupMessage{
 			Type:         messageType,

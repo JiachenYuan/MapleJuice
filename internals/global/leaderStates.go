@@ -69,6 +69,8 @@ func (mt *_MemTable) Put(sdfsFileName string, replicas []string) {
 // myAddr is the hostname of the calling node of this function
 func LeaderStatesToPB(myAddr string) *pb.LeaderState {
 	res := &pb.LeaderState{}
+	// Include memtable
+	// !TODO: Memtable not lock???
 	for key, value := range MemTable.FileToVMMap {
 		vm_addr_list, ok := res.FileToVMMap[key]
 		if !ok {
@@ -93,6 +95,20 @@ func LeaderStatesToPB(myAddr string) *pb.LeaderState {
 		}
 	}
 
+	// Include file lock
+	GlobalFileLock.Lock()
+	for filename, filelock := range FileLocks {
+		res.FileLocks[filename] = &pb.LeaderState_FileLock{}
+		res.FileLocks[filename].ReadQueue = append(res.FileLocks[filename].ReadQueue, filelock.ReadQueue...)
+		res.FileLocks[filename].WriteQueue = append(res.FileLocks[filename].WriteQueue, filelock.WriteQueue...)
+		res.FileLocks[filename].ReadCount = int32(filelock.ReadCount)
+		res.FileLocks[filename].WriteCount = int32(filelock.WriteCount)
+		res.FileLocks[filename].ConsecutiveReads = int32(filelock.ConsecutiveReads)
+		res.FileLocks[filename].ConsecutiveWrites = int32(filelock.ConsecutiveWrites)
+	}
+	GlobalFileLock.Unlock()
+
+
 	// If Leader node, increase Memtable Version number by one
 	if myAddr == GetLeaderAddress() {
 		Version ++;
@@ -100,6 +116,42 @@ func LeaderStatesToPB(myAddr string) *pb.LeaderState {
 	res.Version = int64(Version)
 
 	return res
+}
+
+func UpdateLeaderStateIfNecessary(leaderStates *pb.LeaderState) {
+	if (leaderStates.Version <= int64(Version) ) {
+		return
+	}
+
+	// !TODO: Memtable not lock???
+	new_file_to_VM_map := make(map[string]map[string]Empty)
+	for k, v := range leaderStates.FileToVMMap {
+		addr_list := v.VMAddr
+		new_file_to_VM_map[k] = make(map[string]Empty)
+		for _, addr := range addr_list {
+			new_file_to_VM_map[k][addr] = Empty{}
+		}
+	}
+	MemTable.FileToVMMap = new_file_to_VM_map
+
+	new_VM_to_file_map := make(map[string]map[string]Empty)
+	for k, v := range leaderStates.VMToFileMap {
+		file_list := v.FileNames
+		new_VM_to_file_map[k] = make(map[string]Empty)
+		for _, filename := range file_list {
+			new_VM_to_file_map[k][filename] = Empty{}
+		}
+	}
+	MemTable.VMToFileMap = new_VM_to_file_map
+
+	for filename, v := range leaderStates.FileLocks {
+		FileLocks[filename].ReadQueue = v.ReadQueue
+		FileLocks[filename].WriteQueue = v.WriteQueue
+		FileLocks[filename].ReadCount = int(v.ReadCount)
+		FileLocks[filename].WriteCount = int(v.WriteCount)
+		FileLocks[filename].ConsecutiveReads = int(v.ConsecutiveReads)
+		FileLocks[filename].ConsecutiveWrites = int(v.ConsecutiveWrites)
+	}
 }
 
 

@@ -29,9 +29,19 @@ message LeaderState {
   message FileList {
     repeated string file_names = 1;
   }
+  message FileLock {
+    repeated string ReadQueue = 1;
+    repeated string WriteQueue = 2;
+    int32 ReadCount = 3;
+    int32 WriteCount = 4;
+    int32 ConsecutiveReads = 5;
+    int32 ConsecutiveWrites = 6;
+  }
+  
   int64 version = 1;
   map<string, AddrList> FileToVMMap = 2;
   map<string, FileList> VMToFileMap = 3;
+  map<string, FileLock> FileLocks = 4;
 }
 
 
