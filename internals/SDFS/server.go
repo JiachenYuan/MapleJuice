@@ -307,7 +307,7 @@ func (s *SDFSServer) ReplicateFile(ctx context.Context, in *pb.ReplicationReques
 	}
 	fmt.Println("Replicating file")
 	localSDFSFilePath := filepath.Join(SDFS_PATH, in.FileName)
-	err := transferFile(localSDFSFilePath, in.FileName, []string{in.ReceiverMachine})
+	err := transferFilesConcurrent(localSDFSFilePath, in.FileName, []string{in.ReceiverMachine})
 	if err != nil {
 		fmt.Printf("Failed to transfer file: %v\n", err)
 		resp.Success = false

@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"google.golang.org/grpc"
@@ -95,18 +96,43 @@ func handleGetFile(sdfsFileName string, localFileName string) {
 			break
 		}
 
+		sendGetACKToLeader(sdfsFileName)
+		fmt.Printf("Successfully get file %s\n", sdfsFileName)
+		conn.Close()
+		break
+	}
+}
+
+func sendGetACKToLeader(sdfsFileName string) {
+	var conn *grpc.ClientConn
+	var c pb.SDFSClient
+	var err error
+
+	for {
+		if conn == nil {
+			conn, err = grpc.Dial(global.GetLeaderAddress()+":"+global.SDFS_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			if err != nil {
+				fmt.Printf("did not connect: %v\n", err)
+				continue
+			}
+			c = pb.NewSDFSClient(conn)
+		}
+
 		ackResponse, err := c.GetACK(context.Background(), &pb.GetACKRequest{
 			FileName: sdfsFileName,
 		})
 		if err != nil {
 			fmt.Printf("Leader failed to process get ACK: %v\n", err)
-			return
+			conn.Close()
+			conn = nil
+			continue
 		}
 		if ackResponse == nil || !ackResponse.Success {
 			fmt.Printf("Leader process get ACK unsuccessfully: %v\n", err)
+			conn.Close()
 			return
 		}
-		fmt.Printf("Successfully get file %s\n", sdfsFileName)
+		fmt.Printf("Leader processed get ACK successfully")
 		conn.Close()
 		break
 	}
@@ -183,46 +209,93 @@ func handlePutFile(localFileName string, sdfsFileName string) {
 		}
 
 		fmt.Printf("Starting to put file: %s to SDFS file: %s \n", localFileName, sdfsFileName)
-		err = transferFile(localFileName, sdfsFileName, targetReplicas)
+		err = transferFilesConcurrent(localFileName, sdfsFileName, targetReplicas)
 		if err != nil {
 			fmt.Printf("Failed to transfer file: %v\n", err)
 		} else {
-			r, err := c.PutACK(context.Background(), &pb.PutACKRequest{
-				FileName:         sdfsFileName,
-				ReplicaAddresses: targetReplicas,
-			})
-			if err != nil {
-				fmt.Printf("Leader failed to process put ACK: %v\n", err)
-				return
-			}
-			if r == nil || !r.Success {
-				fmt.Printf("Leader process put ACK unsuccessfully: %v\n", err)
-				return
-			}
+			sendPutACKToLeader(sdfsFileName, targetReplicas)
 		}
 		conn.Close()
 		break
 	}
 }
 
-func transferFile(localFileName string, sdfsFileName string, targetReplicas []string) error {
-	var err error
-	for _, r := range targetReplicas {
-		targetHostName := getScpHostNameFromHostName(r)
-		remotePath := targetHostName + ":" + filepath.Join(SDFS_PATH, sdfsFileName)
-		cmd := exec.Command("scp", localFileName, remotePath)
-		err = cmd.Start()
-		if err != nil {
-			fmt.Printf("Failed to start command: %v\n", err)
-		}
+func transferFilesConcurrent(localFileName string, sdfsFileName string, targetReplicas []string) error {
+	var wg sync.WaitGroup
+	var transferErrors []error
 
-		err = cmd.Wait()
-		if err != nil {
-			fmt.Printf("Command finished with error: %v\n", err)
-		}
+	for _, r := range targetReplicas {
+		wg.Add(1)
+		go func(replica string) {
+			defer wg.Done()
+			err := transferFileToReplica(localFileName, sdfsFileName, replica)
+			if err != nil {
+				transferErrors = append(transferErrors, err)
+			}
+		}(r)
 	}
-	fmt.Printf("Put file to replicas: %+q\n", targetReplicas)
+
+	wg.Wait()
+
+	if len(transferErrors) > 0 {
+		return fmt.Errorf("Some transfers failed: %v", transferErrors)
+	}
+
+	fmt.Printf("Successfully put file to replicas: %+q\n", targetReplicas)
+	return nil
+}
+
+func transferFileToReplica(localFileName string, sdfsFileName string, replica string) error {
+	targetHostName := getScpHostNameFromHostName(replica)
+	remotePath := targetHostName + ":" + filepath.Join(SDFS_PATH, sdfsFileName)
+	cmd := exec.Command("scp", localFileName, remotePath)
+	err := cmd.Start()
+	if err != nil {
+		fmt.Printf("Failed to start command: %v\n", err)
+		return err
+	}
+
+	err = cmd.Wait()
+	if err != nil {
+		fmt.Printf("Command finished with error: %v\n", err)
+	}
+
 	return err
+}
+
+func sendPutACKToLeader(sdfsFileName string, targetReplicas []string) {
+	var conn *grpc.ClientConn
+	var c pb.SDFSClient
+	var err error
+
+	for {
+		if conn == nil {
+			conn, err = grpc.Dial(global.GetLeaderAddress()+":"+global.SDFS_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			if err != nil {
+				fmt.Printf("did not connect: %v\n", err)
+				continue
+			}
+			c = pb.NewSDFSClient(conn)
+		}
+		r, err := c.PutACK(context.Background(), &pb.PutACKRequest{
+			FileName:         sdfsFileName,
+			ReplicaAddresses: targetReplicas,
+		})
+		if err != nil {
+			fmt.Printf("Leader failed to process put ACK: %v\n", err)
+			conn.Close()
+			conn = nil
+			continue
+		}
+		if r == nil || !r.Success {
+			fmt.Printf("Leader process put ACK unsuccessfully: %v\n", err)
+			conn.Close()
+			return
+		}
+		fmt.Printf("Leader processed put ACK successfully")
+		conn.Close()
+		break
+	}
 }
 
 func handleDeleteFile(sdfsFileName string) {
