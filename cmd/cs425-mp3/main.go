@@ -3,6 +3,7 @@ package main
 import (
 	"cs425-mp/internals/SDFS"
 	"cs425-mp/internals/failureDetector"
+	"cs425-mp/internals/global"
 	"fmt"
 	"sync"
 	"time"
@@ -87,7 +88,7 @@ func startLeaderElection(wg *sync.WaitGroup) {
 
 func monitorLeader() {
 	for {
-		leaderID := SDFS.GetLeaderID()
+		leaderID := global.GetLeaderID()
 		if leaderID != -1 {
 			fmt.Printf("*** Current Leader is VM %v ***\n", leaderID)
 		} else {
