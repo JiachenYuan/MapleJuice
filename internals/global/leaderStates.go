@@ -158,6 +158,7 @@ func UpdateLeaderStateIfNecessary(leaderStates *pb.LeaderState) {
 	}
 	MemTable.VMToFileMap = new_VM_to_file_map
 
+	GlobalFileLock.Lock()
 	FileLocks = make(map[string]*FileLock)
 	for filename, v := range leaderStates.FileLocks {
 		FileLocks[filename] = &FileLock{}
@@ -174,6 +175,7 @@ func UpdateLeaderStateIfNecessary(leaderStates *pb.LeaderState) {
 		FileLocks[filename].ConsecutiveReads = int(v.ConsecutiveReads)
 		FileLocks[filename].ConsecutiveWrites = int(v.ConsecutiveWrites)
 	}
+	GlobalFileLock.Unlock()
 
 }
 
