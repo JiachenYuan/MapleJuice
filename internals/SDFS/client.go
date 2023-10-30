@@ -64,6 +64,11 @@ func handleGetFile(sdfsFileName string, localFileName string) {
 			}
 		}
 
+		if shouldWaitForLock {
+			// Failed to acquire lock or reach leader, retry
+			continue
+		}
+
 		replicas := resp.VMAddresses
 		if len(replicas) == 0 {
 			fmt.Printf("No target read replicas provided\n")
@@ -159,6 +164,11 @@ func handlePutFile(localFileName string, sdfsFileName string) {
 				fmt.Printf("Retrying to get file %s\n", sdfsFileName)
 				time.Sleep(3 * time.Second)
 			}
+		}
+
+		if shouldWaitForLock {
+			// Failed to acquire lock or reach leader, retry
+			continue
 		}
 
 		targetReplicas := resp.VMAddresses
