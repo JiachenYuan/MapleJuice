@@ -97,6 +97,7 @@ func LeaderStatesToPB(myAddr string) *pb.LeaderState {
 
 	// Include file lock
 	GlobalFileLock.Lock()
+	res.FileLocks = make(map[string]*pb.LeaderState_FileLock)
 	for filename, filelock := range FileLocks {
 		res.FileLocks[filename] = &pb.LeaderState_FileLock{}
 		res.FileLocks[filename].ReadQueue = append(res.FileLocks[filename].ReadQueue, filelock.ReadQueue...)
@@ -152,6 +153,9 @@ func UpdateLeaderStateIfNecessary(leaderStates *pb.LeaderState) {
 		FileLocks[filename].ConsecutiveReads = int(v.ConsecutiveReads)
 		FileLocks[filename].ConsecutiveWrites = int(v.ConsecutiveWrites)
 	}
+
+	fmt.Printf("My leader state replica's version = %v\n", Version)
+	fmt.Printf("My leader state's fileToVMMap = %v\n", MemTable.FileToVMMap)
 }
 
 
