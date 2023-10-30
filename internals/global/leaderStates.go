@@ -71,6 +71,7 @@ func LeaderStatesToPB(myAddr string) *pb.LeaderState {
 	res := &pb.LeaderState{}
 	// Include memtable
 	// !TODO: Memtable not lock???
+	res.FileToVMMap = make(map[string]*pb.LeaderState_AddrList)
 	for key, value := range MemTable.FileToVMMap {
 		vm_addr_list, ok := res.FileToVMMap[key]
 		if !ok {
