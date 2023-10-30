@@ -18,8 +18,8 @@ import (
 
 const (
 	// LEADER_ADDRESS = "fa23-cs425-1801.cs.illinois.edu" // Default leader's receiving address
-	NUM_WRITE      = 4
-	NUM_READ       = 1
+	NUM_WRITE = 4
+	NUM_READ  = 1
 )
 
 var (
@@ -125,11 +125,7 @@ type SDFSServer struct {
 // Get file
 func (s *SDFSServer) GetFile(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, error) {
 	fileName := in.FileName
-<<<<<<< HEAD
-	requestLock(in.RequesterAddress, fileName, READ)
-=======
 	requestLock(in.RequesterAddress, fileName, global.READ)
->>>>>>> main
 	vmList := listSDFSFileVMs(in.FileName)
 	resp := &pb.GetResponse{
 		Success:     true,
@@ -140,11 +136,7 @@ func (s *SDFSServer) GetFile(ctx context.Context, in *pb.GetRequest) (*pb.GetRes
 
 // Get ACK (sent to leader)
 func (s *SDFSServer) GetACK(ctx context.Context, in *pb.GetACKRequest) (*pb.GetACKResponse, error) {
-<<<<<<< HEAD
-	releaseLock(in.FileName, READ)
-=======
 	releaseLock(in.FileName, global.READ)
->>>>>>> main
 	resp := &pb.GetACKResponse{
 		Success: true,
 	}
@@ -154,11 +146,7 @@ func (s *SDFSServer) GetACK(ctx context.Context, in *pb.GetACKRequest) (*pb.GetA
 // Put file
 func (s *SDFSServer) PutFile(ctx context.Context, in *pb.PutRequest) (*pb.PutResponse, error) {
 	fileName := in.FileName
-<<<<<<< HEAD
-	requestLock(in.RequesterAddress, fileName, WRITE)
-=======
 	requestLock(in.RequesterAddress, fileName, global.WRITE)
->>>>>>> main
 	var targetReplicas []string
 	val, exists := global.MemTable.FileToVMMap[fileName]
 	if !exists {
@@ -180,13 +168,8 @@ func (s *SDFSServer) PutACK(ctx context.Context, in *pb.PutACKRequest) (*pb.PutA
 	fileName := in.FileName
 	vmAddress := in.ReplicaAddresses
 	//update file table
-<<<<<<< HEAD
-	memTable.put(fileName, vmAddress)
-	releaseLock(fileName, WRITE)
-=======
 	global.MemTable.Put(fileName, vmAddress)
 	releaseLock(fileName, global.WRITE)
->>>>>>> main
 	resp := &pb.PutACKResponse{
 		Success: true,
 	}
