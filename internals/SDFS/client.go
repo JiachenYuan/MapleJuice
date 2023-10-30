@@ -41,6 +41,8 @@ func handleGetFile(sdfsFileName string, localFileName string) {
 				fmt.Printf("Failed to call get: %v\n", err)
 				conn.Close()
 				conn = nil
+				fmt.Printf("Retrying to get file %s\n", sdfsFileName)
+				time.Sleep(3 * time.Second)
 				break
 			}
 
@@ -143,6 +145,8 @@ func handlePutFile(localFileName string, sdfsFileName string) {
 				// Close the connection and break to outer loop to retry
 				conn.Close()
 				conn = nil
+				fmt.Printf("Retrying to get file %s\n", sdfsFileName)
+				time.Sleep(3 * time.Second)
 				break
 			}
 
