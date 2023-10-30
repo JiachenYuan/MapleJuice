@@ -149,9 +149,12 @@ func UpdateLeaderStateIfNecessary(leaderStates *pb.LeaderState) {
 
 	FileLocks = make(map[string]*FileLock)
 	for filename, v := range leaderStates.FileLocks {
-		fmt.Printf("%v\n", v)
-		FileLocks[filename].ReadQueue = v.ReadQueue
-		FileLocks[filename].WriteQueue = v.WriteQueue
+		if v.ReadQueue != nil {
+			FileLocks[filename].ReadQueue = v.ReadQueue
+		}
+		if v.WriteQueue != nil {
+			FileLocks[filename].WriteQueue = v.WriteQueue
+		}
 		FileLocks[filename].ReadCount = int(v.ReadCount)
 		FileLocks[filename].WriteCount = int(v.WriteCount)
 		FileLocks[filename].ConsecutiveReads = int(v.ConsecutiveReads)
