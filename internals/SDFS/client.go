@@ -42,8 +42,8 @@ func handleGetFile(sdfsFileName string, localFileName string) {
 				fmt.Printf("Failed to call get: %v\n", err)
 				conn.Close()
 				conn = nil
+				time.Sleep(global.RETRY_CONN_SLEEP_TIME)
 				fmt.Printf("Retrying to get file %s\n", sdfsFileName)
-				time.Sleep(3 * time.Second)
 				break
 			}
 
@@ -56,14 +56,14 @@ func handleGetFile(sdfsFileName string, localFileName string) {
 
 				if r.ShouldWait {
 					fmt.Printf("Waiting for read lock on file %s\n", sdfsFileName)
-					time.Sleep(1 * time.Second)
+					time.Sleep(global.RETRY_LOCK_SLEEP_TIME)
 				} else {
 					shouldWaitForLock = false
 					resp = r
 				}
 			} else {
+				time.Sleep(global.RETRY_CONN_SLEEP_TIME)
 				fmt.Printf("Retrying to get file %s\n", sdfsFileName)
-				time.Sleep(3 * time.Second)
 			}
 		}
 
@@ -125,6 +125,8 @@ func sendGetACKToLeader(sdfsFileName string) {
 			fmt.Printf("Leader failed to process get ACK: %v\n", err)
 			conn.Close()
 			conn = nil
+			time.Sleep(global.RETRY_CONN_SLEEP_TIME)
+			fmt.Printf("Retrying to send get ACK to leader %s\n", sdfsFileName)
 			continue
 		}
 		if ackResponse == nil || !ackResponse.Success {
@@ -171,8 +173,8 @@ func handlePutFile(localFileName string, sdfsFileName string) {
 				// Close the connection and break to outer loop to retry
 				conn.Close()
 				conn = nil
+				time.Sleep(global.RETRY_CONN_SLEEP_TIME)
 				fmt.Printf("Retrying to get file %s\n", sdfsFileName)
-				time.Sleep(3 * time.Second)
 				break
 			}
 
@@ -185,14 +187,14 @@ func handlePutFile(localFileName string, sdfsFileName string) {
 
 				if r.ShouldWait {
 					fmt.Printf("Waiting for write lock on file %s\n", sdfsFileName)
-					time.Sleep(1 * time.Second)
+					time.Sleep(global.RETRY_LOCK_SLEEP_TIME)
 				} else {
 					shouldWaitForLock = false
 					resp = r
 				}
 			} else {
+				time.Sleep(global.RETRY_CONN_SLEEP_TIME)
 				fmt.Printf("Retrying to get file %s\n", sdfsFileName)
-				time.Sleep(3 * time.Second)
 			}
 		}
 
@@ -285,6 +287,8 @@ func sendPutACKToLeader(sdfsFileName string, targetReplicas []string) {
 			fmt.Printf("Leader failed to process put ACK: %v\n", err)
 			conn.Close()
 			conn = nil
+			time.Sleep(global.RETRY_CONN_SLEEP_TIME)
+			fmt.Printf("Retrying to send put ACK to leader %s\n", sdfsFileName)
 			continue
 		}
 		if r == nil || !r.Success {
