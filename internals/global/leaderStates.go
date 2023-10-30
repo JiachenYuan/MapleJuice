@@ -78,6 +78,7 @@ func LeaderStatesToPB(myAddr string) *pb.LeaderState {
 			res.FileToVMMap[key] = &pb.LeaderState_AddrList{}
 			vm_addr_list = res.FileToVMMap[key]
 		}
+		vm_addr_list.VMAddr = make([]string, 0)
 		vm_list := vm_addr_list.VMAddr
 		for vm_addr := range value {
 			vm_list = append(vm_list, vm_addr)
@@ -91,6 +92,7 @@ func LeaderStatesToPB(myAddr string) *pb.LeaderState {
 			res.VMToFileMap[key] = &pb.LeaderState_FileList{}
 			file_list = res.VMToFileMap[key]
 		}
+		file_list.FileNames = make([]string, 0)
 		file_name_list := file_list.FileNames
 		for file_name := range value {
 			file_name_list = append(file_name_list, file_name)
@@ -122,6 +124,7 @@ func LeaderStatesToPB(myAddr string) *pb.LeaderState {
 
 	fmt.Printf("Leader State is = %v\n", MemTable.FileToVMMap)
 	fmt.Printf("Serialized to = %v\n", res.FileToVMMap)
+	fmt.Println()
 
 	return res
 }
