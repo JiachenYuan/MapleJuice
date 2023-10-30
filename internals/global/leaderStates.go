@@ -125,6 +125,7 @@ func UpdateLeaderStateIfNecessary(leaderStates *pb.LeaderState) {
 	if (leaderStates.Version <= int64(Version) ) {
 		return
 	}
+	Version = int(leaderStates.Version)
 
 	// !TODO: Memtable not lock???
 	new_file_to_VM_map := make(map[string]map[string]Empty)
@@ -163,6 +164,8 @@ func UpdateLeaderStateIfNecessary(leaderStates *pb.LeaderState) {
 		FileLocks[filename].ConsecutiveReads = int(v.ConsecutiveReads)
 		FileLocks[filename].ConsecutiveWrites = int(v.ConsecutiveWrites)
 	}
+
+	
 
 	fmt.Printf("My leader state replica's version = %v\n", Version)
 	fmt.Printf("My leader state's fileToVMMap = %v\n", MemTable.FileToVMMap)
