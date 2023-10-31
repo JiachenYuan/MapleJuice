@@ -11,6 +11,7 @@ import (
 	"os/user"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -76,6 +77,7 @@ func handleNodeFailure(failedNodeAddr string) {
 	}
 	fmt.Println("Handling node failure")
 	//find out all the files that the failed node has
+	replicationStartTime := time.Now()
 	filesToReplicate := global.MemTable.VMToFileMap[failedNodeAddr]
 	//for each file, get a list of alived machines that contain the file
 	for fileName := range filesToReplicate {
@@ -93,6 +95,8 @@ func handleNodeFailure(failedNodeAddr string) {
 			fmt.Printf("Successfully replicated file %s from %s to %s\n", fileName, senderAddress, receiverAddress)
 		}
 	}
+	replicationOperationTime := time.Since(replicationStartTime).Milliseconds()
+	fmt.Printf("Replication time: %d ms\n", replicationOperationTime)
 	//remove the VM from the mem table
 	global.MemTable.DeleteVM(failedNodeAddr)
 }

@@ -20,7 +20,7 @@ func handleGetFile(sdfsFileName string, localFileName string) {
 	var conn *grpc.ClientConn
 	var c pb.SDFSClient
 	var err error
-
+	readStartTime := time.Now()
 	for {
 		if conn == nil {
 			conn, err = grpc.Dial(global.GetLeaderAddress()+":"+global.SDFS_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -97,7 +97,8 @@ func handleGetFile(sdfsFileName string, localFileName string) {
 		}
 
 		sendGetACKToLeader(sdfsFileName)
-		fmt.Printf("Successfully get file %s\n", sdfsFileName)
+		readOperationTime := time.Since(readStartTime).Milliseconds()
+		fmt.Printf("Successfully get file %s in %v ms \n", sdfsFileName, readOperationTime)
 		conn.Close()
 		break
 	}
@@ -149,7 +150,7 @@ func handlePutFile(localFileName string, sdfsFileName string) {
 	var conn *grpc.ClientConn
 	var c pb.SDFSClient
 	var err error
-
+	putStartTime := time.Now()
 	for {
 		// Establish a new connection if it doesn't exist or previous leader failed
 		if conn == nil {
@@ -216,6 +217,8 @@ func handlePutFile(localFileName string, sdfsFileName string) {
 			fmt.Printf("Failed to transfer file: %v\n", err)
 		} else {
 			sendPutACKToLeader(sdfsFileName, targetReplicas)
+			putOperationTime := time.Since(putStartTime).Milliseconds()
+			fmt.Printf("Successfully put file %s to SDFS file %s in %v ms\n", localFileName, sdfsFileName, putOperationTime)
 		}
 		conn.Close()
 		break
@@ -240,7 +243,7 @@ func transferFilesConcurrent(localFileName string, sdfsFileName string, targetRe
 	wg.Wait()
 
 	if len(transferErrors) > 0 {
-		return fmt.Errorf("Some transfers failed: %v", transferErrors)
+		return fmt.Errorf("some transfers failed: %v", transferErrors)
 	}
 
 	fmt.Printf("Successfully put file to replicas: %+q\n", targetReplicas)
