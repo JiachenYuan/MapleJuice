@@ -198,7 +198,9 @@ func (s *SDFSServer) PutACK(ctx context.Context, in *pb.PutACKRequest) (*pb.PutA
 	vmAddress := in.ReplicaAddresses
 	//update file table
 	global.MemTable.Put(fileName, vmAddress)
-	releaseLock(fileName, global.WRITE)
+	if !in.IsReplicate {
+		releaseLock(fileName, global.WRITE)
+	}
 	resp := &pb.PutACKResponse{
 		Success: true,
 	}
@@ -333,7 +335,7 @@ func (s *SDFSServer) ReplicateFile(ctx context.Context, in *pb.ReplicationReques
 		fmt.Printf("Failed to transfer file: %v\n", err)
 		resp.Success = false
 	} else {
-		sendPutACKToLeader(in.FileName, in.ReceiverMachines)
+		sendPutACKToLeader(in.FileName, in.ReceiverMachines, true)
 		resp.Success = true
 	}
 	return resp, err

@@ -52,6 +52,7 @@ message PutResponse {
 //put ack
 message PutACKRequest {
   string fileName = 1;
+  bool isReplicate = 2;
   repeated string replicaAddresses = 3;
 }
 

@@ -216,7 +216,7 @@ func handlePutFile(localFileName string, sdfsFileName string) {
 		if err != nil {
 			fmt.Printf("Failed to transfer file: %v\n", err)
 		} else {
-			sendPutACKToLeader(sdfsFileName, targetReplicas)
+			sendPutACKToLeader(sdfsFileName, targetReplicas, false)
 			putOperationTime := time.Since(putStartTime).Milliseconds()
 			fmt.Printf("Successfully put file %s to SDFS file %s in %v ms\n", localFileName, sdfsFileName, putOperationTime)
 		}
@@ -268,7 +268,7 @@ func transferFileToReplica(localFileName string, sdfsFileName string, replica st
 	return err
 }
 
-func sendPutACKToLeader(sdfsFileName string, targetReplicas []string) {
+func sendPutACKToLeader(sdfsFileName string, targetReplicas []string, isReplicate bool) {
 	var conn *grpc.ClientConn
 	var c pb.SDFSClient
 	var err error
@@ -285,6 +285,7 @@ func sendPutACKToLeader(sdfsFileName string, targetReplicas []string) {
 		r, err := c.PutACK(context.Background(), &pb.PutACKRequest{
 			FileName:         sdfsFileName,
 			ReplicaAddresses: targetReplicas,
+			IsReplicate:      isReplicate,
 		})
 		if err != nil {
 			fmt.Printf("Leader failed to process put ACK: %v\n", err)
