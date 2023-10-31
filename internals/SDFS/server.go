@@ -62,15 +62,19 @@ func PeriodicReplication() {
 }
 
 func cleanMemtableAndReplicate() {
+	global.MemtableLock.Lock()
+	VMsToCleanUp := make([]string, 0)
 	for VM := range global.MemTable.VMToFileMap {
 		if !fd.IsNodeAlive(VM) {
-			global.MemTable.DeleteVM(VM)
+			VMsToCleanUp = append(VMsToCleanUp, VM)
 		}
+	}
+	global.MemtableLock.Unlock()
+	for _, VM := range VMsToCleanUp {
+		global.MemTable.DeleteVM(VM)
 	}
 
 	global.MemtableLock.Lock()
-	defer global.MemtableLock.Unlock()
-
 	replicationStartTime := time.Now()
 	needToReplicate := false
 	for fileName := range global.MemTable.FileToVMMap {
@@ -97,6 +101,7 @@ func cleanMemtableAndReplicate() {
 		replicationOperationTime := time.Since(replicationStartTime).Milliseconds()
 		fmt.Printf("Replication time: %d ms\n", replicationOperationTime)
 	}
+	global.MemtableLock.Lock()
 }
 
 func sendReplicateFileRequest(senderMachine string, receiverMachines []string, fileName string) *pb.ReplicationResponse {
