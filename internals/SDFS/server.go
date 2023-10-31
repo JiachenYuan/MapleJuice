@@ -74,34 +74,48 @@ func cleanMemtableAndReplicate() {
 		global.MemTable.DeleteVM(VM)
 	}
 
-	global.MemtableLock.Lock()
 	replicationStartTime := time.Now()
 	needToReplicate := false
+	replicationTasks := make(map[string][]string) // map from fileName to list of receiverAddresses
+
+	global.MemtableLock.Lock()
 	for fileName := range global.MemTable.FileToVMMap {
 		replicas := listSDFSFileVMs(fileName)
 		if len(replicas) < NUM_WRITE {
 			needToReplicate = true
-			senderAddress := replicas[0]
 			allAliveNodes := getAlivePeersAddrs()
 			disjointAddresses := findDisjointElements(allAliveNodes, replicas)
 			receiverAddresses, err := randomSelect(disjointAddresses, NUM_WRITE-len(replicas))
 			if err != nil {
 				fmt.Printf("Error selecting random addresses: %v\n", err)
-			}
-			r := sendReplicateFileRequest(senderAddress, receiverAddresses, fileName)
-			if r == nil || !r.Success {
-				//TODO: add logic for failed replication
-				fmt.Printf("Failed to replicate file %s from %s to %+q\n", fileName, senderAddress, receiverAddresses)
 			} else {
-				fmt.Printf("Successfully replicated file %s from %s to %+q\n", fileName, senderAddress, receiverAddresses)
+				replicationTasks[fileName] = receiverAddresses
 			}
 		}
 	}
+	global.MemtableLock.Unlock() // Unlock as quickly as possible
+
+	for fileName, receiverAddresses := range replicationTasks {
+		replicas := listSDFSFileVMs(fileName) // list again to get the most updated replicas
+		if len(replicas) == 0 {
+			fmt.Printf("No replicas found for file %s. Skipping replication.\n", fileName)
+			continue
+		}
+		senderAddress := replicas[0]
+		r := sendReplicateFileRequest(senderAddress, receiverAddresses, fileName)
+		if r == nil || !r.Success {
+			//TODO: add logic for failed replication
+			fmt.Printf("Failed to replicate file %s from %s to %+q\n", fileName, senderAddress, receiverAddresses)
+		} else {
+			fmt.Printf("Successfully replicated file %s from %s to %+q\n", fileName, senderAddress, receiverAddresses)
+		}
+	}
+
 	if needToReplicate {
 		replicationOperationTime := time.Since(replicationStartTime).Milliseconds()
 		fmt.Printf("Replication time: %d ms\n", replicationOperationTime)
 	}
-	global.MemtableLock.Lock()
+
 }
 
 func sendReplicateFileRequest(senderMachine string, receiverMachines []string, fileName string) *pb.ReplicationResponse {
