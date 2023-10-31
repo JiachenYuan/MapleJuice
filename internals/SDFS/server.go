@@ -76,6 +76,7 @@ func cleanMemtableAndReplicate() {
 	for fileName := range global.MemTable.FileToVMMap {
 		replicas := listSDFSFileVMs(fileName)
 		if len(replicas) < NUM_WRITE {
+			needToReplicate = true
 			senderAddress := replicas[0]
 			allAliveNodes := getAlivePeersAddrs()
 			disjointAddresses := findDisjointElements(allAliveNodes, replicas)
@@ -313,6 +314,7 @@ func (s *SDFSServer) ReplicateFile(ctx context.Context, in *pb.ReplicationReques
 		fmt.Printf("Failed to transfer file: %v\n", err)
 		resp.Success = false
 	} else {
+		sendPutACKToLeader(in.FileName, in.ReceiverMachines)
 		resp.Success = true
 	}
 	return resp, err
