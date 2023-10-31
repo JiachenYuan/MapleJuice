@@ -72,7 +72,8 @@ func cleanMemtableAndReplicate() {
 	defer global.MemtableLock.Unlock()
 
 	replicationStartTime := time.Now()
-	for fileName, _ := range global.MemTable.FileToVMMap {
+	needToReplicate := false
+	for fileName := range global.MemTable.FileToVMMap {
 		replicas := listSDFSFileVMs(fileName)
 		if len(replicas) < NUM_WRITE {
 			senderAddress := replicas[0]
@@ -91,8 +92,10 @@ func cleanMemtableAndReplicate() {
 			}
 		}
 	}
-	replicationOperationTime := time.Since(replicationStartTime).Milliseconds()
-	fmt.Printf("Replication time: %d ms\n", replicationOperationTime)
+	if needToReplicate {
+		replicationOperationTime := time.Since(replicationStartTime).Milliseconds()
+		fmt.Printf("Replication time: %d ms\n", replicationOperationTime)
+	}
 }
 
 func sendReplicateFileRequest(senderMachine string, receiverMachines []string, fileName string) *pb.ReplicationResponse {
