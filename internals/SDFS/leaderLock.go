@@ -22,7 +22,11 @@ func requestLock(requestorAddress string, fileName string, requestType global.Re
 		if !global.Contains(lock.ReadQueue, requestorAddress) {
 			lock.ReadQueue = append(lock.ReadQueue, requestorAddress)
 		}
+<<<<<<< HEAD
 		canProceed = lock.WriteCount == 0 && lock.ReadCount < 2 && (len(lock.WriteQueue) == 0 || lock.ConsecutiveReads < 4) && (lock.ReadQueue[0] == requestorAddress || lock.ReadQueue[1] == requestorAddress)
+=======
+		canProceed = lock.WriteCount == 0 && lock.ReadCount < 2 && (len(lock.WriteQueue) == 0 || lock.ConsecutiveReads < 4) && lock.ReadQueue[0] == requestorAddress
+>>>>>>> main
 	case global.WRITE:
 		if !global.Contains(lock.WriteQueue, requestorAddress) {
 			lock.WriteQueue = append(lock.WriteQueue, requestorAddress)

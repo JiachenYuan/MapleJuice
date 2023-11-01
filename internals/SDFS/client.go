@@ -81,8 +81,12 @@ func handleGetFile(sdfsFileName string, localFileName string) {
 		for _, r := range replicas {
 			fmt.Printf("Trying to get file %s from replica: %s\n", sdfsFileName, r)
 			remotePath := getScpHostNameFromHostName(r) + ":" + filepath.Join(SDFS_PATH, sdfsFileName)
+<<<<<<< HEAD
 			//limited the speed to 30MB/s
 			cmd := exec.Command("scp", "-l", "240000", remotePath, localFileName)
+=======
+			cmd := exec.Command("scp", remotePath, localFileName)
+>>>>>>> main
 			err := cmd.Start()
 			if err != nil {
 				fmt.Printf("Failed to start command: %v\n", err)
@@ -121,8 +125,12 @@ func sendGetACKToLeader(sdfsFileName string) {
 		}
 
 		ackResponse, err := c.GetACK(context.Background(), &pb.GetACKRequest{
+<<<<<<< HEAD
 			RequesterAddress: HOSTNAME,
 			FileName:         sdfsFileName,
+=======
+			FileName: sdfsFileName,
+>>>>>>> main
 		})
 		if err != nil {
 			fmt.Printf("Leader failed to process get ACK: %v\n", err)
@@ -258,8 +266,12 @@ func transferFilesConcurrent(localFileName string, sdfsFileName string, targetRe
 func transferFileToReplica(localFileName string, sdfsFileName string, replica string) error {
 	targetHostName := getScpHostNameFromHostName(replica)
 	remotePath := targetHostName + ":" + filepath.Join(SDFS_PATH, sdfsFileName)
+<<<<<<< HEAD
 	//limited the speed to 30MB/s
 	cmd := exec.Command("scp", "-l", "240000", localFileName, remotePath)
+=======
+	cmd := exec.Command("scp", localFileName, remotePath)
+>>>>>>> main
 	err := cmd.Start()
 	if err != nil {
 		fmt.Printf("Failed to start command: %v\n", err)
@@ -292,7 +304,10 @@ func sendPutACKToLeader(sdfsFileName string, targetReplicas []string, isReplicat
 			FileName:         sdfsFileName,
 			ReplicaAddresses: targetReplicas,
 			IsReplicate:      isReplicate,
+<<<<<<< HEAD
 			RequesterAddress: HOSTNAME,
+=======
+>>>>>>> main
 		})
 		if err != nil {
 			fmt.Printf("Leader failed to process put ACK: %v\n", err)
