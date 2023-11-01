@@ -399,7 +399,7 @@ func handleListLocalFiles() {
 	}
 }
 
-func launchMultitheadReads(sdfsFileName string, localFileName string, targetVMIDs []string) {
+func launchMultiReads(sdfsFileName string, localFileName string, targetVMIDs []string) {
 	startTime := time.Now()
 	var wg sync.WaitGroup
 	var errors []error
