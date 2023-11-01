@@ -207,11 +207,7 @@ func (s *SDFSServer) PutACK(ctx context.Context, in *pb.PutACKRequest) (*pb.PutA
 	//update file table
 	global.MemTable.Put(fileName, vmAddress)
 	if !in.IsReplicate {
-<<<<<<< HEAD
 		releaseLock(in.RequesterAddress, fileName, global.WRITE)
-=======
-		releaseLock(fileName, global.WRITE)
->>>>>>> main
 	}
 	resp := &pb.PutACKResponse{
 		Success: true,

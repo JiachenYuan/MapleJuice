@@ -1,13 +1,9 @@
 package global
 
-<<<<<<< HEAD
 import (
 	"fmt"
 	"time"
 )
-=======
-import "time"
->>>>>>> main
 
 const (
 	LOGGER_PORT          = "55555"
@@ -46,7 +42,6 @@ func Contains[T comparable](s []T, e T) bool {
 	}
 	return false
 }
-<<<<<<< HEAD
 
 func RemoveElementFromFirstTwo[T comparable](s []T, e T) ([]T, error) {
 	var idx int
@@ -66,5 +61,3 @@ func RemoveElementFromFirstTwo[T comparable](s []T, e T) ([]T, error) {
 	}
 	return append(s[:idx], s[idx+1:]...), nil
 }
-=======
->>>>>>> main
