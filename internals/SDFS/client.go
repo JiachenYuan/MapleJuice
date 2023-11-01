@@ -120,7 +120,8 @@ func sendGetACKToLeader(sdfsFileName string) {
 		}
 
 		ackResponse, err := c.GetACK(context.Background(), &pb.GetACKRequest{
-			FileName: sdfsFileName,
+			RequesterAddress: HOSTNAME,
+			FileName:         sdfsFileName,
 		})
 		if err != nil {
 			fmt.Printf("Leader failed to process get ACK: %v\n", err)
@@ -289,6 +290,7 @@ func sendPutACKToLeader(sdfsFileName string, targetReplicas []string, isReplicat
 			FileName:         sdfsFileName,
 			ReplicaAddresses: targetReplicas,
 			IsReplicate:      isReplicate,
+			RequesterAddress: HOSTNAME,
 		})
 		if err != nil {
 			fmt.Printf("Leader failed to process put ACK: %v\n", err)
