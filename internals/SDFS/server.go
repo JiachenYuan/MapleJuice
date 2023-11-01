@@ -168,6 +168,14 @@ func (s *SDFSServer) GetACK(ctx context.Context, in *pb.GetACKRequest) (*pb.GetA
 	return resp, nil
 }
 
+func (s *SDFSServer) MultiGetFile(ctx context.Context, in *pb.MultiGetRequest) (*pb.MultiGetResponse, error) {
+	handleGetFile(in.SdfsFileName, in.LocalFileName)
+	resp := &pb.MultiGetResponse{
+		Success: true,
+	}
+	return resp, nil
+}
+
 // Put file
 func (s *SDFSServer) PutFile(ctx context.Context, in *pb.PutRequest) (*pb.PutResponse, error) {
 	fileName := in.FileName

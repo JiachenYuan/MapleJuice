@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"time"
 
@@ -393,4 +394,46 @@ func handleListLocalFiles() {
 	} else {
 		fmt.Printf("Failed to list local files for machine %s\n", HOSTNAME)
 	}
+}
+
+func launchMultitheadReads(sdfsFileName string, localFileName string, targetVMIDs []string) {
+	startTime := time.Now()
+	var wg sync.WaitGroup
+	var errors []error
+	var mut sync.Mutex
+	for ID := range targetVMIDs {
+		wg.Add(1)
+		go func(vmAddr string) {
+			defer wg.Done()
+			conn, err := grpc.Dial(vmAddr+":"+global.SDFS_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			if err != nil {
+				fmt.Printf("did not connect: %v\n", err)
+				mut.Lock()
+				errors = append(errors, err)
+				mut.Unlock()
+			}
+			c := pb.NewSDFSClient(conn)
+			r, err := c.MultiGetFile(context.Background(), &pb.MultiGetRequest{
+				SdfsFileName:  sdfsFileName,
+				LocalFileName: localFileName,
+			})
+			if err != nil {
+				fmt.Printf("Multithread get finished with error: %v\n", err)
+				errors = append(errors, err)
+				return
+			}
+			if !r.Success {
+				fmt.Printf("Multithread get ended with error: %v\n", err)
+				errors = append(errors, fmt.Errorf("multithread get failed for %s", vmAddr))
+			}
+		}(getFullHostNameFromID(strconv.Itoa(ID)))
+	}
+
+	wg.Wait()
+
+	if len(errors) > 0 {
+		fmt.Printf("Some multithread reads failed: %v\n", errors)
+	}
+	operationTime := time.Since(startTime).Milliseconds()
+	fmt.Printf("Finished multithread get file %s in %v ms \n", sdfsFileName, operationTime)
 }
