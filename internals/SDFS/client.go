@@ -81,7 +81,7 @@ func handleGetFile(sdfsFileName string, localFileName string) {
 		for _, r := range replicas {
 			fmt.Printf("Trying to get file %s from replica: %s\n", sdfsFileName, r)
 			remotePath := getScpHostNameFromHostName(r) + ":" + filepath.Join(SDFS_PATH, sdfsFileName)
-			cmd := exec.Command("scp", remotePath, localFileName)
+			cmd := exec.Command("scp", "-l", "240000", remotePath, localFileName)
 			err := cmd.Start()
 			if err != nil {
 				fmt.Printf("Failed to start command: %v\n", err)
@@ -257,7 +257,7 @@ func transferFilesConcurrent(localFileName string, sdfsFileName string, targetRe
 func transferFileToReplica(localFileName string, sdfsFileName string, replica string) error {
 	targetHostName := getScpHostNameFromHostName(replica)
 	remotePath := targetHostName + ":" + filepath.Join(SDFS_PATH, sdfsFileName)
-	cmd := exec.Command("scp", localFileName, remotePath)
+	cmd := exec.Command("scp", "-l", "240000", remotePath, localFileName)
 	err := cmd.Start()
 	if err != nil {
 		fmt.Printf("Failed to start command: %v\n", err)
