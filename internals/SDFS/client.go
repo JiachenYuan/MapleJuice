@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"sync"
 	"time"
 
@@ -401,7 +400,7 @@ func launchMultitheadReads(sdfsFileName string, localFileName string, targetVMID
 	var wg sync.WaitGroup
 	var errors []error
 	var mut sync.Mutex
-	for ID := range targetVMIDs {
+	for _, ID := range targetVMIDs {
 		wg.Add(1)
 		go func(vmAddr string) {
 			defer wg.Done()
@@ -426,7 +425,7 @@ func launchMultitheadReads(sdfsFileName string, localFileName string, targetVMID
 				fmt.Printf("Multithread get ended with error: %v\n", err)
 				errors = append(errors, fmt.Errorf("multithread get failed for %s", vmAddr))
 			}
-		}(getFullHostNameFromID(strconv.Itoa(ID)))
+		}(getFullHostNameFromID(ID))
 	}
 
 	wg.Wait()

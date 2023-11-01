@@ -55,10 +55,18 @@ func releaseLock(fileName string, requestType global.RequestType) {
 	lock.FileLocksMutex.Lock()
 	defer lock.FileLocksMutex.Unlock()
 	if requestType == global.READ {
+		if lock.ReadCount <= 0 || len(lock.ReadQueue) <= 0 {
+			fmt.Println("Error: Read count or read queue is empty while unlocking read lock")
+			return
+		}
 		fmt.Printf("Released read lock for file %s\n", fileName)
 		lock.ReadCount--
 		lock.ReadQueue = lock.ReadQueue[1:]
 	} else {
+		if lock.WriteCount <= 0 || len(lock.WriteQueue) <= 0 {
+			fmt.Println("Error: Write count or write queue is empty while unlocking write lock")
+			return
+		}
 		fmt.Printf("Released write lock for file %s\n", fileName)
 		lock.WriteCount--
 		lock.WriteQueue = lock.WriteQueue[1:]
