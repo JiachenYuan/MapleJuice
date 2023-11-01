@@ -228,6 +228,7 @@ func handlePutFile(localFileName string, sdfsFileName string) {
 func transferFilesConcurrent(localFileName string, sdfsFileName string, targetReplicas []string) error {
 	var wg sync.WaitGroup
 	var transferErrors []error
+	var mut sync.Mutex
 
 	for _, r := range targetReplicas {
 		wg.Add(1)
@@ -235,7 +236,9 @@ func transferFilesConcurrent(localFileName string, sdfsFileName string, targetRe
 			defer wg.Done()
 			err := transferFileToReplica(localFileName, sdfsFileName, replica)
 			if err != nil {
+				mut.Lock()
 				transferErrors = append(transferErrors, err)
+				mut.Unlock()
 			}
 		}(r)
 	}
