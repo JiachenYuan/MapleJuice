@@ -75,8 +75,6 @@ func handleGetFile(sdfsFileName string, localFileName string) {
 		replicas := resp.VMAddresses
 		if len(replicas) == 0 {
 			fmt.Printf("No target read replicas provided\n")
-			conn.Close()
-			return
 		}
 		for _, r := range replicas {
 			fmt.Printf("Trying to get file %s from replica: %s\n", sdfsFileName, r)
