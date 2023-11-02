@@ -35,7 +35,8 @@ func handleGetFile(sdfsFileName string, localFileName string) {
 		resp := &pb.GetResponse{}
 		for shouldWaitForLock {
 			r, err := c.GetFile(context.Background(), &pb.GetRequest{
-				FileName: sdfsFileName,
+				RequesterAddress: HOSTNAME,
+				FileName:         sdfsFileName,
 			})
 
 			if err != nil {
@@ -166,7 +167,8 @@ func handlePutFile(localFileName string, sdfsFileName string) {
 		resp := &pb.PutResponse{}
 		for shouldWaitForLock {
 			r, err := c.PutFile(context.Background(), &pb.PutRequest{
-				FileName: sdfsFileName,
+				RequesterAddress: HOSTNAME,
+				FileName:         sdfsFileName,
 			})
 
 			if err != nil {

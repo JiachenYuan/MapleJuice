@@ -19,8 +19,6 @@ func requestLock(requestorAddress string, fileName string, requestType global.Re
 	var canProceed bool
 	switch requestType {
 	case global.READ:
-		fmt.Printf("Read Queue: %v\n", lock.ReadQueue)
-		fmt.Printf("Requester Address: %s\n", requestorAddress)
 		if !global.Contains(lock.ReadQueue, requestorAddress) {
 			lock.ReadQueue = append(lock.ReadQueue, requestorAddress)
 		}
@@ -63,8 +61,6 @@ func releaseLock(requesterAddress string, fileName string, requestType global.Re
 		}
 		fmt.Printf("Released read lock for file %s\n", fileName)
 		lock.ReadCount--
-		fmt.Printf("Read Queue: %v\n", lock.ReadQueue)
-		fmt.Printf("Requester Address: %s\n", requesterAddress)
 		newReadQueue, err := global.RemoveElementFromFirstTwo(lock.ReadQueue, requesterAddress)
 		if err != nil {
 			fmt.Printf("Error dequeing read queue: %s\n", err.Error())
