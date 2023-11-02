@@ -421,13 +421,13 @@ func launchMultiReads(sdfsFileName string, localFileName string, targetVMIDs []s
 				LocalFileName: localFileName,
 			})
 			if err != nil {
-				fmt.Printf("Multithread get finished with error: %v\n", err)
+				fmt.Printf("multi read finished with error: %v\n", err)
 				errors = append(errors, err)
 				return
 			}
 			if !r.Success {
-				fmt.Printf("Multithread get ended with error: %v\n", err)
-				errors = append(errors, fmt.Errorf("multithread get failed for %s", vmAddr))
+				fmt.Printf("multi read ended with error: %v\n", err)
+				errors = append(errors, fmt.Errorf("multi get failed for %s", vmAddr))
 			}
 		}(getFullHostNameFromID(ID))
 	}
@@ -435,8 +435,56 @@ func launchMultiReads(sdfsFileName string, localFileName string, targetVMIDs []s
 	wg.Wait()
 
 	if len(errors) > 0 {
-		fmt.Printf("Some multithread reads failed: %v\n", errors)
+		fmt.Printf("Some multi reads failed: %v\n", errors)
 	}
 	operationTime := time.Since(startTime).Milliseconds()
-	fmt.Printf("Finished multithread get file %s in %v ms \n", sdfsFileName, operationTime)
+	fmt.Printf("Finished multi read file %s in %v ms \n", sdfsFileName, operationTime)
+}
+
+func launchMultiWriteRead(sdfsFileName string, localFileName string, writerVMIDs []string) {
+	startTime := time.Now()
+	var wg sync.WaitGroup
+	var errors []error
+	var mut sync.Mutex
+	for _, ID := range writerVMIDs {
+		wg.Add(1)
+		go func(vmAddr string) {
+			defer wg.Done()
+			conn, err := grpc.Dial(vmAddr+":"+global.SDFS_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			if err != nil {
+				fmt.Printf("did not connect: %v\n", err)
+				mut.Lock()
+				errors = append(errors, err)
+				mut.Unlock()
+			}
+			c := pb.NewSDFSClient(conn)
+			r, err := c.MultiPutFile(context.Background(), &pb.MultiPutRequest{
+				SdfsFileName:  sdfsFileName,
+				LocalFileName: localFileName,
+			})
+			if err != nil {
+				fmt.Printf("Multi write finished with error: %v\n", err)
+				errors = append(errors, err)
+				return
+			}
+			if !r.Success {
+				fmt.Printf("Multi write ended with error: %v\n", err)
+				errors = append(errors, fmt.Errorf("multi write failed for %s", vmAddr))
+			}
+
+		}(getFullHostNameFromID(ID))
+	}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		handleGetFile(sdfsFileName, "1G_Local.log")
+	}()
+
+	wg.Wait()
+
+	if len(errors) > 0 {
+		fmt.Printf("Some multi writes failed: %v\n", errors)
+	}
+	operationTime := time.Since(startTime).Milliseconds()
+	fmt.Printf("Finished multi write-read file %s in %v ms \n", sdfsFileName, operationTime)
 }

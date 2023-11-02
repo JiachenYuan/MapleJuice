@@ -74,13 +74,18 @@ func ProcessUserInputInLoop(inputChan <-chan string) {
 			handleListLocalFiles()
 		} else if command == "multiread" {
 			if len(splitted) <= 2 {
-				fmt.Printf("Expected at least 1 target VMs for multithread command\n")
+				fmt.Printf("Expected at least 1 target VMs for multiread command\n")
 				continue
 			}
 			sdfsFileName := splitted[1]
 			localFileName := splitted[2]
 			targetVMs := splitted[3:]
 			launchMultiReads(sdfsFileName, localFileName, targetVMs)
+		} else if command == "multiwrite" {
+			sdfsFileName := splitted[1]
+			localFileName := splitted[2]
+			writers := splitted[3:]
+			launchMultiWriteRead(sdfsFileName, localFileName, writers)
 		} else {
 			fmt.Println("Command Not Supported")
 		}

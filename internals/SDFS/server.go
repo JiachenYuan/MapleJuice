@@ -215,6 +215,14 @@ func (s *SDFSServer) PutACK(ctx context.Context, in *pb.PutACKRequest) (*pb.PutA
 	return resp, nil
 }
 
+func (s *SDFSServer) MultiPutFile(ctx context.Context, in *pb.MultiPutRequest) (*pb.MultiPutResponse, error) {
+	handlePutFile(in.LocalFileName, in.SdfsFileName)
+	resp := &pb.MultiPutResponse{
+		Success: true,
+	}
+	return resp, nil
+}
+
 // Delete file (leader)
 func (s *SDFSServer) DeleteFileLeader(ctx context.Context, in *pb.DeleteRequestLeader) (*pb.DeleteResponseLeader, error) {
 	fileName := in.FileName
