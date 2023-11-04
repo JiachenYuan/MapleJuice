@@ -81,8 +81,8 @@ func handleGetFile(sdfsFileName string, localFileName string) {
 			fmt.Printf("Trying to get file %s from replica: %s\n", sdfsFileName, r)
 			remotePath := getScpHostNameFromHostName(r) + ":" + filepath.Join(SDFS_PATH, sdfsFileName)
 			//limited the speed to 30MB/s
-			// cmd := exec.Command("scp", "-l", "240000", remotePath, localFileName)
-			cmd := exec.Command("scp", remotePath, localFileName)
+			cmd := exec.Command("scp", "-l", "240000", remotePath, localFileName)
+			// cmd := exec.Command("scp", remotePath, localFileName)
 			err := cmd.Start()
 			if err != nil {
 				fmt.Printf("Failed to start command: %v\n", err)
@@ -260,8 +260,8 @@ func transferFileToReplica(localFileName string, sdfsFileName string, replica st
 	targetHostName := getScpHostNameFromHostName(replica)
 	remotePath := targetHostName + ":" + filepath.Join(SDFS_PATH, sdfsFileName)
 	//limited the speed to 30MB/s
-	// cmd := exec.Command("scp", "-l", "240000", localFileName, remotePath)
-	cmd := exec.Command("scp", localFileName, remotePath)
+	cmd := exec.Command("scp", "-l", "240000", localFileName, remotePath)
+	// cmd := exec.Command("scp", localFileName, remotePath)
 	err := cmd.Start()
 	if err != nil {
 		fmt.Printf("Failed to start command: %v\n", err)
