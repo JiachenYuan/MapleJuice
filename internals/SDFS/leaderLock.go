@@ -9,6 +9,7 @@ func cleanUpDeadNodesInLeaderLock(deadNodes []string) {
 	global.GlobalFileLock.Lock()
 	defer global.GlobalFileLock.Unlock()
 	for _, deadNode := range deadNodes {
+		fmt.Printf("Cleaning up dead node in lock %s\n", deadNode)
 		for fileName, lock := range global.FileLocks {
 			lock.FileLocksMutex.Lock()
 			if global.Contains(lock.ReadQueue, deadNode) {
