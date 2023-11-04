@@ -60,7 +60,7 @@ func RemoveElementWithRange[T comparable](s []T, e T, start int, end int) ([]T, 
 		}
 	}
 	if !found {
-		return nil, fmt.Errorf("element not found in first two elements of slice")
+		return nil, fmt.Errorf("element not found in the specified range")
 	}
 	return append(s[:idx], s[idx+1:]...), nil
 }

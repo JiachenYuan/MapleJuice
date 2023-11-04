@@ -16,7 +16,6 @@ func cleanUpDeadNodesInLeaderLock() {
 		}
 	}
 	for _, deadNode := range deadNodes {
-		fmt.Printf("Cleaning up dead node in lock %s\n", deadNode)
 		for fileName, lock := range global.FileLocks {
 			lock.FileLocksMutex.Lock()
 			if global.Contains(lock.ReadQueue, deadNode) {
@@ -36,11 +35,11 @@ func cleanUpDeadNodesInLeaderLock() {
 				if lock.WriteQueue[0] == deadNode {
 					lock.WriteCount--
 				}
-				newReadQueue, err := global.RemoveElementWithRange(lock.ReadQueue, deadNode, 0, len(lock.ReadQueue)-1)
+				newWriteQueue, err := global.RemoveElementWithRange(lock.WriteQueue, deadNode, 0, len(lock.WriteQueue)-1)
 				if err != nil {
-					fmt.Printf("Error dequeing read queue: %s\n", err.Error())
+					fmt.Printf("Error dequeing write queue: %s\n", err.Error())
 				} else {
-					lock.ReadQueue = newReadQueue
+					lock.WriteQueue = newWriteQueue
 				}
 			}
 
