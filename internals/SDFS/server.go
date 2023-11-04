@@ -57,7 +57,7 @@ func PeriodicReplication() {
 		if isCurrentNodeLeader() {
 			cleanMemtableAndReplicate()
 		}
-		time.Sleep(2 * time.Second)
+		time.Sleep(5 * time.Second)
 	}
 }
 
@@ -74,7 +74,7 @@ func cleanMemtableAndReplicate() {
 		global.MemTable.DeleteVM(VM) //memtable is locked in the DeleteVM method
 	}
 
-	go cleanUpDeadNodesInLeaderLock(VMsToCleanUp)
+	go cleanUpDeadNodesInLeaderLock()
 
 	replicationStartTime := time.Now()
 	needToReplicate := false

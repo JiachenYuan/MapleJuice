@@ -1,13 +1,20 @@
 package SDFS
 
 import (
+	fd "cs425-mp/internals/failureDetector"
 	"cs425-mp/internals/global"
 	"fmt"
 )
 
-func cleanUpDeadNodesInLeaderLock(deadNodes []string) {
+func cleanUpDeadNodesInLeaderLock() {
 	global.GlobalFileLock.Lock()
 	defer global.GlobalFileLock.Unlock()
+	deadNodes := make([]string, 0)
+	for _, node := range global.SERVER_ADDRS {
+		if !fd.IsNodeAlive(node) {
+			deadNodes = append(deadNodes, node)
+		}
+	}
 	for _, deadNode := range deadNodes {
 		fmt.Printf("Cleaning up dead node in lock %s\n", deadNode)
 		for fileName, lock := range global.FileLocks {
