@@ -43,11 +43,14 @@ func Contains[T comparable](s []T, e T) bool {
 	return false
 }
 
-func RemoveElementFromFirstTwo[T comparable](s []T, e T) ([]T, error) {
+func RemoveElementWithRange[T comparable](s []T, e T, start int, end int) ([]T, error) {
+	if (start < 0) || (end > len(s)) {
+		return nil, fmt.Errorf("invalid range")
+	}
 	var idx int
 	var found bool
 	for i, v := range s {
-		if i >= 2 {
+		if i < start || i > end {
 			break
 		}
 		if v == e {
