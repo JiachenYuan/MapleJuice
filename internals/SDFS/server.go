@@ -74,6 +74,8 @@ func cleanMemtableAndReplicate() {
 		global.MemTable.DeleteVM(VM) //memtable is locked in the DeleteVM method
 	}
 
+	go cleanUpDeadNodesInLeaderLock(VMsToCleanUp)
+
 	replicationStartTime := time.Now()
 	needToReplicate := false
 	replicationTasks := make(map[string][]string) // map from fileName to list of receiverAddresses
