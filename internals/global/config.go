@@ -49,10 +49,8 @@ func RemoveElementWithRange[T comparable](s []T, e T, start int, end int) ([]T, 
 	}
 	var idx int
 	var found bool
-	for i, v := range s {
-		if i < start || i > end {
-			break
-		}
+	for i := start; i <= end; i++ {
+		v := s[i]
 		if v == e {
 			idx = i
 			found = true
