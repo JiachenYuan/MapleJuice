@@ -15,7 +15,7 @@ In directory: ~/cs425-mp3
 
 run 
 
-`
+```
 rm *.log
 rm fetched*
 for i in {1..20}; do
@@ -24,7 +24,7 @@ done
 dd if=/dev/zero of=1024  bs=1M  count=1024
 git pull && \
 go run cmd/cs425-mp3/main.go
-`
+```
 
 
 ## To Run
