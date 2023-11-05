@@ -71,8 +71,10 @@ func cleanMemtableAndReplicate() {
 	}
 	global.MemtableLock.Unlock()
 	for _, VM := range VMsToCleanUp {
-		global.MemTable.DeleteVM(VM)
+		global.MemTable.DeleteVM(VM) //memtable is locked in the DeleteVM method
 	}
+
+	go cleanUpDeadNodesInLeaderLock()
 
 	replicationStartTime := time.Now()
 	needToReplicate := false
