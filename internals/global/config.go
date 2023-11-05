@@ -44,7 +44,10 @@ func Contains[T comparable](s []T, e T) bool {
 }
 
 func RemoveElementWithRange[T comparable](s []T, e T, start int, end int) ([]T, error) {
-	if (start < 0) || (end > len(s)) {
+	if (len(s) == 0) {
+		return s, nil
+	}
+	if (start < 0) || (end >= len(s)) {
 		return nil, fmt.Errorf("invalid range")
 	}
 	var idx int
