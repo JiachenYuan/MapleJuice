@@ -128,7 +128,7 @@ func sendGetACKToLeader(sdfsFileName string) {
 			}
 			c = pb.NewSDFSClient(conn)
 		}
-		
+
 		// Add request max response time limit
 		timeout := 3 * time.Second
 		ctx, callCancel := context.WithTimeout(context.Background(), timeout)
@@ -187,7 +187,7 @@ func handlePutFile(localFileName string, sdfsFileName string) {
 			timeout := 3 * time.Second
 			ctx, callCancel := context.WithTimeout(context.Background(), timeout)
 			defer callCancel()
-			
+
 			r, err := c.PutFile(ctx, &pb.PutRequest{
 				RequesterAddress: HOSTNAME,
 				FileName:         sdfsFileName,
@@ -240,7 +240,11 @@ func handlePutFile(localFileName string, sdfsFileName string) {
 		if err != nil {
 			fmt.Printf("Failed to transfer file: %v\n", err)
 		} else {
-			sendPutACKToLeader(sdfsFileName, targetReplicas, false)
+			lineCount, err := global.CountLines(localFileName)
+			if err != nil {
+				fmt.Printf("Failed to count lines: %v\n", err)
+			}
+			sendPutACKToLeader(lineCount, sdfsFileName, targetReplicas, false)
 			putOperationTime := time.Since(putStartTime).Milliseconds()
 			fmt.Printf("Successfully put file %s to SDFS file %s in %v ms\n", localFileName, sdfsFileName, putOperationTime)
 		}
@@ -297,7 +301,7 @@ func transferFileToReplica(localFileName string, sdfsFileName string, replica st
 	return err
 }
 
-func sendPutACKToLeader(sdfsFileName string, targetReplicas []string, isReplicate bool) {
+func sendPutACKToLeader(lineCount int, sdfsFileName string, targetReplicas []string, isReplicate bool) {
 	var conn *grpc.ClientConn
 	var c pb.SDFSClient
 	var err error
@@ -317,8 +321,9 @@ func sendPutACKToLeader(sdfsFileName string, targetReplicas []string, isReplicat
 		timeout := 3 * time.Second
 		ctx, callCancel := context.WithTimeout(context.Background(), timeout)
 		defer callCancel()
-		
+
 		r, err := c.PutACK(ctx, &pb.PutACKRequest{
+			LineCount:        int64(lineCount),
 			FileName:         sdfsFileName,
 			ReplicaAddresses: targetReplicas,
 			IsReplicate:      isReplicate,
@@ -397,6 +402,7 @@ func handleListFileHolders(sdfsFileName string) {
 		}
 	}
 	if r.Success {
+		fmt.Printf("File %v has %v lines\n", sdfsFileName, r.LineCount)
 		fmt.Printf("%+q\n", r.VMAddresses)
 	} else {
 		fmt.Printf("Failed to list VMs for file: %s\n", sdfsFileName)

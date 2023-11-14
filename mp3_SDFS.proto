@@ -67,7 +67,8 @@ message PutACKRequest {
   string fileName = 1;
   bool isReplicate = 2;
   string requesterAddress = 3;
-  repeated string replicaAddresses = 4;
+  int64 lineCount = 4;
+  repeated string replicaAddresses = 5;
 }
 
 message PutACKResponse {
@@ -110,7 +111,8 @@ message ListFileHolderRequest{
 
 message ListFileHolderResponse {
   bool success = 1;
-  repeated string VMAddresses = 2;
+  int64 lineCount = 2;
+  repeated string VMAddresses = 3;
 }
 
 //list local files (store)

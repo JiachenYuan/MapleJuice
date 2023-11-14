@@ -206,8 +206,9 @@ func (s *SDFSServer) PutFile(ctx context.Context, in *pb.PutRequest) (*pb.PutRes
 func (s *SDFSServer) PutACK(ctx context.Context, in *pb.PutACKRequest) (*pb.PutACKResponse, error) {
 	fileName := in.FileName
 	vmAddress := in.ReplicaAddresses
+	lineCount := in.LineCount
 	//update file table
-	global.MemTable.Put(fileName, vmAddress)
+	global.MemTable.Put(fileName, vmAddress, int(lineCount))
 	if !in.IsReplicate {
 		releaseLock(in.RequesterAddress, fileName, global.WRITE)
 	}
@@ -332,9 +333,11 @@ func (s *SDFSServer) ListLocalFiles(ctx context.Context, in *pb.ListLocalFilesRe
 func (s *SDFSServer) ListFileHolder(ctx context.Context, in *pb.ListFileHolderRequest) (*pb.ListFileHolderResponse, error) {
 	fileName := in.FileName
 	vmList := listSDFSFileVMs(fileName)
+	lineCount := global.MemTable.FileLineCountMap[fileName]
 	resp := &pb.ListFileHolderResponse{
 		Success:     true,
 		VMAddresses: vmList,
+		LineCount:   int64(lineCount),
 	}
 	return resp, nil
 }
@@ -353,7 +356,11 @@ func (s *SDFSServer) ReplicateFile(ctx context.Context, in *pb.ReplicationReques
 		fmt.Printf("Failed to transfer file: %v\n", err)
 		resp.Success = false
 	} else {
-		sendPutACKToLeader(in.FileName, in.ReceiverMachines, true)
+		lineCount, err := global.CountLines(localSDFSFilePath)
+		if err != nil {
+			fmt.Printf("Failed to count lines: %v\n", err)
+		}
+		sendPutACKToLeader(lineCount, in.FileName, in.ReceiverMachines, true)
 		resp.Success = true
 	}
 	return resp, err
