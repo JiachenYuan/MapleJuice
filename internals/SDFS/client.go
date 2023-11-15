@@ -252,7 +252,7 @@ func handlePutFile(localFileName string, sdfsFileName string) {
 }
 
 // Similar to PUT, but for file append
-func HandleAppendFile(content string, sdfsFileName string) {
+func HandleAppendFile(sdfsFileName string, content string) {
 	var conn *grpc.ClientConn
 	var c pb.SDFSClient
 	var err error
@@ -394,7 +394,7 @@ func callAppendEndpoint(content string, sdfsFileName string, targetHostname stri
 		return err
 	}
 	if !r.Success {
-		return errors.New("[callAppendEndpoint]: append response returns non-successful")
+		return errors.New("[callAppendEndpoint]: append response returns non-successful from " + targetHostname)
 	}
 
 	return nil
