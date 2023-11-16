@@ -239,10 +239,10 @@ func handlePutFile(localFileName string, sdfsFileName string) {
 
 		fmt.Printf("Starting to put file: %s to SDFS file: %s \n", localFileName, sdfsFileName)
 		err = transferFilesConcurrent(localFileName, sdfsFileName, targetReplicas)
+		sendPutACKToLeader(sdfsFileName, targetReplicas, false)
 		if err != nil {
 			fmt.Printf("Failed to transfer file: %v\n", err)
 		} else {
-			sendPutACKToLeader(sdfsFileName, targetReplicas, false)
 			putOperationTime := time.Since(putStartTime).Milliseconds()
 			fmt.Printf("Successfully put file %s to SDFS file %s in %v ms\n", localFileName, sdfsFileName, putOperationTime)
 		}
@@ -329,10 +329,10 @@ func HandleAppendFile(sdfsFileName string, content string) {
 		fmt.Printf("Starting to append to SDFS file: %s \n", sdfsFileName)
 		// err = transferFilesConcurrent(localFileName, sdfsFileName, targetVMAddrs)
 		err = sendAppendContentToVMs(content, sdfsFileName, targetVMAddrs, version)
+		sendPutACKToLeader(sdfsFileName, targetVMAddrs, false)
 		if err != nil {
 			fmt.Printf("Failed to transfer file: %v\n", err)
 		} else {
-			sendPutACKToLeader(sdfsFileName, targetVMAddrs, false)
 			putOperationTime := time.Since(startTime).Milliseconds()
 			fmt.Printf("Successfully append to SDFS file %s in %v ms\n", sdfsFileName, putOperationTime)
 		}
