@@ -378,7 +378,9 @@ func (s *SDFSServer) ListFileHolder(ctx context.Context, in *pb.ListFileHolderRe
 
 // replicate file upon detecting failures
 func (s *SDFSServer) ReplicateFile(ctx context.Context, in *pb.ReplicationRequest) (*pb.ReplicationResponse, error) {
-	resp := &pb.ReplicationResponse{}
+	resp := &pb.ReplicationResponse{
+		Success: true,
+	}
 	if in.SenderMachine != HOSTNAME {
 		fmt.Println("Error: received replication request for a different machine")
 		resp.Success = false
@@ -389,13 +391,12 @@ func (s *SDFSServer) ReplicateFile(ctx context.Context, in *pb.ReplicationReques
 	if err != nil {
 		fmt.Printf("Failed to transfer file: %v\n", err)
 		resp.Success = false
-	} else {
-		lineCount, err := global.CountFileLines(localSDFSFilePath)
-		if err != nil {
-			fmt.Printf("Failed to count lines: %v\n", err)
-		}
-		sendPutACKToLeader(lineCount, in.FileName, in.ReceiverMachines, true, false)
-		resp.Success = true
+	}
+	lineCount, err := global.CountFileLines(localSDFSFilePath)
+	sendPutACKToLeader(lineCount, in.FileName, in.ReceiverMachines, true, false)
+	if err != nil {
+		fmt.Printf("Failed to count line number: %v\n", err)
+		resp.Success = false
 	}
 	return resp, err
 }
