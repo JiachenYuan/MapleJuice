@@ -30,6 +30,7 @@ const (
 	SDFS_ListFileHolder_FullMethodName     = "/cs425_mp3.SDFS/ListFileHolder"
 	SDFS_ListLocalFiles_FullMethodName     = "/cs425_mp3.SDFS/ListLocalFiles"
 	SDFS_ReplicateFile_FullMethodName      = "/cs425_mp3.SDFS/ReplicateFile"
+	SDFS_AppendNewContent_FullMethodName   = "/cs425_mp3.SDFS/AppendNewContent"
 )
 
 // SDFSClient is the client API for SDFS service.
@@ -47,6 +48,7 @@ type SDFSClient interface {
 	ListFileHolder(ctx context.Context, in *ListFileHolderRequest, opts ...grpc.CallOption) (*ListFileHolderResponse, error)
 	ListLocalFiles(ctx context.Context, in *ListLocalFilesRequest, opts ...grpc.CallOption) (*ListLocalFilesResponse, error)
 	ReplicateFile(ctx context.Context, in *ReplicationRequest, opts ...grpc.CallOption) (*ReplicationResponse, error)
+	AppendNewContent(ctx context.Context, in *AppendNewContentRequest, opts ...grpc.CallOption) (*AppendNewContentResponse, error)
 }
 
 type sDFSClient struct {
@@ -156,6 +158,15 @@ func (c *sDFSClient) ReplicateFile(ctx context.Context, in *ReplicationRequest, 
 	return out, nil
 }
 
+func (c *sDFSClient) AppendNewContent(ctx context.Context, in *AppendNewContentRequest, opts ...grpc.CallOption) (*AppendNewContentResponse, error) {
+	out := new(AppendNewContentResponse)
+	err := c.cc.Invoke(ctx, SDFS_AppendNewContent_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SDFSServer is the server API for SDFS service.
 // All implementations must embed UnimplementedSDFSServer
 // for forward compatibility
@@ -171,6 +182,7 @@ type SDFSServer interface {
 	ListFileHolder(context.Context, *ListFileHolderRequest) (*ListFileHolderResponse, error)
 	ListLocalFiles(context.Context, *ListLocalFilesRequest) (*ListLocalFilesResponse, error)
 	ReplicateFile(context.Context, *ReplicationRequest) (*ReplicationResponse, error)
+	AppendNewContent(context.Context, *AppendNewContentRequest) (*AppendNewContentResponse, error)
 	mustEmbedUnimplementedSDFSServer()
 }
 
@@ -210,6 +222,9 @@ func (UnimplementedSDFSServer) ListLocalFiles(context.Context, *ListLocalFilesRe
 }
 func (UnimplementedSDFSServer) ReplicateFile(context.Context, *ReplicationRequest) (*ReplicationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReplicateFile not implemented")
+}
+func (UnimplementedSDFSServer) AppendNewContent(context.Context, *AppendNewContentRequest) (*AppendNewContentResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AppendNewContent not implemented")
 }
 func (UnimplementedSDFSServer) mustEmbedUnimplementedSDFSServer() {}
 
@@ -422,6 +437,24 @@ func _SDFS_ReplicateFile_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SDFS_AppendNewContent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AppendNewContentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SDFSServer).AppendNewContent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SDFS_AppendNewContent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SDFSServer).AppendNewContent(ctx, req.(*AppendNewContentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SDFS_ServiceDesc is the grpc.ServiceDesc for SDFS service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -472,6 +505,10 @@ var SDFS_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReplicateFile",
 			Handler:    _SDFS_ReplicateFile_Handler,
+		},
+		{
+			MethodName: "AppendNewContent",
+			Handler:    _SDFS_AppendNewContent_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
