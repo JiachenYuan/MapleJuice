@@ -239,8 +239,8 @@ func handlePutFile(localFileName string, sdfsFileName string) {
 
 		fmt.Printf("Starting to put file: %s to SDFS file: %s \n", localFileName, sdfsFileName)
 		err = transferFilesConcurrent(localFileName, sdfsFileName, targetReplicas)
-		lineCount, err := global.CountLines(localFileName)
-		sendPutACKToLeader(lineCount, sdfsFileName, targetReplicas, false)
+		lineCount, err := global.CountFileLines(localFileName)
+		sendPutACKToLeader(lineCount, sdfsFileName, targetReplicas, false, false)
 		if err != nil {
 			fmt.Printf("Failed to transfer file: %v\n", err)
 		} else {
@@ -330,8 +330,8 @@ func HandleAppendFile(sdfsFileName string, content string) {
 		fmt.Printf("Starting to append to SDFS file: %s \n", sdfsFileName)
 		// err = transferFilesConcurrent(localFileName, sdfsFileName, targetVMAddrs)
 		err = sendAppendContentToVMs(content, sdfsFileName, targetVMAddrs, version)
-		lineCount, err := global.CountLines(localFileName)
-		sendPutACKToLeader(lineCount, sdfsFileName, targetVMAddrs, false)
+		lineCount, err := global.CountStringLines(content)
+		sendPutACKToLeader(lineCount, sdfsFileName, targetVMAddrs, false, true)
 		if err != nil {
 			fmt.Printf("Failed to transfer file: %v\n", err)
 		} else {
@@ -450,7 +450,7 @@ func transferFileToReplica(localFileName string, sdfsFileName string, replica st
 	return err
 }
 
-func sendPutACKToLeader(lineCount int, sdfsFileName string, targetReplicas []string, isReplicate bool) {
+func sendPutACKToLeader(lineCount int, sdfsFileName string, targetReplicas []string, isReplicate bool, isAppend bool) {
 	var conn *grpc.ClientConn
 	var c pb.SDFSClient
 	var err error
@@ -476,6 +476,7 @@ func sendPutACKToLeader(lineCount int, sdfsFileName string, targetReplicas []str
 			FileName:         sdfsFileName,
 			ReplicaAddresses: targetReplicas,
 			IsReplicate:      isReplicate,
+			IsAppend:         isAppend,
 			RequesterAddress: HOSTNAME,
 		})
 		if err != nil {

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 )
 
 func Min(a int, b int) int {
@@ -47,7 +48,17 @@ func RemoveElementWithRange[T comparable](s []T, e T, start int, end int) ([]T, 
 	return append(s[:idx], s[idx+1:]...), nil
 }
 
-func CountLines(filename string) (int, error) {
+func CountStringLines(content string) (int, error) {
+	scanner := bufio.NewScanner(strings.NewReader(content))
+	lineCount := 0
+	for scanner.Scan() {
+		lineCount++
+	}
+
+	return lineCount, scanner.Err()
+}
+
+func CountFileLines(filename string) (int, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return 0, err

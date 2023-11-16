@@ -24,13 +24,11 @@ const (
 
 var (
 	SDFS_PATH string
-	HOSTNAME string
+	HOSTNAME  string
 )
 
 // Record file append's latest version. Used for idempotent file append
 var appendVersionMap map[string]int = make(map[string]int)
-
-
 
 func init() {
 	usr, err := user.Current()
@@ -203,6 +201,10 @@ func (s *SDFSServer) PutACK(ctx context.Context, in *pb.PutACKRequest) (*pb.PutA
 	vmAddress := in.ReplicaAddresses
 	lineCount := in.LineCount
 	//update file table
+	if in.IsAppend {
+		originalLinCount := global.MemTable.FileLineCountMap[fileName]
+		lineCount += int64(originalLinCount)
+	}
 	global.MemTable.Put(fileName, vmAddress, int(lineCount))
 	if !in.IsReplicate {
 		releaseLock(in.RequesterAddress, fileName, global.WRITE)
@@ -224,27 +226,27 @@ func (s *SDFSServer) AppendNewContent(ctx context.Context, in *pb.AppendNewConte
 	fPath := filepath.Join(SDFS_PATH, in.FileName)
 	// If the file doesn't exist, create it, or append to the file
 	f, err := os.OpenFile(fPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-    if err != nil {
+	if err != nil {
 		// Cannot find the file to be appended
 		fmt.Printf("cannot open file %s to append: %v\n", fPath, err)
-        return &pb.AppendNewContentResponse{
+		return &pb.AppendNewContentResponse{
 			Success: false,
 		}, nil
-    }
-    if _, err := f.Write([]byte(in.Content)); err != nil {
-        // Cannot actually append the new content to the file
+	}
+	if _, err := f.Write([]byte(in.Content)); err != nil {
+		// Cannot actually append the new content to the file
 		fmt.Printf("cannot append to file %s: %v\n", fPath, err)
-        return &pb.AppendNewContentResponse{
+		return &pb.AppendNewContentResponse{
 			Success: false,
 		}, nil
-    }
-    if err := f.Close(); err != nil {
-        // Cannot close the appended file
+	}
+	if err := f.Close(); err != nil {
+		// Cannot close the appended file
 		fmt.Printf("cannot close the appended file %s: %v\n", fPath, err)
-        return &pb.AppendNewContentResponse{
+		return &pb.AppendNewContentResponse{
 			Success: false,
 		}, nil
-    }
+	}
 	return &pb.AppendNewContentResponse{
 		Success: true,
 	}, nil
@@ -388,11 +390,11 @@ func (s *SDFSServer) ReplicateFile(ctx context.Context, in *pb.ReplicationReques
 		fmt.Printf("Failed to transfer file: %v\n", err)
 		resp.Success = false
 	} else {
-		lineCount, err := global.CountLines(localSDFSFilePath)
+		lineCount, err := global.CountFileLines(localSDFSFilePath)
 		if err != nil {
 			fmt.Printf("Failed to count lines: %v\n", err)
 		}
-		sendPutACKToLeader(lineCount, in.FileName, in.ReceiverMachines, true)
+		sendPutACKToLeader(lineCount, in.FileName, in.ReceiverMachines, true, false)
 		resp.Success = true
 	}
 	return resp, err
