@@ -65,7 +65,10 @@ func (s *MapleJuiceServer) Maple(ctx context.Context, in *pb.MapleRequest) (*pb.
 	//3. for each key, output to a temporary local file
 	runExecutableFileOnInputFiles(in.MapleExePath, in.Files, in.SdfsIntermediateFilenamePrefix)
 	//4. append the temporary local file to intermediate file on SDFS
-	return nil, nil
+	resp := &pb.MapleResponse{
+		Success: true,
+	}
+	return resp, nil
 }
 
 func runExecutableFileOnInputFiles(mapleExePath string, fileLines []*pb.FileLines, prefix string) error {
