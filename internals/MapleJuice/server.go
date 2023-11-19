@@ -129,7 +129,6 @@ func runExecutableFileOnSingleInputFile(mapleExePath string, fileLine *pb.FileLi
 			kvPairs := strings.Split(string(output), "\n")
 			for _, kvPair := range kvPairs {
 				kv := strings.Split(kvPair, ":")
-				fmt.Printf("kv: %v\n", kv)
 				if len(kv) != 2 {
 					continue
 				}
