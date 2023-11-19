@@ -43,7 +43,7 @@ func (s *MapleJuiceServer) GetMapleWorkerList(ctx context.Context, in *pb.MapleW
 	if sdfs.IsCurrentNodeLeader() {
 		workersCount := in.NumMaples
 		dir := in.SdfsSrcDirectory
-		workerAssignments := assignWorkload(dir, int(workersCount))
+		workerAssignments := assignMapleWorkToWorkers(dir, int(workersCount))
 		resp := &pb.MapleWorkerListeResponse{
 			Success:     true,
 			Assignments: workerAssignments,

@@ -31,7 +31,8 @@ func calculateMapleWorkload(files []string, numMaples int) (int, error) {
 	return individualWorkload, nil
 }
 
-func assignWorkload(dir string, numMaples int) []*pb.MapleWorkerListeResponse_WorkerTaskAssignment {
+// For each worker, assign a list of files and line ranges to process in the maple task
+func assignMapleWorkToWorkers(dir string, numMaples int) []*pb.MapleWorkerListeResponse_WorkerTaskAssignment {
 	workersList := generateMapleWorkersList(numMaples)
 	files := global.ListAllFilesInDirectory(dir)
 	linesPerWorker, err := calculateMapleWorkload(files, numMaples)
