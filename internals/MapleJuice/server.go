@@ -187,6 +187,7 @@ func appendAllIntermediateResultToSDFS(KVCollection map[string][]string, prefix 
 			content += fmt.Sprintf("%s:%s\n", key, v)
 		}
 		sdfsIntermediateFileName := fmt.Sprintf("%s_%s", prefix, key)
+		fmt.Printf("Trying to appended to SDFS file %s\n", sdfsIntermediateFileName)
 		sdfs.HandleAppendFile(sdfsIntermediateFileName, content)
 	}
 
