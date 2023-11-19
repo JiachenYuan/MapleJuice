@@ -127,7 +127,7 @@ func sendMapleRequestToSingleWorker(assignment *pb.MapleWorkerListeResponse_Work
 	if resp == nil || !resp.Success {
 		return fmt.Errorf("node %v processed maple request unsuccessfully: %v", assignment.WorkerAddress, err)
 	}
-	fmt.Printf("Node %v processed maple request successfully: %v\n", assignment.WorkerAddress, err)
+	fmt.Printf("Node %v processed maple request successfully\n", assignment.WorkerAddress)
 	return nil
 }
 
