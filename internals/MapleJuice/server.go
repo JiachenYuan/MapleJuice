@@ -116,7 +116,7 @@ func runExecutableFileOnSingleInputFile(mapleExePath string, fileLine *pb.FileLi
 	for scanner.Scan() {
 		if currentLine >= startLine && currentLine <= endLine {
 			line := scanner.Text()
-			cmd := exec.Command("python", mapleExePath)
+			cmd := exec.Command("python3", mapleExePath)
 			cmd.Stdin = strings.NewReader(line)
 			output, err := cmd.CombinedOutput()
 			if err != nil {
