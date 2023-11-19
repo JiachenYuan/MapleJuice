@@ -16,15 +16,17 @@ message MapleWorkerListRequest {
     string sdfsSrcDirectory = 2;
 }
 
+message LineRange {
+    int32 start = 1;
+    int32 end = 2;
+}
+
+message FileLines {
+    string filename = 1;
+    LineRange range = 2;
+}
+
 message MapleWorkerListeResponse {
-    message LineRange {
-        int32 start = 1;
-        int32 end = 2;
-    }
-    message FileLines {
-        string filename = 1;
-        LineRange range = 2;
-    }
     message WorkerTaskAssignment {
         string workerAddress = 1;
         repeated FileLines files = 2;
@@ -38,7 +40,7 @@ message MapleWorkerListeResponse {
 message MapleRequest {
     string mapleExePath = 1;
     string sdfsIntermediateFilenamePrefix = 2;
-    string sdfsSrcDirectory = 3;
+    repeated FileLines files = 3;
 }
 
 message MapleResponse {

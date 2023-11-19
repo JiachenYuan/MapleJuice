@@ -61,9 +61,9 @@ func assignWorkload(dir string, numMaples int) []*pb.MapleWorkerListeResponse_Wo
 
 			// Add file and line range to current worker's assignment
 			endLine := startLine + linesToTake - 1
-			fileLines := &pb.MapleWorkerListeResponse_FileLines{
+			fileLines := &pb.FileLines{
 				Filename: file,
-				Range: &pb.MapleWorkerListeResponse_LineRange{
+				Range: &pb.LineRange{
 					Start: int32(startLine),
 					End:   int32(endLine),
 				},

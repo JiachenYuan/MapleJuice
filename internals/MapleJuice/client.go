@@ -104,7 +104,7 @@ func sendMapleRequestToSingleWorker(assignment *pb.MapleWorkerListeResponse_Work
 	var err error
 	ctx, dialCancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer dialCancel()
-	conn, err := grpc.DialContext(ctx, global.GetLeaderAddress()+":"+global.MAPLE_JUICE_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.DialContext(ctx, assignment.WorkerAddress+":"+global.MAPLE_JUICE_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	defer conn.Close()
 	if err != nil {
 		fmt.Printf("did not connect: %v\n", err)
@@ -119,7 +119,7 @@ func sendMapleRequestToSingleWorker(assignment *pb.MapleWorkerListeResponse_Work
 	resp, err := c.Maple(ctx, &pb.MapleRequest{
 		MapleExePath:                   mapleExePath,
 		SdfsIntermediateFilenamePrefix: intermediateFileNamePrefix,
-		SdfsSrcDirectory:               sourceDirectory,
+		Files:                          assignment.Files,
 	})
 	if err != nil {
 		return fmt.Errorf("node %v failed to process maple request: %v", assignment.WorkerAddress, err)
