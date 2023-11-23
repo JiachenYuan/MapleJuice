@@ -90,7 +90,7 @@ func assignMapleWorkToWorkers(dir string, numMaples int) map[string][]*pb.FileLi
 			}
 		}
 	}
-
+	fmt.Printf("Maple assignments: %v\n", assignments)
 	return assignments
 
 }
