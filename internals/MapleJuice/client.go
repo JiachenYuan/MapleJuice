@@ -51,6 +51,7 @@ func sendMapleRequestToWorkers(assignments map[string][]*pb.FileLines, mapleExeP
 		wg.Add(1)
 		go func(_worrkerAddr string, _assignment []*pb.FileLines, _occupiedVM map[string]global.Empty) {
 			defer wg.Done()
+			fmt.Printf("Sending maple request to worker %v\n", _worrkerAddr)
 			err := sendMapleRequestToSingleWorker(_worrkerAddr, _assignment, mapleExePath, intermediateFileNamePrefix, occupiedVM)
 			if err != nil {
 				mut.Lock()
@@ -86,7 +87,7 @@ func sendMapleRequestToSingleWorker(workerAddr string, assignment []*pb.FileLine
 				// Choose this new vm and schedule the inputFiles to this vm
 				occupiedVM[vmAddr] = global.Empty{}
 				// With heuristic that this recursion would end eventually, we take a leap of faith
-				fmt.Printf("Rescheduling maple request to %v\n", vmAddr)
+				fmt.Printf("Rescheduling maple request while dialing to %v\n", vmAddr)
 				return sendMapleRequestToSingleWorker(vmAddr, assignment, mapleExePath, intermediateFileNamePrefix, occupiedVM)
 			}
 		}
@@ -111,6 +112,7 @@ func sendMapleRequestToSingleWorker(workerAddr string, assignment []*pb.FileLine
 				// Choose this new vm and schedule the inputFiles to this vm
 				occupiedVM[vmAddr] = global.Empty{}
 				// With heuristic that this recursion would end eventually, we take a leap of faith
+				fmt.Printf("Rescheduling maple request while sending exec to %v\n", vmAddr)
 				return sendMapleRequestToSingleWorker(vmAddr, assignment, mapleExePath, intermediateFileNamePrefix, occupiedVM)
 			}
 		}
