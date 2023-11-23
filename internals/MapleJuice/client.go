@@ -51,7 +51,6 @@ func sendMapleRequestToWorkers(assignments map[string][]*pb.FileLines, mapleExeP
 		wg.Add(1)
 		go func(_worrkerAddr string, _assignment []*pb.FileLines, _occupiedVM map[string]global.Empty) {
 			defer wg.Done()
-			fmt.Printf("Sending maple request to worker %v\n", _worrkerAddr)
 			err := sendMapleRequestToSingleWorker(_worrkerAddr, _assignment, mapleExePath, intermediateFileNamePrefix, occupiedVM)
 			if err != nil {
 				mut.Lock()
@@ -96,7 +95,7 @@ func sendMapleRequestToSingleWorker(workerAddr string, assignment []*pb.FileLine
 	defer conn.Close()
 	c := pb.NewMapleJuiceClient(conn)
 
-	resp, err := c.MapleExec(ctx, &pb.MapleExecRequest{
+	resp, err := c.MapleExec(context.Background(), &pb.MapleExecRequest{
 		MapleExePath:                   mapleExePath,
 		SdfsIntermediateFilenamePrefix: intermediateFileNamePrefix,
 		Files:                          assignment,
