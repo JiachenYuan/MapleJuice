@@ -74,6 +74,7 @@ func sendMapleRequestToSingleWorker(workerAddr string, assignment []*pb.FileLine
 	var err error
 	ctx, dialCancel := context.WithTimeout(context.Background(), 2*time.Second)
 	conn, err := grpc.DialContext(ctx, workerAddr+":"+global.MAPLE_JUICE_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	defer dialCancel()
 	if err != nil {
 		fmt.Printf("did not connect: %v\n", err)
 		alivePeers := sdfs.GetAlivePeersAddrs()
@@ -85,13 +86,13 @@ func sendMapleRequestToSingleWorker(workerAddr string, assignment []*pb.FileLine
 				// Choose this new vm and schedule the inputFiles to this vm
 				occupiedVM[vmAddr] = global.Empty{}
 				// With heuristic that this recursion would end eventually, we take a leap of faith
+				fmt.Printf("Rescheduling maple request to %v\n", vmAddr)
 				return sendMapleRequestToSingleWorker(vmAddr, assignment, mapleExePath, intermediateFileNamePrefix, occupiedVM)
 			}
 		}
 		return err
 	}
 	defer conn.Close()
-	defer dialCancel()
 	c := pb.NewMapleJuiceClient(conn)
 
 	resp, err := c.MapleExec(ctx, &pb.MapleExecRequest{
