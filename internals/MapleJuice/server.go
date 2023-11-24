@@ -111,6 +111,7 @@ func runExecutableFileOnSingleInputFile(mapleExePath string, fileLine *pb.FileLi
 	file := fileLine.Filename
 	startLine := int(fileLine.Range.Start)
 	endLine := int(fileLine.Range.End)
+	fmt.Printf("Running maple executable on file %s, line %d to %d\n", file, startLine, endLine)
 	currentLine := 0
 	inputFile, err := os.Open(file)
 	if err != nil {
