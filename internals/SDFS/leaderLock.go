@@ -72,7 +72,14 @@ func requestLock(requestorAddress string, fileName string, requestType global.Re
 		if !global.Contains(lock.ReadQueue, requestorAddress) {
 			lock.ReadQueue = append(lock.ReadQueue, requestorAddress)
 		}
-		canProceed = lock.WriteCount == 0 && lock.ReadCount < NUM_CONCURRENT_READ_LIMIT && (len(lock.WriteQueue) == 0 || lock.ConsecutiveReads < 4) && (lock.ReadQueue[0] == requestorAddress || lock.ReadQueue[1] == requestorAddress)
+		atQueueHead := false
+		for i := 0; i < global.Min(len(lock.ReadQueue), NUM_CONCURRENT_READ_LIMIT); i++ {
+			if lock.ReadQueue[i] == requestorAddress {
+				atQueueHead = true
+				break
+			}
+		}
+		canProceed = lock.WriteCount == 0 && lock.ReadCount < NUM_CONCURRENT_READ_LIMIT && (len(lock.WriteQueue) == 0 || lock.ConsecutiveReads < 4) && atQueueHead
 	case global.WRITE:
 		if !global.Contains(lock.WriteQueue, requestorAddress) {
 			lock.WriteQueue = append(lock.WriteQueue, requestorAddress)
