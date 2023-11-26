@@ -27,6 +27,7 @@ func cleanUpDeadNodesInLeaderLock() {
 					if lock.ReadQueue[i] == deadNode {
 						fmt.Printf("Released read lock for file %s due to dead node\n", fileName)
 						lock.ReadCount--
+						break
 					}
 				}
 				newReadQueue, err := global.RemoveElementWithRange(lock.ReadQueue, deadNode, 0, len(lock.ReadQueue)-1)
