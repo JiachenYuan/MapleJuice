@@ -1,7 +1,6 @@
 package failureDetector
 
 import (
-	"cs425-mp/internals/global"
 	pb "cs425-mp/protobuf"
 	"encoding/json"
 	"fmt"
@@ -220,11 +219,11 @@ func newMessageOfType(messageType pb.GroupMessage_MessageType, includeLeaderStat
 
 	// Gossip message with leader states piggybacked
 	if (len(includeLeaderStates) == 1) && includeLeaderStates[0] {
-		localHostname, _ := getLocalNodeAddress()
+		// localHostname, _ := getLocalNodeAddress()
 		message := &pb.GroupMessage{
 			Type:         messageType,
 			NodeInfoList: nodeInfoListToPB(),
-			LeaderState:  global.LeaderStatesToPB(localHostname),
+			// LeaderState:  global.LeaderStatesToPB(localHostname),
 		}
 		return message
 	}

@@ -63,11 +63,11 @@ func startSDFS(wg *sync.WaitGroup) {
 		SDFS.StartSDFSServer()
 	}()
 
-	// wg.Add(1)
-	// go func() {
-	// 	defer wg.Done()
-	// 	SDFS.PeriodicLeaderTasks()
-	// }()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		SDFS.PeriodicLeaderTasks()
+	}()
 }
 
 func startLeaderElection(wg *sync.WaitGroup) {
