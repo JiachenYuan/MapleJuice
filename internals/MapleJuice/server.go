@@ -139,7 +139,7 @@ func runExecutableFileOnSingleInputFile(mapleExePath string, fileLine *pb.FileLi
 				value := kv[1]
 				KVCollection[key] = append(KVCollection[key], value)
 			}
-			fmt.Printf("Output from line %d: %s\n", currentLine, string(output))
+			// fmt.Printf("Output from line %d: %s\n", currentLine, string(output))
 		}
 		currentLine++
 		if currentLine > endLine {
