@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	NUM_CONCURRENT_READ_LIMIT = 1000
+	NUM_CONCURRENT_READ_LIMIT = 10
 )
 
 func cleanUpDeadNodesInLeaderLock() {
