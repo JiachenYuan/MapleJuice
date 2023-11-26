@@ -175,7 +175,7 @@ import re
 
 regex = "%s"
 def process_line(line):
-    exist = re.match(regex, line)
+    exist = re.search(regex, line)
     if exist:
         print(f"key:{line}")
 
