@@ -20,7 +20,7 @@ func HandleGroupMessages() {
 		os.Exit(1)
 	}
 	defer conn.Close()
-	buffer := make([]byte, 65536)
+	buffer := make([]byte, 16384)
 	for {
 		// If current node is not initialized or is in LEFT status, do nothing
 		if LOCAL_NODE_KEY == "" {
