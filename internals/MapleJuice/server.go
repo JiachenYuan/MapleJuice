@@ -221,14 +221,14 @@ func (s *MapleJuiceServer) JuiceExec(ctx context.Context, in *pb.JuiceExecReques
 				key = parts[0]
 				value := parts[1]
 
-				values += value + ","
+				values += value + "::"
 			} else {
 				fmt.Println("Invalid line format:", line)
 				return nil, errors.New("Invalid line format:" + line)
 			}
 		}
 
-		valuesStr := values[:len(values)-1] // remove the last comma
+		valuesStr := values[:len(values)-2] // remove the last deliemeter (::)
 		programInputStr := fmt.Sprintf("%s:%s", key, valuesStr)
 		// Give value set to the juice task executable
 		cmd := exec.Command("python3", juiceProgram)
