@@ -14,15 +14,6 @@ import (
 	"strings"
 )
 
-func generateMapleWorkersList(numMaples int) []string {
-	//TODO: This is a temporary implementation, we need to change this to a more sophisticated one
-	workersList := make([]string, numMaples)
-	for i := 0; i < numMaples; i++ {
-		workersList[i] = global.SERVER_ADDRS[i]
-	}
-	return workersList
-}
-
 func calculateMapleWorkload(files []string, numMaples int) (int, error) {
 	totalLines := 0
 	for _, file := range files {
@@ -40,7 +31,11 @@ func calculateMapleWorkload(files []string, numMaples int) (int, error) {
 
 // For each worker, assign a list of files and line ranges to process in the maple task
 func assignMapleWorkToWorkers(dir string, numMaples int) map[string][]*pb.FileLines {
-	workersList := generateMapleWorkersList(numMaples)
+	randomNodeList := fd.RandomlySelectNodes(numMaples, global.GetLeaderAddress())
+	workersList := make([]string, 0)
+	for _, node := range randomNodeList {
+		workersList = append(workersList, node.NodeAddr)
+	}
 	files := global.ListAllFilesInDirectory(dir)
 	linesPerWorker, err := calculateMapleWorkload(files, numMaples)
 	if err != nil {
@@ -115,7 +110,7 @@ func createKeyAssignmentForJuicers(numJuicer int, filePrefix string, useRangePar
 	intermediateFiles := getAndSortAllFilesWithPrefix(filePrefix)
 
 	// Randomly get numJuicer number of VMs
-	selectedNode := fd.RandomlySelectNodes(numJuicer)
+	selectedNode := fd.RandomlySelectNodes(numJuicer, global.GetLeaderAddress())
 
 	// Using range partitioning to assign intermediate files
 	if useRangePartition {
