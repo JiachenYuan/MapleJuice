@@ -727,5 +727,12 @@ func HandlePutWithSchema(localFileName string, sdfsFileName string) {
 		return
 	}
 	defer os.Remove(dataFile.Name())
+	for scanner.Scan() {
+		_, err = dataFile.WriteString(scanner.Text() + "\n")
+		if err != nil {
+			fmt.Printf("Failed to write data to new data file %s\n", dataFileName)
+			return
+		}
+	}
 	HandlePutFile(dataFile.Name(), sdfsFileName)
 }
