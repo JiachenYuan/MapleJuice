@@ -158,7 +158,7 @@ func (s *SDFSServer) GetFile(ctx context.Context, in *pb.GetRequest) (*pb.GetRes
 
 // Get ACK (sent to leader)
 func (s *SDFSServer) GetACK(ctx context.Context, in *pb.GetACKRequest) (*pb.GetACKResponse, error) {
-	releaseLock(in.RequesterAddress, in.FileName, global.READ)
+	// releaseLock(in.RequesterAddress, in.FileName, global.READ)
 	resp := &pb.GetACKResponse{
 		Success: true,
 	}
