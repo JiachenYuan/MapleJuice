@@ -90,8 +90,8 @@ func HandleGetFile(sdfsFileName string, localFileName string) {
 		for _, r := range replicas {
 			fmt.Printf("Trying to get file %s from replica: %s\n", sdfsFileName, r)
 			remotePath := getScpHostNameFromHostName(r) + ":" + filepath.Join(SDFS_PATH, sdfsFileName)
-			//limited the speed to 30MB/s
-			cmd := exec.Command("scp", "-l", "240000", remotePath, localFileName)
+			//// limited the speed to 30MB/s
+			cmd := exec.Command("scp", remotePath, localFileName)
 			// cmd := exec.Command("scp", remotePath, localFileName)
 			err := cmd.Start()
 			if err != nil {
@@ -440,8 +440,8 @@ func transferFilesConcurrent(localFileName string, sdfsFileName string, targetRe
 func transferFileToReplica(localFileName string, sdfsFileName string, replica string) error {
 	targetHostName := getScpHostNameFromHostName(replica)
 	remotePath := targetHostName + ":" + filepath.Join(SDFS_PATH, sdfsFileName)
-	//limited the speed to 30MB/s
-	cmd := exec.Command("scp", "-l", "240000", localFileName, remotePath)
+	////limited the speed to 30MB/s
+	cmd := exec.Command("scp", localFileName, remotePath)
 	// cmd := exec.Command("scp", localFileName, remotePath)
 	err := cmd.Start()
 	if err != nil {

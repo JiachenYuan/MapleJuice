@@ -141,9 +141,10 @@ type SDFSServer struct {
 
 // Get file
 func (s *SDFSServer) GetFile(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, error) {
-	fileName := in.FileName
+	// fileName := in.FileName
 	var vmList []string
-	canProceed := requestLock(in.RequesterAddress, fileName, global.READ)
+	// canProceed := requestLock(in.RequesterAddress, fileName, global.READ)
+	canProceed := true
 	if canProceed {
 		vmList = listSDFSFileVMs(in.FileName)
 	}
