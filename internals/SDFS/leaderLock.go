@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	NUM_CONCURRENT_READ_LIMIT = 10
+	NUM_CONCURRENT_READ_LIMIT = 2
 )
 
 func cleanUpDeadNodesInLeaderLock() {
@@ -23,12 +23,9 @@ func cleanUpDeadNodesInLeaderLock() {
 		for fileName, lock := range global.FileLocks {
 			lock.FileLocksMutex.Lock()
 			if global.Contains(lock.ReadQueue, deadNode) {
-				for i := 0; i<len(lock.ReadQueue); i++ {
-					if lock.ReadQueue[i] == deadNode {
-						fmt.Printf("Released read lock for file %s due to dead node\n", fileName)
-						lock.ReadCount--
-						break
-					}
+				if (len(lock.ReadQueue) > 0 && lock.ReadQueue[0] == deadNode) || (len(lock.ReadQueue) > 1 && lock.ReadQueue[1] == deadNode) {
+					fmt.Printf("Released read lock for file %s due to dead node\n", fileName)
+					lock.ReadCount--
 				}
 				newReadQueue, err := global.RemoveElementWithRange(lock.ReadQueue, deadNode, 0, len(lock.ReadQueue)-1)
 				if err != nil {
@@ -72,14 +69,7 @@ func requestLock(requestorAddress string, fileName string, requestType global.Re
 		if !global.Contains(lock.ReadQueue, requestorAddress) {
 			lock.ReadQueue = append(lock.ReadQueue, requestorAddress)
 		}
-		atQueueHead := false
-		for i := 0; i < global.Min(len(lock.ReadQueue), NUM_CONCURRENT_READ_LIMIT); i++ {
-			if lock.ReadQueue[i] == requestorAddress {
-				atQueueHead = true
-				break
-			}
-		}
-		canProceed = lock.WriteCount == 0 && lock.ReadCount < NUM_CONCURRENT_READ_LIMIT && (len(lock.WriteQueue) == 0 || lock.ConsecutiveReads < 4) && atQueueHead
+		canProceed = lock.WriteCount == 0 && lock.ReadCount < 2 && (len(lock.WriteQueue) == 0 || lock.ConsecutiveReads < 4) && (lock.ReadQueue[0] == requestorAddress || lock.ReadQueue[1] == requestorAddress)
 	case global.WRITE:
 		if !global.Contains(lock.WriteQueue, requestorAddress) {
 			lock.WriteQueue = append(lock.WriteQueue, requestorAddress)
