@@ -90,7 +90,6 @@ func requestLock(requestorAddress string, fileName string, requestType global.Re
 		}
 	}
 	return canProceed
-	// return true
 }
 
 func releaseLock(requesterAddress string, fileName string, requestType global.RequestType) {
