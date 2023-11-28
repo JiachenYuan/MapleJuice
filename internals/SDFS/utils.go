@@ -144,7 +144,7 @@ func getServerName(id int) string {
 // Generate random duration bewteen 4-6 seconds
 func randomDuration() time.Duration {
 	rand.Seed(time.Now().UnixNano())
-	n := rand.Intn(3) + 5
+	n := rand.Intn(3) + 7
 	return time.Duration(n) * time.Second
 }
 

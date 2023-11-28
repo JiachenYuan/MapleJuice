@@ -59,7 +59,7 @@ func multicastLeaderState(selectedNodes []*Node) {
 			defer conn.Close()
 			// Request vote to peers and and respond if states haven't changed since start of the election
 			client := pb.NewGroupMembershipClient(conn)
-			timeout := 3 * time.Second
+			timeout := 2 * time.Second
 			ctx, cancel := context.WithTimeout(context.Background(), timeout)
 			defer cancel()
 			ack, err := client.LeaderStateBroadcast(ctx, &pb.LeaderStateReplicationPush{
