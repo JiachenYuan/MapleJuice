@@ -16,7 +16,7 @@ import (
 )
 
 func PeriodicUpdate() {
-	replicateLeaderState := true
+	replicateLeaderState := 0 // looping counter of 4 
 	for {
 		// If current node is not started or is still in LEFT status, do nothing
 		if LOCAL_NODE_KEY == "" {
@@ -29,12 +29,12 @@ func PeriodicUpdate() {
 		selectedNodes := RandomlySelectNodes(NUM_NODES_TO_GOSSIP, LOCAL_NODE_KEY)
 		NodeListLock.Unlock()
 		SendGossip(gossip, selectedNodes)
-		// Also broadcast current copy of leader state once every two rounds
-		if replicateLeaderState {
+		// Also broadcast current copy of leader state once every 4 rounds
+		if replicateLeaderState == 4 {
 			go multicastLeaderState(selectedNodes)
-			replicateLeaderState = false
+			replicateLeaderState = 0
 		} else {
-			replicateLeaderState = true
+			replicateLeaderState++
 		}
 		time.Sleep(GOSSIP_RATE)
 	}
@@ -59,7 +59,7 @@ func multicastLeaderState(selectedNodes []*Node) {
 			defer conn.Close()
 			// Request vote to peers and and respond if states haven't changed since start of the election
 			client := pb.NewGroupMembershipClient(conn)
-			timeout := 2 * time.Second
+			timeout := 3 * time.Second
 			ctx, cancel := context.WithTimeout(context.Background(), timeout)
 			defer cancel()
 			ack, err := client.LeaderStateBroadcast(ctx, &pb.LeaderStateReplicationPush{
