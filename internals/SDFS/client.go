@@ -61,6 +61,8 @@ func HandleGetFile(sdfsFileName string, localFileName string) {
 		}
 		// Premature return if local cache is found and there is no error copying it to current project directory
 		if len(errList) == 0 {
+			readOperationTime := time.Since(readStartTime).Milliseconds()
+			fmt.Printf("Successfully get file %s in %v ms \n", sdfsFileName, readOperationTime)
 			return
 		}
 	}
