@@ -1,6 +1,7 @@
 package maplejuice
 
 import (
+	"bufio"
 	"crypto/md5"
 	fd "cs425-mp/internals/failureDetector"
 	"cs425-mp/internals/global"
@@ -340,12 +341,19 @@ func extractSchemaFromSchemaFile(filename string) (string, error) {
 	defer file.Close()
 
 	// Read the first line of the file
-	var schema string
-	_, err = fmt.Fscanf(file, "%s\n", &schema)
-	if err != nil {
-		fmt.Printf("Error reading schema from file %s: %v\n", filename, err)
-		return "", err
-	}
+	// var schema string
+	// _, err = fmt.Fscanf(file, "%s\n", &schema)
+	// if err != nil {
+	// 	fmt.Printf("Error reading schema from file %s: %v\n", filename, err)
+	// 	return "", err
+	// }
+
+	scanner := bufio.NewScanner(file)
+	scanner.Scan()
+	schema := scanner.Text()
+	if err := scanner.Err(); err != nil {
+        return "", err
+    }
 	return schema, nil
 }
 
