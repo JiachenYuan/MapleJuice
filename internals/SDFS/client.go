@@ -7,9 +7,11 @@ import (
 	pb "cs425-mp/protobuf"
 	"errors"
 	"fmt"
+	"io"
 	"math/rand"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
 	"sync"
 	"time"
@@ -24,6 +26,45 @@ func HandleGetFile(sdfsFileName string, localFileName string) {
 	var c pb.SDFSClient
 	var err error
 	readStartTime := time.Now()
+
+	// Small optimization: get from local cache for the sdfs file copy if available
+	usr, err := user.Current()
+	if err != nil {
+		fmt.Printf("Error getting user home directory: %v \n", err)
+	}
+	SDFS_PATH = filepath.Join(usr.HomeDir, "SDFS_Files")
+	possibleCachePath := filepath.Join(SDFS_PATH, sdfsFileName)
+	if _, err := os.Stat(possibleCachePath); err == nil {
+		fmt.Printf("local cache exists\n")
+		sourceFile := possibleCachePath
+		destDir := filepath.Join(usr.HomeDir, "cs425-mp4")
+		destinationFile := filepath.Join(destDir, localFileName)
+
+		errList := make([]error, 0)
+		source, err := os.Open(sourceFile)  //open the source file 
+		if err != nil {
+			fmt.Printf("copy cache failed\n")
+			errList = append(errList, err)
+		}
+		defer source.Close()
+
+		destination, err := os.Create(destinationFile)  //create the destination file
+		if err != nil {
+			fmt.Printf("copy cache failed\n")
+			errList = append(errList, err)
+		}
+		defer destination.Close()
+		_, err = io.Copy(destination, source)  //copy the contents of source to destination file
+		if err != nil {
+			fmt.Printf("copy cache failed\n")
+			errList = append(errList, err)
+		}
+		// Premature return if local cache is found and there is no error copying it to current project directory
+		if len(errList) == 0 {
+			return
+		}
+	}
+
 	for {
 		if conn == nil {
 			ctx, dialCancel := context.WithTimeout(context.Background(), 2*time.Second)
