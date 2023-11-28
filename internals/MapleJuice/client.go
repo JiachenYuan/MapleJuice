@@ -355,4 +355,5 @@ func handleSQLJoin(table1 string, column1 string, table2 string, column2 string,
 	sdfs.HandlePutFile(JuiceExeFileName, JuiceExeFileName)
 	handleJuice(JuiceExeFileName, 5, "join", directoryName+"_joined", true, true)
 	sdfs.HandleGetFile(directoryName+"_joined", directoryName+"_joined")
+	// If post processing of the joined file is needed, add at below
 }
