@@ -291,12 +291,9 @@ def process_line(line):
     key, value_set = line.strip().split(':', 1)
     value_splitted = value_set.split("::")
     datasets_names = set([x.split("->")[0] for x in value_splitted])
-    datasets_names_list = list(datasets_names)
-    if len(datasets_names) == 1:
-        all_result_rows = [x.split("->")[1] for x in value_splitted]
-        for row in all_result_rows:
-            print(f"{row}")
-    elif len(datasets_names) == 2:
+    datasets_names_list = sorted(datasets_names)
+    
+    if len(datasets_names) == 2:
         value_from_table_a = [x.split("->")[1] for x in value_splitted if (x.split("->")[0] == datasets_names_list[0])]
         value_from_table_b = [x.split("->")[1] for x in value_splitted if (x.split("->")[0] == datasets_names_list[1])]
         # All combination
@@ -350,7 +347,7 @@ func extractSchemaFromSchemaFile(filename string) (string, error) {
 	if err := scanner.Err(); err != nil {
         return "", err
     }
-	schema = strings.TrimPrefix(schema, "U+feff")
+	schema = strings.TrimPrefix(schema, "\uFEFF")
 	return schema, nil
 }
 

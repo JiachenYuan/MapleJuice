@@ -254,7 +254,7 @@ func handleSQL(query string) {
 			fmt.Printf("Invalid SQL query format\n")
 			return
 		}
-		fmt.Printf("::::::::: %v, %v, %v, %v, %v, %v", dataset1, dataset2, leftDataset, col1, rightDataset, col2)
+		fmt.Printf("::::::::: %v, %v, %v, %v, %v, %v\n", dataset1, dataset2, leftDataset, col1, rightDataset, col2)
 		directoryName := longestCommonPrefix([]string{dataset1, dataset2})
 		if len(directoryName) == 0 {
 			fmt.Printf("Cannot join two tables not in the same sdfs directory (sharing some prefix)")
