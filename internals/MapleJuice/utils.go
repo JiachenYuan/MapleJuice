@@ -170,7 +170,8 @@ field = "%s"
 regex = re.compile(r"%s")
 
 def process_line(line):
-	line = line.strip().split("##")[1] # 0th index would be the filename this line comes from
+	# 0th index would be the filename this line comes from
+	line = line.strip().split("##")[1]
     data = dict(zip(schema, line.strip().split(',')))
     if field in data and regex.search(data[field]):
         print(f"key:{line}")
@@ -195,7 +196,6 @@ if __name__ == "__main__":
 	}
 
 	return fileName, nil
-
 }
 
 func generateJoinMapleExeFile(table1 string, column1 string, schema1 string, table2 string, column2 string, schema2 string) (string, error) {
