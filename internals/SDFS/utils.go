@@ -141,7 +141,7 @@ func getServerName(id int) string {
 	return global.SERVER_ADDRS[id-1]
 }
 
-// Generate random duration bewteen 4-6 seconds
+// Generate random duration bewteen 7-10 seconds
 func randomDuration() time.Duration {
 	rand.Seed(time.Now().UnixNano())
 	n := rand.Intn(3) + 7
