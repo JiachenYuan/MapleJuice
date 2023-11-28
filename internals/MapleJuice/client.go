@@ -254,6 +254,7 @@ func handleSQL(query string) {
 			fmt.Printf("Invalid SQL query format\n")
 			return
 		}
+		fmt.Printf("::::::::: %v, %v, %v, %v, %v, %v", dataset1, dataset2, leftDataset, col1, rightDataset, col2)
 		directoryName := longestCommonPrefix([]string{dataset1, dataset2})
 		if len(directoryName) == 0 {
 			fmt.Printf("Cannot join two tables not in the same sdfs directory (sharing some prefix)")
@@ -288,7 +289,7 @@ func matchFilterPattern(query string) (string, string, string, error) {
 
 func matchJoinPattern(query string) (string, string, string, string, string, string, error) {
 	// SELECT ALL FROM D1, D2 WHERE D1.name = D2.ID
-	pattern := `SELECT ALL FROM (\w+), (\w+) WHERE (\w+)\.(\w+) = (\w)+\.(\w+)`
+	pattern := `SELECT ALL FROM (\w+), (\w+) WHERE (\w+)\.(\w+) = (\w+)\.(\w+)`
 	re := regexp.MustCompile(pattern)
 
 	// Match the pattern in the given sqlQuery
