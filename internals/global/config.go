@@ -10,6 +10,8 @@ const (
 	SDFS_PORT            = "55557"
 	LEADER_ELECTION_PORT = "55558"
 	MAPLE_JUICE_PORT     = "55559"
+	LEADER_STATE_REPLICATION_PORT = "55560"
+
 
 	QUORUM                = 6
 	RETRY_CONN_SLEEP_TIME = 3 * time.Second
