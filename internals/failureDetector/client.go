@@ -66,11 +66,11 @@ func multicastLeaderState(selectedNodes []*Node) {
 				LeaderState: copy,
 			})
 			if err != nil || !ack.Received {
-				fmt.Printf("Leader state replication failed sending to %v\n", target_addr)
+				fmt.Printf("Leader state replication failed sending to %v, %v\n", target_addr, err)
 			}
 		}(target_addr_port, localLeaderStateCopy)
 	}
-	wg.Wait()
+	// wg.Wait()
 }
 
 func NodeStatusUpdateAndNewGossip() *pb.GroupMessage {
