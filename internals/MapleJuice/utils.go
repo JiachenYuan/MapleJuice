@@ -170,15 +170,14 @@ field = "%s"
 regex = re.compile(r"%s")
 
 def process_line(line):
-	# 0th index would be the filename this line comes from
 	line = line.strip().split("##")[1]
-    data = dict(zip(schema, line.strip().split(',')))
-    if field in data and regex.search(data[field]):
-        print(f"key:{line}")
+	data = dict(zip(schema, line.strip().split(',')))
+	if field in data and regex.search(data[field]):
+		print(f"key:{line}")
 
 if __name__ == "__main__":
-    for line in sys.stdin:
-        process_line(line)
+	for line in sys.stdin:
+		process_line(line)		
 `, schema, field, regex)
 
 	fileName := "SQL_filter_map.py"
