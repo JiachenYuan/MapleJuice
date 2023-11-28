@@ -160,10 +160,6 @@ func createKeyAssignmentForJuicers(numJuicer int, filePrefix string, useRangePar
 	return keyAssignment
 }
 
-func AssignIntermediateKeysToJuicer() {
-
-}
-
 func generateFilterMapleExeFileWithRegex(regex string, schema string, field string) (string, error) {
 	pythonScript := fmt.Sprintf(`
 import sys
@@ -354,6 +350,7 @@ func extractSchemaFromSchemaFile(filename string) (string, error) {
 	if err := scanner.Err(); err != nil {
         return "", err
     }
+	schema = strings.TrimPrefix(schema, "U+feff")
 	return schema, nil
 }
 
