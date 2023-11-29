@@ -274,7 +274,7 @@ func handleSQL(query string) {
 }
 
 func matchFilterPattern(query string) (string, string, string, error) {
-	pattern := `SELECT ALL FROM (\w+) WHERE (\w+) REGEX (.+)`
+	pattern := `SELECT ALL FROM (\w+) WHERE (\w+) REGEXP (.+)`
 	re := regexp.MustCompile(pattern)
 
 	// Match the pattern in the given sqlQuery

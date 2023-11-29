@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
+	"time"
 
 	"google.golang.org/grpc"
 )
@@ -120,41 +121,46 @@ func runExecutableFileOnSingleInputFile(mapleExePath string, fileLine *pb.FileLi
 	}
 	defer inputFile.Close()
 	scanner := bufio.NewScanner(inputFile)
-	counter := 0
+	lines := make([]string, 0)
 	for scanner.Scan() {
 		if currentLine >= startLine && currentLine <= endLine {
-			line := scanner.Text()
-			cmd := exec.Command("python3", mapleExePath)
-			// Map exe's input will have information about which sdfs file this line is coming from before the ## sign
-			cmd.Stdin = strings.NewReader(file + "##" + line)
-			output, err := cmd.CombinedOutput()
-			if err != nil {
-				fmt.Printf("Error executing script on line %d: %s\n", currentLine, err)
-				continue
+			line := file + "##" + scanner.Text()
+			lines = append(lines, line)
+			currentLine++
+			if currentLine > endLine {
+				break
 			}
-			kvPairs := strings.Split(string(output), "\n")
-			for _, kvPair := range kvPairs {
-				kv := strings.Split(kvPair, ":")
-				if len(kv) != 2 {
-					continue
-				}
-				key := kv[0]
-				value := kv[1]
-				KVCollection[key] = append(KVCollection[key], value)
-			}
-			counter++
-			fmt.Printf("counter: %d\n", counter)
-			// fmt.Printf("Output from line %d: %s\n", currentLine, string(output))
-		}
-		currentLine++
-		if currentLine > endLine {
-			break
 		}
 	}
+
 	if err := scanner.Err(); err != nil {
 		fmt.Println("Error reading from input file:", err)
 		return nil, err
 	}
+	startTime := time.Now()
+	cmd := exec.Command("python3", mapleExePath)
+
+	// Map exe's input will have information about which sdfs file this line is coming from before the ## sign
+	cmd.Stdin = strings.NewReader(strings.Join(lines, "\n"))
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Printf("Error executing script on line %d: %s\n", currentLine, err)
+		return nil, err
+	}
+	endtime := time.Now()
+	fmt.Printf("Maple execution time: %v\n", endtime.Sub(startTime))
+	kvPairs := strings.Split(string(output), "\n")
+	for _, kvPair := range kvPairs {
+		kv := strings.Split(kvPair, ":")
+		if len(kv) != 2 {
+			continue
+		}
+		key := kv[0]
+		value := kv[1]
+		KVCollection[key] = append(KVCollection[key], value)
+	}
+	// fmt.Printf("Output from line %d: %s\n", currentLine, string(output))
+
 	// err = writeKVToFile(KVCollection)
 	// if err != nil {
 	// 	fmt.Println("Error writing to KV Collection to files:", err)
