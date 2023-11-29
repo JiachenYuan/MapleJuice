@@ -120,6 +120,7 @@ func runExecutableFileOnSingleInputFile(mapleExePath string, fileLine *pb.FileLi
 	}
 	defer inputFile.Close()
 	scanner := bufio.NewScanner(inputFile)
+	counter := 0
 	for scanner.Scan() {
 		if currentLine >= startLine && currentLine <= endLine {
 			line := scanner.Text()
@@ -141,6 +142,8 @@ func runExecutableFileOnSingleInputFile(mapleExePath string, fileLine *pb.FileLi
 				value := kv[1]
 				KVCollection[key] = append(KVCollection[key], value)
 			}
+			counter++
+			fmt.Printf("counter: %d\n", counter)
 			// fmt.Printf("Output from line %d: %s\n", currentLine, string(output))
 		}
 		currentLine++
