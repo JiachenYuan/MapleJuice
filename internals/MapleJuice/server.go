@@ -150,6 +150,7 @@ func runExecutableFileOnSingleInputFile(mapleExePath string, fileLine *pb.FileLi
 		kv := strings.SplitN(kvPair, ":", 2)
 		if len(kv) < 2 {
 			err = fmt.Errorf("Error parsing output line %s", kvPair)
+			fmt.Println(err)
 			return nil, err
 		}
 		key := kv[0]
