@@ -176,7 +176,7 @@ def process_line(line):
 	for row in reader:
 		data = dict(zip(schema, row))
 		if field in data and regex.search(data[field]):
-			print(f"key:{','.join(row)}")
+			print(f"key:{row}")
 
 if __name__ == "__main__":
 	for line in sys.stdin:
