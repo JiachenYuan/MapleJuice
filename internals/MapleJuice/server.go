@@ -125,11 +125,11 @@ func runExecutableFileOnSingleInputFile(mapleExePath string, fileLine *pb.FileLi
 		if currentLine >= startLine && currentLine <= endLine {
 			line := file + "##" + scanner.Text()
 			lines = append(lines, line)
-			if currentLine > endLine {
-				break
-			}
 		}
 		currentLine++
+		if currentLine > endLine {
+			break
+		}
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -146,10 +146,12 @@ func runExecutableFileOnSingleInputFile(mapleExePath string, fileLine *pb.FileLi
 		return nil, err
 	}
 	kvPairs := strings.Split(string(output), "\n")
+	//remove the last empty line
+	kvPairs = kvPairs[:len(kvPairs)-1]
 	for _, kvPair := range kvPairs {
 		kv := strings.SplitN(kvPair, ":", 2)
 		if len(kv) < 2 {
-			err = fmt.Errorf("Error parsing output line %s", kvPair)
+			err = fmt.Errorf("error parsing output line %s", kvPair)
 			fmt.Println(err)
 			return nil, err
 		}

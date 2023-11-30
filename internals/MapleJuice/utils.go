@@ -162,18 +162,21 @@ func createKeyAssignmentForJuicers(numJuicer int, filePrefix string, useRangePar
 
 func generateFilterMapleExeFileWithRegex(regex string, schema string, field string) (string, error) {
 	pythonScript := fmt.Sprintf(`
-import sys
+import csv
 import re
+import sys
 
 schema = "%s".split(',')
 field = "%s"
 regex = re.compile(r"%s")
 
 def process_line(line):
+	reader = csv.reader([line])
 	line = line.strip().split("##")[1]
-	data = dict(zip(schema, line.strip().split(',')))
-	if field in data and regex.search(data[field]):
-		print(f"key:{line}")
+	for row in reader:
+		data = dict(zip(schema, row))
+		if field in data and regex.search(data[field]):
+			print(f"key:{','.join(row)}")
 
 if __name__ == "__main__":
 	for line in sys.stdin:
