@@ -199,8 +199,7 @@ func (s *MapleJuiceServer) JuiceExec(ctx context.Context, in *pb.JuiceExecReques
 			return nil, err
 		}
 
-		key := ""
-		values := "" // todo: value set might be too big, move it to disk if possible
+		key := "" // todo: value set might be too big, move it to disk if possible
 		// Read file line by line
 		var builder strings.Builder
 		scanner := bufio.NewScanner(file)
@@ -216,8 +215,7 @@ func (s *MapleJuiceServer) JuiceExec(ctx context.Context, in *pb.JuiceExecReques
 		}
 		juiceReadInputExecutionTime := time.Since(juiceReadInputStartTime).Milliseconds()
 		fmt.Printf("Juice read input file: %v, execution time: %vms\n", inputFilename, juiceReadInputExecutionTime)
-
-		valuesStr := values[:len(values)-2] // remove the last deliemeter (::)
+		valuesStr := builder.String()[:builder.Len()-2] // remove the last deliemeter (::)
 		programInputStr := fmt.Sprintf("%s:%s", key, valuesStr)
 		// Give value set to the juice task executable
 
