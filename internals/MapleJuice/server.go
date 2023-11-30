@@ -147,10 +147,7 @@ func runExecutableFileOnSingleInputFile(mapleExePath string, fileLine *pb.FileLi
 	}
 	kvPairs := strings.Split(string(output), "\n")
 	for _, kvPair := range kvPairs {
-		kv := strings.Split(kvPair, ":")
-		if len(kv) != 2 {
-			continue
-		}
+		kv := strings.SplitN(kvPair, ":", 2)
 		key := kv[0]
 		value := kv[1]
 		KVCollection[key] = append(KVCollection[key], value)
@@ -193,21 +190,14 @@ func (s *MapleJuiceServer) JuiceExec(ctx context.Context, in *pb.JuiceExecReques
 		for scanner.Scan() {
 			line := scanner.Text()
 			// Split the line into key and value
-			parts := strings.Split(line, ":")
-			if len(parts) == 2 {
-				key = parts[0]
-				value := parts[1]
-
-				values += value + "::"
-			} else {
-				fmt.Println("Invalid line format:", line)
-				return nil, errors.New("Invalid line format:" + line)
-			}
+			parts := strings.SplitN(line, ":", 2)
+			key = parts[0]
+			value := parts[1]
+			values += value + "::"
 		}
 
 		valuesStr := values[:len(values)-2] // remove the last deliemeter (::)
 		programInputStr := fmt.Sprintf("%s:%s", key, valuesStr)
-		fmt.Printf("Juice program input: %s\n", programInputStr)
 		// Give value set to the juice task executable
 		cmd := exec.Command("python3", juiceProgram)
 		cmd.Stdin = strings.NewReader(programInputStr)
