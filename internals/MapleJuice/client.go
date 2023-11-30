@@ -314,14 +314,14 @@ func handleSQLFilter(dataset string, field string, regex string) {
 	}
 	filterStartTime := time.Now()
 	sdfs.HandlePutFile(mapleExeFileName, mapleExeFileName)
-	handleMaple(mapleExeFileName, 5, "filter", dataset)
+	handleMaple(mapleExeFileName, 9, "filter", dataset)
 
 	juiceExeFileName, err := generateJuiceFilterExeFile()
 	if err != nil {
 		fmt.Printf("Error generating juice filter exe file: %v\n", err)
 	}
 	sdfs.HandlePutFile(juiceExeFileName, juiceExeFileName)
-	handleJuice(juiceExeFileName, 5, "filter", dataset+"_filtered", true, true)
+	handleJuice(juiceExeFileName, 9, "filter", dataset+"_filtered", false, true)
 	sdfs.HandleGetFile(dataset+"_filtered", dataset+"_filtered")
 	filterExecutionTime := time.Since(filterStartTime).Milliseconds()
 	sdfs.HandleDeleteFile(dataset + "_filtered")

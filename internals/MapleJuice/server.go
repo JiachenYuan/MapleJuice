@@ -207,6 +207,7 @@ func (s *MapleJuiceServer) JuiceExec(ctx context.Context, in *pb.JuiceExecReques
 
 		valuesStr := values[:len(values)-2] // remove the last deliemeter (::)
 		programInputStr := fmt.Sprintf("%s:%s", key, valuesStr)
+		fmt.Printf("Juice program input: %s\n", programInputStr)
 		// Give value set to the juice task executable
 		cmd := exec.Command("python3", juiceProgram)
 		cmd.Stdin = strings.NewReader(programInputStr)
@@ -272,6 +273,7 @@ func appendAllIntermediateResultToSDFS(KVCollection map[string][]string, prefix 
 	// Iterate over the directory entries and delete each file.
 	for key, values := range KVCollection {
 		var content string
+		fmt.Printf("value length: %d\n", len(values))
 		for _, v := range values {
 			content += fmt.Sprintf("%s:%s\n", key, v)
 		}
