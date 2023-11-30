@@ -20,8 +20,8 @@ func RandomlySelectNodes(num int, excludeKeys ...string) []*Node {
 	}
 
 	keys := make([]string, 0, len(NodeInfoList))
-	for k := range NodeInfoList {
-		if excludeMap[k] {
+	for k, nodeInfo := range NodeInfoList {
+		if excludeMap[nodeInfo.NodeAddr] {
 			continue
 		}
 		keys = append(keys, k)
