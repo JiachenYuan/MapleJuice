@@ -142,7 +142,8 @@ func runExecutableFileOnSingleInputFile(mapleExePath string, fileLine *pb.FileLi
 	cmd.Stdin = strings.NewReader(strings.Join(lines, "\n"))
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		fmt.Printf("Error executing maple script on line %d: %s\n", currentLine, err)
+		fmt.Printf("Error executing maple script on %s\n", err)
+		fmt.Printf("Error output: %s\n", output)
 		return nil, err
 	}
 	kvPairs := strings.Split(string(output), "\n")
