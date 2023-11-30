@@ -13,7 +13,6 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
-	"time"
 
 	"google.golang.org/grpc"
 )
@@ -126,18 +125,17 @@ func runExecutableFileOnSingleInputFile(mapleExePath string, fileLine *pb.FileLi
 		if currentLine >= startLine && currentLine <= endLine {
 			line := file + "##" + scanner.Text()
 			lines = append(lines, line)
-			currentLine++
 			if currentLine > endLine {
 				break
 			}
 		}
+		currentLine++
 	}
 
 	if err := scanner.Err(); err != nil {
 		fmt.Println("Error reading from input file:", err)
 		return nil, err
 	}
-	startTime := time.Now()
 	cmd := exec.Command("python3", mapleExePath)
 
 	// Map exe's input will have information about which sdfs file this line is coming from before the ## sign
@@ -147,8 +145,6 @@ func runExecutableFileOnSingleInputFile(mapleExePath string, fileLine *pb.FileLi
 		fmt.Printf("Error executing script on line %d: %s\n", currentLine, err)
 		return nil, err
 	}
-	endtime := time.Now()
-	fmt.Printf("Maple execution time: %v\n", endtime.Sub(startTime))
 	kvPairs := strings.Split(string(output), "\n")
 	for _, kvPair := range kvPairs {
 		kv := strings.Split(kvPair, ":")
@@ -159,39 +155,9 @@ func runExecutableFileOnSingleInputFile(mapleExePath string, fileLine *pb.FileLi
 		value := kv[1]
 		KVCollection[key] = append(KVCollection[key], value)
 	}
-	// fmt.Printf("Output from line %d: %s\n", currentLine, string(output))
-
-	// err = writeKVToFile(KVCollection)
-	// if err != nil {
-	// 	fmt.Println("Error writing to KV Collection to files:", err)
-	// 	return err
-	// }
 
 	return KVCollection, nil
 }
-
-// func writeKVToFile(KVCollection map[string][]string) error {
-// 	for key, values := range KVCollection {
-// 		fileName := key
-// 		fPath := filepath.Join(MAPLE_INTERMEDIATE_FILES_FOLDER, fileName)
-// 		// Open the file if it exists, or create it if it doesn't
-// 		file, err := os.OpenFile(fPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-// 		if err != nil {
-// 			fmt.Printf("Error opening or creating file for key %s: %s\n", key, err)
-// 			return err
-// 		}
-// 		defer file.Close()
-
-// 		for _, value := range values {
-// 			_, err := file.WriteString(fmt.Sprintf("{%s:%s}\n", key, value))
-// 			if err != nil {
-// 				fmt.Printf("Error writing to file for key %s: %s\n", key, err)
-// 				return err
-// 			}
-// 		}
-// 	}
-// 	return nil
-// }
 
 func (s *MapleJuiceServer) JuiceExec(ctx context.Context, in *pb.JuiceExecRequest) (*pb.JuiceExecResponse, error) {
 	// Extract request fields
