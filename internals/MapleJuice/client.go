@@ -314,14 +314,19 @@ func handleSQLFilter(dataset string, field string, regex string) {
 	}
 	filterStartTime := time.Now()
 	sdfs.HandlePutFile(mapleExeFileName, mapleExeFileName)
-	handleMaple(mapleExeFileName, 6, "filter", dataset)
-
+	mapleStartTime := time.Now()
+	handleMaple(mapleExeFileName, 9, "filter", dataset)
+	mapleExecutionTime := time.Since(mapleStartTime).Milliseconds()
+	fmt.Printf("Maple execution time for filter: %vms\n", mapleExecutionTime)
 	juiceExeFileName, err := generateJuiceFilterExeFile()
 	if err != nil {
 		fmt.Printf("Error generating juice filter exe file: %v\n", err)
 	}
 	sdfs.HandlePutFile(juiceExeFileName, juiceExeFileName)
-	handleJuice(juiceExeFileName, 6, "filter", dataset+"_filtered", true, true)
+	juiceStartTime := time.Now()
+	handleJuice(juiceExeFileName, 9, "filter", dataset+"_filtered", true, true)
+	juiceExecutionTime := time.Since(juiceStartTime).Milliseconds()
+	fmt.Printf("Juice execution time for filter: %vms\n", juiceExecutionTime)
 	sdfs.HandleGetFile(dataset+"_filtered", dataset+"_filtered")
 	filterExecutionTime := time.Since(filterStartTime).Milliseconds()
 	fmt.Printf("Filter execution time: %vms\n", filterExecutionTime)
@@ -351,14 +356,20 @@ func handleSQLJoin(table1 string, column1 string, table2 string, column2 string,
 	}
 	joinStartTime := time.Now()
 	sdfs.HandlePutFile(MapleExeFileName, MapleExeFileName)
+	mapleStartTime := time.Now()
 	handleMaple(MapleExeFileName, 5, "join", directoryName)
+	mapleExecutionTime := time.Since(mapleStartTime).Milliseconds()
+	fmt.Printf("Maple execution time for join: %vms\n", mapleExecutionTime)
 
 	JuiceExeFileName, err := generateJoinJuiceExeFile()
 	if err != nil {
 		fmt.Printf("Error generating juice filter exe file: %v\n", err)
 	}
 	sdfs.HandlePutFile(JuiceExeFileName, JuiceExeFileName)
+	juiceStartTime := time.Now()
 	handleJuice(JuiceExeFileName, 5, "join", directoryName+"_joined", true, true)
+	juiceExecutionTime := time.Since(juiceStartTime).Milliseconds()
+	fmt.Printf("Juice execution time for join: %vms\n", juiceExecutionTime)
 	sdfs.HandleGetFile(directoryName+"_joined", directoryName+"_joined")
 	// If post processing of the joined file is needed, add at below
 	joinExecutionTime := time.Since(joinStartTime).Milliseconds()

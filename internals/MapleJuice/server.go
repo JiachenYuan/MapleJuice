@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
+	"time"
 
 	"google.golang.org/grpc"
 )
@@ -121,6 +122,7 @@ func runExecutableFileOnSingleInputFile(mapleExePath string, fileLine *pb.FileLi
 	defer inputFile.Close()
 	scanner := bufio.NewScanner(inputFile)
 	lines := make([]string, 0)
+	mapleReadInputStartTime := time.Now()
 	for scanner.Scan() {
 		if currentLine >= startLine && currentLine <= endLine {
 			line := file + "##" + scanner.Text()
@@ -131,11 +133,15 @@ func runExecutableFileOnSingleInputFile(mapleExePath string, fileLine *pb.FileLi
 			break
 		}
 	}
+	mapleReadInputExecutionTime := time.Since(mapleReadInputStartTime)
+	fmt.Printf("Maple read input file: %v, execution time: %v\n", file, mapleReadInputExecutionTime)
 
 	if err := scanner.Err(); err != nil {
 		fmt.Println("Error reading from input file:", err)
 		return nil, err
 	}
+
+	mapleProgramStartTime := time.Now()
 	cmd := exec.Command("python3", mapleExePath)
 
 	// Map exe's input will have information about which sdfs file this line is coming from before the ## sign
@@ -146,6 +152,8 @@ func runExecutableFileOnSingleInputFile(mapleExePath string, fileLine *pb.FileLi
 		fmt.Printf("Error output: %s\n", output)
 		return nil, err
 	}
+	mapleProgramExecutionTime := time.Since(mapleProgramStartTime)
+	fmt.Printf("Maple program on input file: %v execution time: %v\n", file, mapleProgramExecutionTime)
 	kvPairs := strings.Split(string(output), "\n")
 	//remove the last empty line
 	kvPairs = kvPairs[:len(kvPairs)-1]
@@ -195,6 +203,7 @@ func (s *MapleJuiceServer) JuiceExec(ctx context.Context, in *pb.JuiceExecReques
 		values := "" // todo: value set might be too big, move it to disk if possible
 		// Read file line by line
 		scanner := bufio.NewScanner(file)
+		juiceReadInputStartTime := time.Now()
 		for scanner.Scan() {
 			line := scanner.Text()
 			// Split the line into key and value
@@ -203,10 +212,14 @@ func (s *MapleJuiceServer) JuiceExec(ctx context.Context, in *pb.JuiceExecReques
 			value := parts[1]
 			values += value + "::"
 		}
+		juiceReadInputExecutionTime := time.Since(juiceReadInputStartTime)
+		fmt.Printf("Juice read input file: %v, execution time: %v\n", inputFilename, juiceReadInputExecutionTime)
 
 		valuesStr := values[:len(values)-2] // remove the last deliemeter (::)
 		programInputStr := fmt.Sprintf("%s:%s", key, valuesStr)
 		// Give value set to the juice task executable
+
+		juiceProgramStartTime := time.Now()
 		cmd := exec.Command("python3", juiceProgram)
 		cmd.Stdin = strings.NewReader(programInputStr)
 		output, err := cmd.CombinedOutput()
@@ -214,7 +227,8 @@ func (s *MapleJuiceServer) JuiceExec(ctx context.Context, in *pb.JuiceExecReques
 			fmt.Printf("Error executing script on line %s: %s\n", programInputStr, err)
 			return nil, err
 		}
-
+		juiceProgramExecutionTime := time.Since(juiceProgramStartTime)
+		fmt.Printf("Juice program execution on file: %v, execution time: %v\n", inputFilename, juiceProgramExecutionTime)
 		// Write the parsed key: [values set] into the temp file
 		f.Write(output)
 	}
