@@ -148,6 +148,10 @@ func runExecutableFileOnSingleInputFile(mapleExePath string, fileLine *pb.FileLi
 	kvPairs := strings.Split(string(output), "\n")
 	for _, kvPair := range kvPairs {
 		kv := strings.SplitN(kvPair, ":", 2)
+		if len(kv) < 2 {
+			err = fmt.Errorf("Error parsing output line %s", kvPair)
+			return nil, err
+		}
 		key := kv[0]
 		value := kv[1]
 		KVCollection[key] = append(KVCollection[key], value)
