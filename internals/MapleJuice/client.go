@@ -312,6 +312,7 @@ func handleSQLFilter(dataset string, field string, regex string) {
 	if err != nil {
 		fmt.Printf("Error generating maple filter exe file: %v\n", err)
 	}
+	filterStartTime := time.Now()
 	sdfs.HandlePutFile(mapleExeFileName, mapleExeFileName)
 	handleMaple(mapleExeFileName, 5, "filter", dataset)
 
@@ -322,6 +323,8 @@ func handleSQLFilter(dataset string, field string, regex string) {
 	sdfs.HandlePutFile(juiceExeFileName, juiceExeFileName)
 	handleJuice(juiceExeFileName, 5, "filter", dataset+"_filtered", true, true)
 	sdfs.HandleGetFile(dataset+"_filtered", dataset+"_filtered")
+	filterExecutionTime := time.Since(filterStartTime).Milliseconds()
+	fmt.Printf("Filter execution time: %vms\n", filterExecutionTime)
 }
 
 func handleSQLJoin(table1 string, column1 string, table2 string, column2 string, directoryName string) {
@@ -346,6 +349,7 @@ func handleSQLJoin(table1 string, column1 string, table2 string, column2 string,
 	if err != nil {
 		fmt.Printf("Error generating maple join exe file: %v\n", err)
 	}
+	joinStartTime := time.Now()
 	sdfs.HandlePutFile(MapleExeFileName, MapleExeFileName)
 	handleMaple(MapleExeFileName, 5, "join", directoryName)
 
@@ -357,4 +361,6 @@ func handleSQLJoin(table1 string, column1 string, table2 string, column2 string,
 	handleJuice(JuiceExeFileName, 5, "join", directoryName+"_joined", true, true)
 	sdfs.HandleGetFile(directoryName+"_joined", directoryName+"_joined")
 	// If post processing of the joined file is needed, add at below
+	joinExecutionTime := time.Since(joinStartTime).Milliseconds()
+	fmt.Printf("Join execution time: %vms\n", joinExecutionTime)
 }
