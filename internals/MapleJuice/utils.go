@@ -171,8 +171,8 @@ field = "%s"
 regex = re.compile(r"%s")
 
 def process_line(line):
-	reader = csv.reader([line])
 	line = line.strip().split("##")[1]
+	reader = csv.reader([line])
 	for row in reader:
 		data = dict(zip(schema, row))
 		if field in data and regex.search(data[field]):
