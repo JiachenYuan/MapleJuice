@@ -189,6 +189,7 @@ func dispatchJuiceTasksToVMs(keyAssignment map[string]map[string]global.Empty, j
 }
 
 func dispatchJuiceTaskToSingleVM(vm string, inputFiles map[string]global.Empty, juiceProgram string, dstFileName string, occupiedVM map[string]global.Empty) error {
+	fmt.Printf(">>> Dispatched juice task to %v, key = %v\n", vm, inputFiles)
 	ctx, dialCancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer dialCancel()
 	conn, err := grpc.DialContext(ctx, vm+":"+global.MAPLE_JUICE_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
