@@ -206,6 +206,7 @@ func dispatchJuiceTaskToSingleVM(vm string, inputFiles map[string]global.Empty, 
 				// Choose this new vm and schedule the inputFiles to this vm
 				occupiedVM[vmAddr] = global.Empty{}
 				// With heuristic that this recursion would end eventually, we take a leap of faith
+				fmt.Printf(">>> Juice rescheduling to %v\n", vmAddr)
 				return dispatchJuiceTaskToSingleVM(vmAddr, inputFiles, juiceProgram, dstFileName, occupiedVM)
 			}
 		}
@@ -235,6 +236,7 @@ func dispatchJuiceTaskToSingleVM(vm string, inputFiles map[string]global.Empty, 
 				// Choose this new vm and schedule the inputFiles to this vm
 				occupiedVM[vmAddr] = global.Empty{}
 				// With heuristic that this recursion would end eventually, we take a leap of faith
+				fmt.Printf(">>> Juice rescheduling to %v\n", vmAddr)
 				return dispatchJuiceTaskToSingleVM(vmAddr, inputFiles, juiceProgram, dstFileName, occupiedVM)
 			}
 		}
