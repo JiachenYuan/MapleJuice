@@ -341,6 +341,7 @@ func handleSQLJoin(table1 string, column1 string, table2 string, column2 string,
 		fmt.Printf("Error extracting schema from file: %v\n", err)
 		return
 	}
+	fmt.Println(">>> schema of table1 is: " + schema1)
 	// Get schema of the second table
 	schema2FileName := table2 + "_schema"
 	sdfs.HandleGetFile(schema2FileName, schema2FileName)
@@ -349,6 +350,7 @@ func handleSQLJoin(table1 string, column1 string, table2 string, column2 string,
 		fmt.Printf("Error extracting schema from file: %v\n", err)
 		return
 	}
+	fmt.Println(">>> schema of table2 is: " + schema1)
 	// Generate maple exe that will be used by the SQL JOIN operation
 	MapleExeFileName, err := generateJoinMapleExeFile(table1, column1, schema1, table2, column2, schema2)
 	if err != nil {
