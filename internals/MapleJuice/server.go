@@ -212,6 +212,7 @@ func (s *MapleJuiceServer) JuiceExec(ctx context.Context, in *pb.JuiceExecReques
 			value := parts[1]
 			builder.WriteString(value)
 			builder.WriteString("::")
+			fmt.Println(">>> Still building input for key -- " + key)
 		}
 		juiceReadInputExecutionTime := time.Since(juiceReadInputStartTime).Milliseconds()
 		fmt.Printf("Juice read input file: %v, execution time: %vms\n", inputFilename, juiceReadInputExecutionTime)
