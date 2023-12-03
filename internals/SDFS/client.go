@@ -381,9 +381,12 @@ func HandleAppendFile(sdfsFileName string, contentOrFileName string, isFile bool
 		if err != nil {
 			fmt.Printf("Failed to transfer file: %v\n", err)
 		}
-		var lineCount int
+		var lineCount int = 0
 		if (!isFile) {
 			lineCount, err = global.CountStringLines(contentOrFileName)
+			if err != nil {
+				fmt.Printf("Failed to count lines: %v\n", err)
+			}
 		} else {
 			// cmd := exec.Command("wc", "-l", contentOrFileName)
 			cmd := exec.Command("bash", "-c", fmt.Sprintf("wc -l %v", contentOrFileName))
@@ -398,13 +401,15 @@ func HandleAppendFile(sdfsFileName string, contentOrFileName string, isFile bool
 				fmt.Println("Cannot line count the file " + contentOrFileName + ": " + err.Error())
 			}
 		}
-		sendPutACKToLeader(lineCount, sdfsFileName, targetVMAddrs, false, true)
-		if err != nil {
-			fmt.Printf("Failed to count lines: %v\n", err)
+		if lineCount == 0 {
+			fmt.Printf("Failed to count lines: %v\n", contentOrFileName)
 		} else {
+			sendPutACKToLeader(lineCount, sdfsFileName, targetVMAddrs, false, true)
+			
 			putOperationTime := time.Since(startTime).Milliseconds()
 			fmt.Printf("Successfully append to SDFS file %s in %v ms\n", sdfsFileName, putOperationTime)
 		}
+		
 		conn.Close()
 		break
 	}
