@@ -236,33 +236,13 @@ func (s *MapleJuiceServer) JuiceExec(ctx context.Context, in *pb.JuiceExecReques
 			cmd.Stdin = strings.NewReader(programInputStr)
 			// cmd.Stdin = strings.NewReader("eiwqojfioqwejfiowqejfoqwjeifojqwefjqweiofjoweiqjfoiqwejifojweqiofjioqwhfgdisbvbasuivbasduifbuia")
 			fmt.Printf(">>> Juice execute python...\n")
-
-			o_channel := make(chan []byte)
-			// e_channel := make(chan error)
-			go func(c chan []byte) {
-				output, err := cmd.CombinedOutput()
-				if err != nil {
-					fmt.Printf("Error executing script on line %s: %s\n", programInputStr, err)
-					errListLock.Lock()
-					errList = append(errList, err)
-					errListLock.Unlock()
-					// e <- err
-					// return
-				}
-				c <- output
-
-			}(o_channel)
-
-			output := <- o_channel
-			// err = <- e_channel
-
-			// output, err := cmd.CombinedOutput()
-			// if err != nil {
-			// 	fmt.Printf("Error executing script on line %s: %s\n", programInputStr, err)
-			// 	errListLock.Lock()
-			// 	errList = append(errList, err)
-			// 	errListLock.Unlock()
-			// }
+			output, err := cmd.CombinedOutput()
+			if err != nil {
+				fmt.Printf("Error executing script on line %s: %s\n", programInputStr, err)
+				errListLock.Lock()
+				errList = append(errList, err)
+				errListLock.Unlock()
+			}
 			juiceProgramExecutionTime := time.Since(juiceProgramStartTime).Milliseconds()
 			fmt.Printf("Juice program execution on file: %v, execution time: %vms\n", inputFilename, juiceProgramExecutionTime)
 			// Write the parsed key: [values set] into the temp file
