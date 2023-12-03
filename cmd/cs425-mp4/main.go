@@ -14,8 +14,8 @@ func main() {
 	global.MP_NUMBER = 4
 	var wg sync.WaitGroup
 	go startFailureDetector(&wg)
-	startSDFS(&wg)
-	startLeaderElection(&wg)
+	go startSDFS(&wg)
+	go startLeaderElection(&wg)
 	go startMapleJuice(&wg)
 	go monitorLeader()
 
