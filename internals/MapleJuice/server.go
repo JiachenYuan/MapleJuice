@@ -185,11 +185,11 @@ func (s *MapleJuiceServer) JuiceExec(ctx context.Context, in *pb.JuiceExecReques
 
 	// Create a temp file holding local aggregate results for all assigned keys
 
-	_, err := os.Create("juice_local_result")
+	f, err := os.Create("juice_local_result")
 	if err != nil {
 		return nil, err
 	}
-	// defer os.Remove(f.Name())
+	defer os.Remove(f.Name())
 
 	// make the parsing job concurrent, the file IO can be sequential and that's fine
 	for _, inputFilename := range in.InputIntermFiles {
