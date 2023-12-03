@@ -235,7 +235,9 @@ func (s *MapleJuiceServer) JuiceExec(ctx context.Context, in *pb.JuiceExecReques
 			cmd := exec.Command("python3", juiceProgram)
 			cmd.Stdin = strings.NewReader(programInputStr)
 			// cmd.Stdin = strings.NewReader("eiwqojfioqwejfiowqejfoqwjeifojqwefjqweiofjoweiqjfoiqwejifojweqiofjioqwhfgdisbvbasuivbasduifbuia")
+			fmt.Println(programInputStr)
 			fmt.Printf(">>> Juice execute python...\n")
+			
 			output, err := cmd.CombinedOutput()
 			if err != nil {
 				fmt.Printf("Error executing script on line %s: %s\n", programInputStr, err)
