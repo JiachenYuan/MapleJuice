@@ -232,10 +232,19 @@ func (s *MapleJuiceServer) JuiceExec(ctx context.Context, in *pb.JuiceExecReques
 			// Give value set to the juice task executable
 			
 			juiceProgramStartTime := time.Now()
+
+			err = os.WriteFile("join_input.temp", []byte(programInputStr), 0644)
+			if err != nil {
+				errListLock.Lock()
+				errList = append(errList, err)
+				errListLock.Unlock()
+				return
+			}
 			cmd := exec.Command("python3", juiceProgram)
-			cmd.Stdin = strings.NewReader(programInputStr)
+			// cmd.Stdin = strings.NewReader(programInputStr)
 			// cmd.Stdin = strings.NewReader("eiwqojfioqwejfiowqejfoqwjeifojqwefjqweiofjoweiqjfoiqwejifojweqiofjioqwhfgdisbvbasuivbasduifbuia")
 			fmt.Println(programInputStr)
+			
 			fmt.Printf(">>> Juice execute python...\n")
 			
 			output, err := cmd.CombinedOutput()
