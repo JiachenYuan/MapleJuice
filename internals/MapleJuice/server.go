@@ -198,7 +198,6 @@ func (s *MapleJuiceServer) JuiceExec(ctx context.Context, in *pb.JuiceExecReques
 	errList := make([]error, 0)
 	var errListLock sync.Mutex
 
-	// todo: make the parsing job concurrent, the file IO can be sequential and that's fine
 	for _, inputFilename := range in.InputIntermFiles {
 		wg.Add(1)
 		go func(inputFilename string) {
@@ -212,7 +211,7 @@ func (s *MapleJuiceServer) JuiceExec(ctx context.Context, in *pb.JuiceExecReques
 				errListLock.Unlock()
 			}
 			
-			key := "" // todo: value set might be too big, move it to disk if possible
+			key := "" 
 			// Read file line by line
 			var builder strings.Builder
 			scanner := bufio.NewScanner(file)
@@ -234,16 +233,36 @@ func (s *MapleJuiceServer) JuiceExec(ctx context.Context, in *pb.JuiceExecReques
 			
 			juiceProgramStartTime := time.Now()
 			cmd := exec.Command("python3", juiceProgram)
-			// cmd.Stdin = strings.NewReader(programInputStr)
-			cmd.Stdin = strings.NewReader("eiwqojfioqwejfiowqejfoqwjeifojqwefjqweiofjoweiqjfoiqwejifojweqiofjioqwhfgdisbvbasuivbasduifbuia")
+			cmd.Stdin = strings.NewReader(programInputStr)
+			// cmd.Stdin = strings.NewReader("eiwqojfioqwejfiowqejfoqwjeifojqwefjqweiofjoweiqjfoiqwejifojweqiofjioqwhfgdisbvbasuivbasduifbuia")
 			fmt.Printf(">>> Juice execute python...\n")
-			output, err := cmd.CombinedOutput()
-			if err != nil {
-				fmt.Printf("Error executing script on line %s: %s\n", programInputStr, err)
-				errListLock.Lock()
-				errList = append(errList, err)
-				errListLock.Unlock()
-			}
+
+			o_channel := make(chan []byte)
+			// e_channel := make(chan error)
+			go func(c chan []byte) {
+				output, err := cmd.CombinedOutput()
+				if err != nil {
+					fmt.Printf("Error executing script on line %s: %s\n", programInputStr, err)
+					errListLock.Lock()
+					errList = append(errList, err)
+					errListLock.Unlock()
+					// e <- err
+					// return
+				}
+				c <- output
+
+			}(o_channel)
+
+			output := <- o_channel
+			// err = <- e_channel
+
+			// output, err := cmd.CombinedOutput()
+			// if err != nil {
+			// 	fmt.Printf("Error executing script on line %s: %s\n", programInputStr, err)
+			// 	errListLock.Lock()
+			// 	errList = append(errList, err)
+			// 	errListLock.Unlock()
+			// }
 			juiceProgramExecutionTime := time.Since(juiceProgramStartTime).Milliseconds()
 			fmt.Printf("Juice program execution on file: %v, execution time: %vms\n", inputFilename, juiceProgramExecutionTime)
 			// Write the parsed key: [values set] into the temp file
@@ -256,6 +275,9 @@ func (s *MapleJuiceServer) JuiceExec(ctx context.Context, in *pb.JuiceExecReques
 	}
 
 	wg.Wait()
+	if len(errList) != 0 {
+		return nil, errors.New(">>> error in executing juice on certain keys")
+	}
 
 	// Append (create if necessary) temp file content to destination global file
 	data, err := os.ReadFile(f.Name())
