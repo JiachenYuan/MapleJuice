@@ -14,7 +14,7 @@ func main() {
 	var wg sync.WaitGroup
 	go startFailureDetector(&wg)
 	startSDFS(&wg)
-	// startLeaderElection(&wg)
+	startLeaderElection(&wg)
 	go monitorLeader()
 
 	wg.Wait()
