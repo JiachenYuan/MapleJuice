@@ -234,7 +234,8 @@ func (s *MapleJuiceServer) JuiceExec(ctx context.Context, in *pb.JuiceExecReques
 			
 			juiceProgramStartTime := time.Now()
 			cmd := exec.Command("python3", juiceProgram)
-			cmd.Stdin = strings.NewReader(programInputStr)
+			// cmd.Stdin = strings.NewReader(programInputStr)
+			cmd.Stdin = strings.NewReader("eiwqojfioqwejfiowqejfoqwjeifojqwefjqweiofjoweiqjfoiqwejifojweqiofjioqwhfgdisbvbasuivbasduifbuia")
 			fmt.Printf(">>> Juice execute python...\n")
 			output, err := cmd.CombinedOutput()
 			if err != nil {
