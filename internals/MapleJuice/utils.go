@@ -312,7 +312,7 @@ def process_line(line):
 
 if __name__ == "__main__":
 	f = open('myfile.txt', 'r')
-    for line in f.readline():
+	for line in f.readline():
         process_line(line)
 `
 	// Write the Python script to a file
