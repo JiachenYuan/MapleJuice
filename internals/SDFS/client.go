@@ -395,7 +395,7 @@ func HandleAppendFile(sdfsFileName string, contentOrFileName string, isFile bool
 			}
 			lineCount, err = strconv.Atoi(string(output))
 			if err != nil {
-				fmt.Println("Cannot line count the file " + contentOrFileName)
+				fmt.Println("Cannot line count the file " + contentOrFileName + ": " + err.Error())
 			}
 		}
 		sendPutACKToLeader(lineCount, sdfsFileName, targetVMAddrs, false, true)
