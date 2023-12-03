@@ -222,9 +222,10 @@ func (s *MapleJuiceServer) JuiceExec(ctx context.Context, in *pb.JuiceExecReques
 		juiceProgramStartTime := time.Now()
 		cmd := exec.Command("python3", juiceProgram)
 		cmd.Stdin = strings.NewReader(programInputStr)
-		_, err = cmd.CombinedOutput() // the python script will write its output to the file
+		output, err := cmd.CombinedOutput() // the python script will write its output to the file
 		if err != nil {
 			fmt.Printf("Error executing script on line %s: %s\n", programInputStr, err)
+			fmt.Printf("Python output is %s\n", output)
 			return nil, err
 		}
 		
@@ -264,6 +265,7 @@ func (s *MapleJuiceServer) Juice(ctx context.Context, in *pb.JuiceRequest) (*pb.
 
 	// var vmToInputFiles map[string]map[string]global.Empty
 	vmToInputFiles := createKeyAssignmentForJuicers(numJuicer, filePrefix, useRangePartition)
+	fmt.Printf("The Juice assignment is: %v\n", vmToInputFiles)
 	err := dispatchJuiceTasksToVMs(vmToInputFiles, juiceProgram, dstFileName)
 
 	if err != nil {

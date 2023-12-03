@@ -271,6 +271,7 @@ def process_line(line):
 if __name__ == "__main__":
     for line in sys.stdin:
         process_line(line)
+    dst_file.close()
 `
 
 	// Write the Python script to a file
@@ -317,7 +318,7 @@ def process_line(line):
 if __name__ == "__main__":
     for line in sys.stdin:
         process_line(line)
-
+    dst_file.close()
 `
 	// Write the Python script to a file
 	fileName := "SQL_join_reduce.py"
