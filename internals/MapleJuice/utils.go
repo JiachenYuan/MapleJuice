@@ -259,12 +259,14 @@ func generateJuiceFilterExeFile() (string, error) {
 	pythonScript := `
 import sys
 
+dst_file = open("juice_local_result", "a")
+
 def process_line(line):
     key, value_set = line.strip().split(':', 1)
     agg_result = [x for x in value_set.split("::")]
     for result in agg_result:
-        print(f"{result}")
-
+        # print(f"{result}")
+        dst_file.write(f"{result}\n")
 
 if __name__ == "__main__":
     for line in sys.stdin:
@@ -293,6 +295,8 @@ func generateJoinJuiceExeFile() (string, error) {
 	pythonScript := `
 import sys
 
+dst_file = open("juice_local_result", "a")
+
 def process_line(line):
     # line format: {col_value}:{dataset}->{row}::{dataset}->{row}::...
     key, value_set = line.strip().split(':', 1)
@@ -307,8 +311,8 @@ def process_line(line):
         for i in range(len(value_from_table_a)):
             for j in range(len(value_from_table_b)):
                 rowL, rowR = value_from_table_a[i], value_from_table_b[j]
-                print(f"{datasets_names_list[0]}->{rowL},{datasets_names_list[1]}->{rowR}")
-
+                # print(f"{datasets_names_list[0]}->{rowL},{datasets_names_list[1]}->{rowR}")
+                dst_file.write(f"{datasets_names_list[0]}->{rowL},{datasets_names_list[1]}->{rowR}\n")
 
 if __name__ == "__main__":
     for line in sys.stdin:

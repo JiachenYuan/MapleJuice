@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"time"
 
@@ -300,7 +301,7 @@ func HandlePutFile(localFileName string, sdfsFileName string) {
 }
 
 // Similar to PUT, but for file append
-func HandleAppendFile(sdfsFileName string, content string) {
+func HandleAppendFile(sdfsFileName string, contentOrFileName string, isFile bool) {
 	var conn *grpc.ClientConn
 	var c pb.SDFSClient
 	var err error
@@ -376,11 +377,26 @@ func HandleAppendFile(sdfsFileName string, content string) {
 
 		fmt.Printf("Starting to append to SDFS file: %s \n", sdfsFileName)
 		// err = transferFilesConcurrent(localFileName, sdfsFileName, targetVMAddrs)
-		err = sendAppendContentToVMs(content, sdfsFileName, targetVMAddrs, version)
+		err = sendAppendContentToVMs(contentOrFileName, sdfsFileName, targetVMAddrs, version, isFile)
 		if err != nil {
 			fmt.Printf("Failed to transfer file: %v\n", err)
 		}
-		lineCount, err := global.CountStringLines(content)
+		var lineCount int
+		if (!isFile) {
+			lineCount, err = global.CountStringLines(contentOrFileName)
+		} else {
+			cmd := exec.Command("wc", "-l", contentOrFileName)
+
+			output, err := cmd.CombinedOutput()
+			if err != nil {
+				fmt.Println("Error running wc:", err)
+				fmt.Printf("Failed to append.")
+			}
+			lineCount, err = strconv.Atoi(string(output))
+			if err != nil {
+				fmt.Println("Cannot line count the file" + contentOrFileName)
+			}
+		}
 		sendPutACKToLeader(lineCount, sdfsFileName, targetVMAddrs, false, true)
 		if err != nil {
 			fmt.Printf("Failed to count lines: %v\n", err)
@@ -393,7 +409,7 @@ func HandleAppendFile(sdfsFileName string, content string) {
 	}
 }
 
-func sendAppendContentToVMs(content string, sdfsFileName string, targetVMAddrs []string, version int) error {
+func sendAppendContentToVMs(content string, sdfsFileName string, targetVMAddrs []string, version int, isFile bool) error {
 	var wg sync.WaitGroup
 	var transferErrors []error
 	var mut sync.Mutex
@@ -402,7 +418,7 @@ func sendAppendContentToVMs(content string, sdfsFileName string, targetVMAddrs [
 		wg.Add(1)
 		go func(hostname string) {
 			defer wg.Done()
-			err := callAppendEndpoint(content, sdfsFileName, hostname, version)
+			err := callAppendEndpoint(content, sdfsFileName, hostname, version, isFile)
 			if err != nil {
 				mut.Lock()
 				transferErrors = append(transferErrors, err)
@@ -421,7 +437,7 @@ func sendAppendContentToVMs(content string, sdfsFileName string, targetVMAddrs [
 	return nil
 }
 
-func callAppendEndpoint(content string, sdfsFileName string, targetHostname string, version int) error {
+func callAppendEndpoint(contentOrFilename string, sdfsFileName string, targetHostname string, version int, isFile bool) error {
 	ctx, dialCancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer dialCancel()
 	conn, err := grpc.DialContext(ctx, targetHostname+":"+global.SDFS_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -436,9 +452,29 @@ func callAppendEndpoint(content string, sdfsFileName string, targetHostname stri
 	ctx, callCancel := context.WithTimeout(context.Background(), timeout)
 	defer callCancel()
 
+	if (isFile) {
+		targetHostName := getScpHostNameFromHostName(targetHostname)
+		remotePath := targetHostName + ":" + filepath.Join(SDFS_PATH, sdfsFileName+"_append_"+strconv.Itoa(version))
+		////limited the speed to 30MB/s
+		cmd := exec.Command("scp", contentOrFilename, remotePath)
+		// cmd := exec.Command("scp", localFileName, remotePath)
+		err := cmd.Start()
+		if err != nil {
+			fmt.Printf("Failed to start command: %v\n", err)
+			return err
+		}
+
+		err = cmd.Wait()
+		if err != nil {
+			fmt.Printf("Transfer Command finished with error: %v\n", err)
+			return err
+		}
+		contentOrFilename = sdfsFileName+"_append_"+strconv.Itoa(version)
+	}
+
 	r, err := c.AppendNewContent(ctx, &pb.AppendNewContentRequest{
 		FileName: sdfsFileName,
-		Content:  content,
+		Content:  contentOrFilename,
 		Version:  int32(version),
 	})
 
