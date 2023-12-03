@@ -211,7 +211,7 @@ func UpdateLeaderStateIfNecessary(leaderStates *pb.LeaderState) {
 
 /************************************************* Leader Information ***************************************************************/
 var (
-	LeaderID = 2 // Record which machine is the leader for now. -1 is the default value and mean there is no leader, at least this machine thinks
+	LeaderID = -1 // Record which machine is the leader for now. -1 is the default value and mean there is no leader, at least this machine thinks
 )
 
 func GetLeaderID() int {

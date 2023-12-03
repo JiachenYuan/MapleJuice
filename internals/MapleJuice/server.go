@@ -231,6 +231,7 @@ func (s *MapleJuiceServer) JuiceExec(ctx context.Context, in *pb.JuiceExecReques
 		fmt.Printf("Juice program execution on file: %v, execution time: %vms\n", inputFilename, juiceProgramExecutionTime)
 		// Write the parsed key: [values set] into the temp file
 		f.Write(output)
+		break
 	}
 
 	// Append (create if necessary) temp file content to destination global file
