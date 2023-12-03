@@ -311,7 +311,7 @@ def process_line(line):
 
 
 if __name__ == "__main__":
-    f = open('myfile.txt', 'r')
+    f = open('join_input.temp', 'r')
     for line in f.readline():
         process_line(line)
 `
