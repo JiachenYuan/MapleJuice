@@ -17,7 +17,7 @@ const (
 
 var (
 	GOSSIP_RATE         = 400 * time.Millisecond // 400 ms
-	T_FAIL              = 4 * time.Second        // 4 seconds
+	T_FAIL              = 40000000 * time.Second        // 4 seconds
 	T_SUSPECT           = 2 * time.Second        // 2 seconds
 	T_CLEANUP           = 3 * time.Second        // 3 seconds
 	NUM_NODES_TO_GOSSIP = 2                      //number of nodes to gossip to
