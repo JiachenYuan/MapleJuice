@@ -192,23 +192,24 @@ func (s *MapleJuiceServer) JuiceExec(ctx context.Context, in *pb.JuiceExecReques
 		return nil, err
 	}
 	var tempFileLock sync.Mutex
-	var wg sync.WaitGroup
+	// var wg sync.WaitGroup
 	defer os.Remove(f.Name())
 
 	errList := make([]error, 0)
 	var errListLock sync.Mutex
 
 	for _, inputFilename := range in.InputIntermFiles {
-		wg.Add(1)
-		go func(inputFilename string) {
-			defer wg.Done()
+		
+		
+		
 
 			file, err := os.Open(inputFilename)
 			if err != nil {
 				fmt.Printf("unable to open intermediate file input %s: %v\n", inputFilename, err)
-				errListLock.Lock()
-				errList = append(errList, err)
-				errListLock.Unlock()
+				// errListLock.Lock()
+				// errList = append(errList, err)
+				// errListLock.Unlock()
+				return nil, err
 			}
 			
 			key := "" 
@@ -235,10 +236,10 @@ func (s *MapleJuiceServer) JuiceExec(ctx context.Context, in *pb.JuiceExecReques
 
 			err = os.WriteFile("join_input.temp", []byte(programInputStr), 0644)
 			if err != nil {
-				errListLock.Lock()
-				errList = append(errList, err)
-				errListLock.Unlock()
-				return
+				// errListLock.Lock()
+				// errList = append(errList, err)
+				// errListLock.Unlock()
+				return nil, err
 			}
 			cmd := exec.Command("python3", juiceProgram)
 			// cmd.Stdin = strings.NewReader(programInputStr)
@@ -260,12 +261,12 @@ func (s *MapleJuiceServer) JuiceExec(ctx context.Context, in *pb.JuiceExecReques
 			tempFileLock.Lock()
 			f.Write(output)
 			tempFileLock.Unlock()
-		} (inputFilename)
+		
 
 		
 	}
 
-	wg.Wait()
+	
 	if len(errList) != 0 {
 		return nil, errors.New(">>> error in executing juice on certain keys")
 	}
