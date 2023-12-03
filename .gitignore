@@ -36,3 +36,8 @@ go.work
 
 # Test files
 test*
+
+
+join_*
+
+table_*
