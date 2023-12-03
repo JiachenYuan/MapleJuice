@@ -16,7 +16,7 @@ func main() {
 	go startFailureDetector(&wg)
 	startSDFS(&wg)
 	startLeaderElection(&wg)
-	startMapleJuice(&wg)
+	go startMapleJuice(&wg)
 	go monitorLeader()
 
 	wg.Wait()

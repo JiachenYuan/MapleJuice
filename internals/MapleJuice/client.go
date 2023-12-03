@@ -194,22 +194,22 @@ func dispatchJuiceTaskToSingleVM(vm string, inputFiles map[string]global.Empty, 
 	defer dialCancel()
 	conn, err := grpc.DialContext(ctx, vm+":"+global.MAPLE_JUICE_PORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		fmt.Printf("did not connect: %v\n", err)
-		// Rescheduling current works to a new VM
-		alivePeers := sdfs.GetAlivePeersAddrs()
-		for _, vmAddr := range alivePeers {
-			// We make the assumption leader will not do any Maple/Juice tasks
-			if vmAddr == global.GetLeaderAddress() {
-				continue
-			}
-			if _, ok := occupiedVM[vmAddr]; !ok {
-				// Choose this new vm and schedule the inputFiles to this vm
-				occupiedVM[vmAddr] = global.Empty{}
-				// With heuristic that this recursion would end eventually, we take a leap of faith
-				fmt.Printf(">>> Juice rescheduling to %v\n", vmAddr)
-				return dispatchJuiceTaskToSingleVM(vmAddr, inputFiles, juiceProgram, dstFileName, occupiedVM)
-			}
-		}
+		// fmt.Printf("did not connect: %v\n", err)
+		// // Rescheduling current works to a new VM
+		// alivePeers := sdfs.GetAlivePeersAddrs()
+		// for _, vmAddr := range alivePeers {
+		// 	// We make the assumption leader will not do any Maple/Juice tasks
+		// 	if vmAddr == global.GetLeaderAddress() {
+		// 		continue
+		// 	}
+		// 	if _, ok := occupiedVM[vmAddr]; !ok {
+		// 		// Choose this new vm and schedule the inputFiles to this vm
+		// 		occupiedVM[vmAddr] = global.Empty{}
+		// 		// With heuristic that this recursion would end eventually, we take a leap of faith
+		// 		fmt.Printf(">>> Juice rescheduling to %v\n", vmAddr)
+		// 		return dispatchJuiceTaskToSingleVM(vmAddr, inputFiles, juiceProgram, dstFileName, occupiedVM)
+		// 	}
+		// }
 		return err
 	}
 	c := pb.NewMapleJuiceClient(conn)
@@ -223,23 +223,23 @@ func dispatchJuiceTaskToSingleVM(vm string, inputFiles map[string]global.Empty, 
 		InputIntermFiles: inputFilesList,
 	})
 	if err != nil {
-		fmt.Printf("juice exec failed due to external errors: %v\n", err)
-		// todo: Rescheduling or Retry?? Current choice - Rescheduling
-		// Rescheduling current works to a new VM
-		alivePeers := sdfs.GetAlivePeersAddrs()
-		for _, vmAddr := range alivePeers {
-			// We make the assumption leader will not do any Maple/Juice tasks
-			if vmAddr == global.GetLeaderAddress() {
-				continue
-			}
-			if _, ok := occupiedVM[vmAddr]; !ok {
-				// Choose this new vm and schedule the inputFiles to this vm
-				occupiedVM[vmAddr] = global.Empty{}
-				// With heuristic that this recursion would end eventually, we take a leap of faith
-				fmt.Printf(">>> Juice rescheduling to %v\n", vmAddr)
-				return dispatchJuiceTaskToSingleVM(vmAddr, inputFiles, juiceProgram, dstFileName, occupiedVM)
-			}
-		}
+		// fmt.Printf("juice exec failed due to external errors: %v\n", err)
+		// // todo: Rescheduling or Retry?? Current choice - Rescheduling
+		// // Rescheduling current works to a new VM
+		// alivePeers := sdfs.GetAlivePeersAddrs()
+		// for _, vmAddr := range alivePeers {
+		// 	// We make the assumption leader will not do any Maple/Juice tasks
+		// 	if vmAddr == global.GetLeaderAddress() {
+		// 		continue
+		// 	}
+		// 	if _, ok := occupiedVM[vmAddr]; !ok {
+		// 		// Choose this new vm and schedule the inputFiles to this vm
+		// 		occupiedVM[vmAddr] = global.Empty{}
+		// 		// With heuristic that this recursion would end eventually, we take a leap of faith
+		// 		fmt.Printf(">>> Juice rescheduling to %v\n", vmAddr)
+		// 		return dispatchJuiceTaskToSingleVM(vmAddr, inputFiles, juiceProgram, dstFileName, occupiedVM)
+		// 	}
+		// }
 		return err
 	}
 	if !resp.Success {
