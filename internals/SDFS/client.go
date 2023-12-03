@@ -385,7 +385,8 @@ func HandleAppendFile(sdfsFileName string, contentOrFileName string, isFile bool
 		if (!isFile) {
 			lineCount, err = global.CountStringLines(contentOrFileName)
 		} else {
-			cmd := exec.Command("wc", "-l", contentOrFileName)
+			// cmd := exec.Command("wc", "-l", contentOrFileName)
+			cmd := exec.Command("bash", "-c", fmt.Sprintf("wc -l %v", contentOrFileName))
 
 			output, err := cmd.CombinedOutput()
 			if err != nil {
