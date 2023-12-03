@@ -312,8 +312,12 @@ def process_line(line):
 
 if __name__ == "__main__":
     f = open('join_input.temp', 'r')
-    for line in f.readline():
+    while True:
+        line = f.readline()
+        if not line:
+            break
         process_line(line)
+
 `
 	// Write the Python script to a file
 	fileName := "SQL_join_reduce.py"
