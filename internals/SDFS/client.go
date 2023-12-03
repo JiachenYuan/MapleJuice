@@ -14,6 +14,7 @@ import (
 	"os/user"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -396,7 +397,7 @@ func HandleAppendFile(sdfsFileName string, contentOrFileName string, isFile bool
 				fmt.Println("Error running wc:", err)
 				fmt.Printf("Failed to append.")
 			}
-			lineCount, err = strconv.Atoi(string(output))
+			lineCount, err = strconv.Atoi(strings.Split(string(output), " ")[0])
 			if err != nil {
 				fmt.Println("Cannot line count the file " + contentOrFileName + ": " + err.Error())
 			}
