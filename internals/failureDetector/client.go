@@ -159,7 +159,7 @@ func sendGossipToNodes(selectedNodes []*Node, gossip []byte) {
 		}(addPortNumberToNodeAddr(node.NodeAddr))
 	}
 	wg.Wait()
-	fmt.Printf("Sent group gossip.\n")
+	// fmt.Printf("Sent group gossip.\n")
 }
 
 // Join compute cluster without using an Introducer node. Need all machine's address hardcoded in global.go
