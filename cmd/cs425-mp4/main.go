@@ -13,6 +13,7 @@ import (
 func main() {
 	global.MP_NUMBER = 4
 	var wg sync.WaitGroup
+	wg.Add(1)
 	go startFailureDetector(&wg)
 	go startSDFS(&wg)
 	go startLeaderElection(&wg)
