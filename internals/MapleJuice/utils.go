@@ -306,8 +306,8 @@ def process_line(line):
     datasets_names_list = sorted(datasets_names)
     
     if len(datasets_names) == 2:
-        value_from_table_a = [x.split("->")[1] for x in value_splitted if (x.split("->")[0] == datasets_names_list[0])]
-        value_from_table_b = [x.split("->")[1] for x in value_splitted if (x.split("->")[0] == datasets_names_list[1])]
+        value_from_table_a = [x.split("->")[1] for x in value_splitted if (x.split("->")[0] == datasets_names_list[0]) and len(x.split("->")) > 1]
+        value_from_table_b = [x.split("->")[1] for x in value_splitted if (x.split("->")[0] == datasets_names_list[1]) and len(x.split("->")) > 1]
         # All combination
         for i in range(len(value_from_table_a)):
             for j in range(len(value_from_table_b)):
