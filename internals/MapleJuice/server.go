@@ -182,6 +182,10 @@ func (s *MapleJuiceServer) JuiceExec(ctx context.Context, in *pb.JuiceExecReques
 	for _, file := range in.InputIntermFiles {
 		sdfs.HandleGetFile(file, file)
 	}
+	var wg sync.WaitGroup
+	var juiceExeErrors []error
+	var errMut sync.Mutex
+	var tempFileMutex sync.Mutex
 
 	// Create a temp file holding local aggregate results for all assigned keys
 
@@ -193,46 +197,65 @@ func (s *MapleJuiceServer) JuiceExec(ctx context.Context, in *pb.JuiceExecReques
 
 	// todo: make the parsing job concurrent, the file IO can be sequential and that's fine
 	for _, inputFilename := range in.InputIntermFiles {
-		file, err := os.Open(inputFilename)
-		if err != nil {
-			fmt.Printf("unable to open intermediate file input %s: %v\n", inputFilename, err)
-			return nil, err
-		}
+		wg.Add(1)
+		go func(_inputFilename string) {
+			defer wg.Done()
+			file, err := os.Open(_inputFilename)
+			if err != nil {
+				fmt.Printf("unable to open intermediate file input %s: %v\n", _inputFilename, err)
+				errMut.Lock()
+				juiceExeErrors = append(juiceExeErrors, err)
+				errMut.Unlock()
+				return
+			}
+			defer file.Close()
+			key := "" // todo: value set might be too big, move it to disk if possible
+			// Read file line by line
+			var builder strings.Builder
+			scanner := bufio.NewScanner(file)
+			juiceReadInputStartTime := time.Now()
+			for scanner.Scan() {
+				line := scanner.Text()
+				// Split the line into key and value
+				parts := strings.SplitN(line, ":", 2)
+				key = parts[0]
+				value := parts[1]
+				builder.WriteString(value)
+				builder.WriteString("::")
+			}
+			if err := scanner.Err(); err != nil {
+				fmt.Println("Error reading from input file:", err)
+				errMut.Lock()
+				juiceExeErrors = append(juiceExeErrors, err)
+				errMut.Unlock()
+				return
+			}
+			juiceReadInputExecutionTime := time.Since(juiceReadInputStartTime).Milliseconds()
+			fmt.Printf("Juice read input file: %v, execution time: %vms\n", _inputFilename, juiceReadInputExecutionTime)
+			valuesStr := builder.String()[:builder.Len()-2] // remove the last deliemeter (::)
+			programInputStr := fmt.Sprintf("%s:%s", key, valuesStr)
+			// Give value set to the juice task executable
 
-		key := "" // todo: value set might be too big, move it to disk if possible
-		// Read file line by line
-		var builder strings.Builder
-		scanner := bufio.NewScanner(file)
-		juiceReadInputStartTime := time.Now()
-		for scanner.Scan() {
-			line := scanner.Text()
-			// Split the line into key and value
-			parts := strings.SplitN(line, ":", 2)
-			key = parts[0]
-			value := parts[1]
-			builder.WriteString(value)
-			builder.WriteString("::")
-		}
-		juiceReadInputExecutionTime := time.Since(juiceReadInputStartTime).Milliseconds()
-		fmt.Printf("Juice read input file: %v, execution time: %vms\n", inputFilename, juiceReadInputExecutionTime)
-		valuesStr := builder.String()[:builder.Len()-2] // remove the last deliemeter (::)
-		programInputStr := fmt.Sprintf("%s:%s", key, valuesStr)
-		// Give value set to the juice task executable
-
-		juiceProgramStartTime := time.Now()
-		cmd := exec.Command("python3", juiceProgram)
-		cmd.Stdin = strings.NewReader(programInputStr)
-		output, err := cmd.CombinedOutput()
-		if err != nil {
-			fmt.Printf("Error executing script on line %s: %s\n", programInputStr, err)
-			return nil, err
-		}
-		juiceProgramExecutionTime := time.Since(juiceProgramStartTime).Milliseconds()
-		fmt.Printf("Juice program execution on file: %v, execution time: %vms\n", inputFilename, juiceProgramExecutionTime)
-		// Write the parsed key: [values set] into the temp file
-		f.Write(output)
-		break
+			juiceProgramStartTime := time.Now()
+			cmd := exec.Command("python3", juiceProgram)
+			cmd.Stdin = strings.NewReader(programInputStr)
+			output, err := cmd.CombinedOutput()
+			if err != nil {
+				fmt.Printf("Error executing script on line %s: %s\n", programInputStr, err)
+				errMut.Lock()
+				juiceExeErrors = append(juiceExeErrors, err)
+				errMut.Unlock()
+				return
+			}
+			juiceProgramExecutionTime := time.Since(juiceProgramStartTime).Milliseconds()
+			fmt.Printf("Juice program execution on file: %v, execution time: %vms\n", _inputFilename, juiceProgramExecutionTime)
+			// Write the parsed key: [values set] into the temp file
+			tempFileMutex.Lock()
+			f.Write(output)
+			tempFileMutex.Unlock()
+		}(inputFilename)
 	}
+	wg.Wait()
 
 	// Append (create if necessary) temp file content to destination global file
 	data, err := os.ReadFile(f.Name())
