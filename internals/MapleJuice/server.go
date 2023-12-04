@@ -249,6 +249,43 @@ func (s *MapleJuiceServer) JuiceExec(ctx context.Context, in *pb.JuiceExecReques
 	}, nil
 }
 
+// Only leader should process at this endpoint
+func (s *MapleJuiceServer) Juice(ctx context.Context, in *pb.JuiceRequest) (*pb.JuiceResponse, error) {
+	if !sdfs.IsCurrentNodeLeader() {
+		return nil, errors.New("not a leader, but received Juice command")
+	}
+
+	// Extract request fields
+	juiceProgram := in.JuiceExecName
+	numJuicer := int(in.NumJuicer)
+	filePrefix := in.Prefix
+	dstFileName := in.DestName
+	deleteInputAfter := in.DeleteInput
+	useRangePartition := in.IsRangePartition
+
+	// var vmToInputFiles map[string]map[string]global.Empty
+	vmToInputFiles := createKeyAssignmentForJuicers(numJuicer, filePrefix, useRangePartition)
+	fmt.Printf("The Juice assignment is: %v\n", vmToInputFiles)
+	err := dispatchJuiceTasksToVMs(vmToInputFiles, juiceProgram, dstFileName)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if deleteInputAfter {
+		// Delete all the input files
+		for _, fileSet := range vmToInputFiles {
+			for sdfsFilename := range fileSet {
+				global.MemTable.DeleteFile(sdfsFilename)
+			}
+		}
+	}
+
+	return &pb.JuiceResponse{
+		Success: true,
+	}, nil
+}
+
 func appendAllIntermediateResultToSDFS(KVCollection map[string][]string, prefix string) error {
 	// Iterate over the directory entries and delete each file.
 	for key, values := range KVCollection {
