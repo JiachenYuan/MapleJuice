@@ -336,10 +336,13 @@ func handleSQLFilter(dataset string, field string, regex string) {
 	}
 	sdfs.HandlePutFile(juiceExeFileName, juiceExeFileName)
 	juiceStartTime := time.Now()
-	handleJuice(juiceExeFileName, 4, intermediatePrefix, dataset+intermediatePrefix, true, true)
+
+	//generate a random string between 1 and 10000
+	resultFileName := "res_" + strconv.Itoa(rand.Intn(10000))
+	handleJuice(juiceExeFileName, 4, intermediatePrefix, resultFileName, true, true)
 	juiceExecutionTime := time.Since(juiceStartTime).Milliseconds()
 	fmt.Printf("Juice execution time for filter: %vms\n", juiceExecutionTime)
-	sdfs.HandleGetFile(dataset+intermediatePrefix, dataset+intermediatePrefix)
+	sdfs.HandleGetFile(resultFileName, dataset+"_filtered")
 	filterExecutionTime := time.Since(filterStartTime).Milliseconds()
 	fmt.Printf("Filter execution time: %vms\n", filterExecutionTime)
 }
