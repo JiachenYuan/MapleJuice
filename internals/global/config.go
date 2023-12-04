@@ -12,7 +12,7 @@ const (
 	MAPLE_JUICE_PORT              = "55559"
 	LEADER_STATE_REPLICATION_PORT = "55560"
 
-	QUORUM                = 5
+	QUORUM                = 3
 	RETRY_CONN_SLEEP_TIME = 3 * time.Second
 	RETRY_LOCK_SLEEP_TIME = 1 * time.Second
 )
