@@ -185,7 +185,7 @@ func (s *MapleJuiceServer) JuiceExec(ctx context.Context, in *pb.JuiceExecReques
 
 	// Create a temp file holding local aggregate results for all assigned keys
 
-	f, err := os.Create("juice_local_result")
+	_, err := os.Create("juice_local_result")
 	if err != nil {
 		return nil, err
 	}
