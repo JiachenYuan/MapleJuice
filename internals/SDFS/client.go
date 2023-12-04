@@ -527,7 +527,7 @@ func transferFileToReplica(localFileName string, sdfsFileName string, replica st
 	targetHostName := getScpHostNameFromHostName(replica)
 	remotePath := targetHostName + ":" + filepath.Join(SDFS_PATH, sdfsFileName)
 	////limited the speed to 30MB/s
-	cmd := exec.Command("scp", remotePath, localFileName)
+	cmd := exec.Command("scp", localFileName, remotePath)
 	// cmd := exec.Command("scp", localFileName, remotePath)
 	err := cmd.Start()
 	if err != nil {
