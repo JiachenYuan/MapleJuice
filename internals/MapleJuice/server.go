@@ -189,13 +189,13 @@ func (s *MapleJuiceServer) JuiceExec(ctx context.Context, in *pb.JuiceExecReques
 
 	// Create a temp file holding local aggregate results for all assigned keys
 
-	f, err := os.CreateTemp("", "juice_local_result")
+	f, err := os.Create("juice_local_result")
 	if err != nil {
 		return nil, err
 	}
 	defer os.Remove(f.Name())
 
-	// todo: make the parsing job concurrent, the file IO can be sequential and that's fine
+	// make the parsing job concurrent, the file IO can be sequential and that's fine
 	for _, inputFilename := range in.InputIntermFiles {
 		wg.Add(1)
 		go func(_inputFilename string) {
@@ -258,11 +258,13 @@ func (s *MapleJuiceServer) JuiceExec(ctx context.Context, in *pb.JuiceExecReques
 	wg.Wait()
 
 	// Append (create if necessary) temp file content to destination global file
-	data, err := os.ReadFile(f.Name())
-	if err != nil {
-		fmt.Printf("cannot read the temporary file: %v\n", err)
-	}
-	sdfs.HandleAppendFile(dstFileName, string(data))
+	// data, err := os.ReadFile(f.Name())
+	// if err != nil {
+	// 	fmt.Printf("cannot read the temporary file: %v\n", err)
+	// }
+
+	// TODO: transfer by file instead of data
+	sdfs.HandleAppendFile(dstFileName, "juice_local_result", true)
 
 	return &pb.JuiceExecResponse{
 		Success: true,
@@ -285,6 +287,7 @@ func (s *MapleJuiceServer) Juice(ctx context.Context, in *pb.JuiceRequest) (*pb.
 
 	// var vmToInputFiles map[string]map[string]global.Empty
 	vmToInputFiles := createKeyAssignmentForJuicers(numJuicer, filePrefix, useRangePartition)
+	fmt.Printf("The Juice assignment is: %v\n", vmToInputFiles)
 	err := dispatchJuiceTasksToVMs(vmToInputFiles, juiceProgram, dstFileName)
 
 	if err != nil {
@@ -315,7 +318,7 @@ func appendAllIntermediateResultToSDFS(KVCollection map[string][]string, prefix 
 		}
 		sdfsIntermediateFileName := fmt.Sprintf("%s_%s", prefix, key)
 		fmt.Printf("Trying to appended to SDFS file %s\n", sdfsIntermediateFileName)
-		sdfs.HandleAppendFile(sdfsIntermediateFileName, content)
+		sdfs.HandleAppendFile(sdfsIntermediateFileName, content, false)
 	}
 
 	return nil
