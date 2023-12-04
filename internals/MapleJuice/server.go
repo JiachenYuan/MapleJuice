@@ -294,12 +294,18 @@ func appendAllIntermediateResultToSDFS(KVCollection map[string][]string, prefix 
 		for _, v := range values {
 			content += fmt.Sprintf("%s:%s\n", key, v)
 		}
-		sdfsIntermediateFileName := fmt.Sprintf("%s_%s", prefix, key)
+		sdfsIntermediateFileName := fmt.Sprintf("%s_%s", prefix, sanitizeKey(key))
 		fmt.Printf("Trying to appended to SDFS file %s\n", sdfsIntermediateFileName)
 		sdfs.HandleAppendFile(sdfsIntermediateFileName, content, false)
 	}
 
 	return nil
+}
+
+func sanitizeKey(key string) string {
+	cleanedKey := strings.ReplaceAll(key, " ", "\\ ")
+	cleanedKey = strings.ReplaceAll(cleanedKey, "/", "_")
+	return cleanedKey
 }
 
 func StartMapleJuiceServer() {
