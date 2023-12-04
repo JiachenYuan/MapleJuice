@@ -303,7 +303,7 @@ func appendAllIntermediateResultToSDFS(KVCollection map[string][]string, prefix 
 }
 
 func sanitizeKey(key string) string {
-	cleanedKey := strings.ReplaceAll(key, " ", "\\ ")
+	cleanedKey := strings.ReplaceAll(key, " ", "@")
 	cleanedKey = strings.ReplaceAll(cleanedKey, "/", "_")
 	return cleanedKey
 }
