@@ -1,5 +1,17 @@
 # MapleJuice
 
+MapleJuice is a distributed systems project built from the ground up using the Go programming language. This system incorporates MapReduce-like functionalities and is backed by what is called Simple Distributed File System, drawing inspiration from Hadoop Distributed File System (HDFS).
+
+## Overview
+
+This project originated as a course assignment in a Distributed Systems course, where the goal was to design and implement a Hadoop-like system. Through the development of MapleJuice, I gained valuable insights into the intricate world of distributed systems.
+
+## Key Features
+
+- **MapReduce Functionality:** MapleJuice leverages a distributed processing paradigm similar to MapReduce, providing a scalable and fault-tolerant framework for processing large datasets.
+
+- **Simple Distributed File System (SDFS):** Our project is supported by a Simple Distributed File System inspired by HDFS, ensuring reliable storage and efficient data retrieval across the distributed environment.
+
 ## Environment
 * golang 1.21
 
