@@ -5,9 +5,9 @@
 
 
 ## How to Start 
-1. In directory `~/cs425-mp4` and **main** branch, run 
+1. In directory `~/SDFS_MJ` and **main** branch, run 
 ```
-go run cmd/cs425-mp4/main.go
+go run cmd/SDFS_MJ/main.go
 ```
 
 ## Supported Commands
