@@ -1,4 +1,4 @@
-# CS425-MP4
+# MapleJuice
 
 ## Environment
 * golang 1.21
