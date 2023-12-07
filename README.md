@@ -5,9 +5,9 @@
 
 
 ## How to Start 
-1. In directory `~/SDFS_MJ` and **main** branch, run 
+1. In directory `~/MapleJuice` and **main** branch, run 
 ```
-go run cmd/SDFS_MJ/main.go
+go run cmd/MapleJuice/main.go
 ```
 
 ## Supported Commands
