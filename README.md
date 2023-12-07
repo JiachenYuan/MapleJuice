@@ -4,7 +4,7 @@ MapleJuice is a distributed systems project built from the ground up using the G
 
 ## Overview
 
-This project originated as a course assignment in a Distributed Systems course, where the goal was to design and implement a Hadoop-like system. Through the development of MapleJuice, I gained valuable insights into the intricate world of distributed systems.
+This project originated as a course assignment (refactored in Golang) in a Distributed Systems course, where the goal was to design and implement a Hadoop-like system. Through the development of MapleJuice, I gained valuable insights into the intricate world of distributed systems.
 
 ## Key Features
 
